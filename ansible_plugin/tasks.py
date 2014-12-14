@@ -26,7 +26,7 @@ from cloudify.decorators import operation
 
 ansible_home = "/etc/ansible"
 
-def write_to_file(path,filename,entry):
+def _write_to_file(path,filename,entry):
   if not os.path.exists(path):
     os.makedirs()
   path_to_file = os.path.join(path,filename)
@@ -43,14 +43,15 @@ def add_production_host(address):
   '''
     this adds a production host address line to the production hosts file in /etc/ansible
   '''
-  write_to_file(ansible_home,"production",address)
+  _write_to_file(ansible_home,"production",address)
   ctx.logger.info("Added {0} to production systems list.".format(address))
 
-@ add_staging_host(address):
+@operation
+def add_staging_host(address):
   '''
     this adds a staging host address line to the staging hosts file in /etc/ansible
   '''
-  write_to_file(ansible_home,"staging",address)
+  _write_to_file(ansible_home,"staging",address)
   ctx.logger.info("Added {0} to staging systems list.".format(address))
 
 @operation
