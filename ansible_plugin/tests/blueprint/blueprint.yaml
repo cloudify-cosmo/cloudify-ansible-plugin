@@ -58,7 +58,3 @@ node_templates:
                     inputs:
                         playbook: { get_inputs: new_playbook_name }
                         entry: { get_input: local_path_to_playbook }
-
-node_types:
-    cloudify.nodes.Compute:
-        properties: { ip: {} }
