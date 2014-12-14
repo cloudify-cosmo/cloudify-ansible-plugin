@@ -38,21 +38,6 @@ def write_to_file(path,filename,entry):
     f.write(entry)
   f.close()
 
-# Runs the Shell Command
-def run_shell_command(command):
-  ctx.logger.info("Running shell command: {0}".format(command))
-  try:
-    run = subprocess.Popen(
-      command, 
-      stdout=subprocess.PIPE, 
-      stderr=subprocess.PIPE, 
-      stdin=subprocess.PIPE)
-  except ValueError:
-    print ValueError
-    ctx.logger.error("Invalid Shell Command: {0}".format(command))
-  standard_output, standard_error = run.communicate()
-  return standard_output, standard_error
-
 @operation
 def add_production_host(host,address):
   '''
