@@ -1,0 +1,3 @@
+plugins:
+  ansible:
+    executor: central_deployment_agent
