@@ -132,7 +132,8 @@ def _validate_installation(package):
 
 # Installs a Package
 @operation
-def install_package(package_manager, package):
+def install_package(package):
+  package_manager = _get_package_manager()
   ctx.logger.info("Installing {0}".format(package))
   q,y = _install_args(package_manager)
   command = ["sudo",package_manager,"install",package,q,y]
