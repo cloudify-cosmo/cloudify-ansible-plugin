@@ -15,6 +15,6 @@ node_templates:
         interfaces:
             cloudify.interfaces.lifecycle:
                 create:
-                    implementation: ansible.ansible_plugin.install.install_package
+                    implementation: cloudify-ansible-plugin.ansible_plugin.install.install_package
                     inputs:
                         package: { get_input: package_name }
