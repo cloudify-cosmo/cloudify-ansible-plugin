@@ -38,7 +38,7 @@ def _write_to_file(path,filename,entry):
     f.write(entry)
   f.close()
 
-# Runs any Shell Command
+# Runs the Shell Command
 def _run_shell_command(command):
   ctx.logger.info("Running shell command: {0}".format(command))
   try:
