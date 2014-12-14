@@ -46,13 +46,13 @@ node_templates:
                     inputs:
                         package: { get_input: package_name }
                         package_manager: { get_input: package_manager_name }
-                #add_production_host:
-                #    implementation: ansible.ansible_plugin.tasks.add_production_host
-                #    inputs:
-                #        host: { get_input: new_host_name }
-                #        address: { get_input: new_host_address}
-                #add_playbook:
-                #    implementation: ansible.main.tasks.add_playbook
-                #    inputs:
-                #        playbook: { get_inputs: new_playbook_name }
-                #        entry: { get_input: local_path_to_playbook }
+                add_production_host:
+                    implementation: ansible.ansible_plugin.tasks.add_production_host
+                    inputs:
+                        host: { get_input: new_host_name }
+                        address: { get_input: new_host_address}
+                add_playbook:
+                    implementation: ansible.main.tasks.add_playbook
+                    inputs:
+                        playbook: { get_inputs: new_playbook_name }
+                        entry: { get_input: local_path_to_playbook }
