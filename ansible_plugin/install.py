@@ -27,7 +27,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 
 # Runs any Shell Command
-def run_shell_command(command):
+def _run_shell_command(command):
   ctx.logger.info("Running shell command: {0}".format(command))
   try:
     run = subprocess.Popen(
@@ -42,16 +42,16 @@ def run_shell_command(command):
   return standard_output, standard_error
 
 # Gets the Distrobution
-def get_distro_version():
+def _get_distro_version():
   info = platform.dist()
   distro = info[0]
   version = info[1]
   return distro,version
 
 # Returns the Package Manager for the distrobution
-def get_package_manager():
+def _get_package_manager():
   package_manager = "apt-get"
-  distro,version = get_distro_version()
+  distro,version = _get_distro_version()
   if distro == "Ubuntu":
     ctx.logger.info("{0} is the Linux distribution.".format(distro))
     package_manager = "apt-get"
@@ -64,7 +64,7 @@ def get_package_manager():
   return package_manager
 
 # Returns Install Arguments for a Package Manager
-def install_args(package_manager):
+def _install_args(package_manager):
   if package_manager == "apt-get":
     quiet_output = "-qq"
     assume_yes = "-y"
@@ -74,22 +74,21 @@ def install_args(package_manager):
   return quiet_output,assume_yes
 
 # Upgrade the Package Manager
-def upgrade_package_manager(package_manager):
-  q,y = install_args(package_manager)
+def _upgrade_package_manager(package_manager):
+  q,y = _install_args(package_manager)
   ctx.logger.info("Upgrading {0}".format(package_manager))
   command = ["sudo",package_manager,"upgrade",y,q]
   try:
-    o,e = run_shell_command(command)
+    o,e = _run_shell_command(command)
   except TypeError:
   	ctx.logger.info("No Errors were raised in Command: ".format(command))
  	pass
   return o,e
 
-
 # Installs the EPEL Repo
-def install_epel_repo():
+def _install_epel_repo():
   wget_url = "http://dl.fedoraproject.org/pub/epel/5/x86_64/"
-  distro,version = get_distro_version()
+  distro,version = _get_distro_version()
   if version == "5*":
     rpm_version = "epel-release-5-4.noarch.rpm"
   elif version == "6*":
@@ -106,20 +105,19 @@ def install_epel_repo():
     urllib.urlretrieve(wget_url + rpm_version, filename)
   command = ["sudo","rpm","-Uvh","/tmp/" + rpm_version]
   try:
-    o,e = run_shell_command(command)
+    o,e = _run_shell_command(command)
   except TypeError:
   	ctx.logger.info("No Errors were raised in Command: ".format(command))
  	pass
   return o,e
 
-
 # Installs the PPA repos
-def install_ppa_repo():
+def _install_ppa_repo():
   # Installs the Software Properties Common Dependency
   def install_dependency():
     command = ["sudo","apt-get","install","software-properties-common"]
     try:
-      o,e = run_shell_command(command)
+      o,e = _run_shell_command(command)
     except TypeError:
       ctx.logger.info("No Errors were raised in Command: ".format(command))
       pass
@@ -127,54 +125,53 @@ def install_ppa_repo():
   o,e = install_dependency()
   command = ["sudo","apt-add-repository","ppa:ansible/ansible"]
   try:
-    o,e = run_shell_command(command)
+    o,e = _run_shell_command(command)
   except TypeError:
   	ctx.logger.info("No Errors were raised in Command: ".format(command))
  	pass
   return o,e
 
 # Decides which repos to install
-def add_repo(package_manager):
+def _add_repo(package_manager):
   ctx.logger.info("Installing Additional Repositories to {0}".format(package_manager))
   if package_manager == "yum":
-    o,e = install_epel_repo()
+    o,e = _install_epel_repo()
   elif package_manager == "apt-get":
-    o,e = install_ppa_repo()
+    o,e = _install_ppa_repo()
   return o,e
 
 # Updates a Package Manager
 def update_package_manager(package_manager):
-  add_repo(package_manager)
+  _add_repo(package_manager)
   ctx.logger.info("Updating {0}".format(package_manager))
   command = ["sudo",package_manager,"update"]
   try:
-    o,e = run_shell_command(command)
+    o,e = _run_shell_command(command)
   except TypeError:
   	ctx.logger.info("No Errors were raised in Command: ".format(command))
   	pass
   return o,e
 
 # validate the installation
-def validate_installation(package):
+def _validate_installation(package):
   ctx.logger.info("Validating {0}: ".format(package))
   command = [pakcage,"--version"]
-  o,e = run_shell_command(command)
+  o,e = _run_shell_command(command)
   if o:
     ctx.logger.info("Installation successful.")
   else:
     ctx.logger.error("Installation failed.")
 
-
 # Installs a Package
 @operation
 def install_package(package_manager, package):
   ctx.logger.info("Installing {0}".format(package))
-  q,y = install_args(package_manager)
+  q,y = _install_args(package_manager)
   command = ["sudo",package_manager,"install",package,q,y]
   try:
-    o,e = run_shell_command(command)
+    o,e = _run_shell_command(command)
   except TypeError:
   	ctx.logger.info("No Errors were raised in Command: ".format(command))
  	  pass
-  validate_installation(package)
+  _validate_installation(package)
 

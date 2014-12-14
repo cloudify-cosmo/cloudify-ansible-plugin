@@ -6,6 +6,7 @@ imports:
 plugins:
   ansible:
     executor: central_deployment_agent
+    install: false
 
 inputs:
     manager_ip:
@@ -18,10 +19,16 @@ inputs:
         default: "apt-get"
         type: string
 
-    new_host_name:
+    new_staging_host_name:
         type: string
 
-    new_host_address:
+    new_staging_host_address:
+        type: string
+
+    new_production_host_name:
+        type: string
+
+    new_production_host_address:
         type: string
 
     new_playbook_name:
@@ -31,9 +38,13 @@ inputs:
     path_to_new_playbook:
         type: string
 
+    ansible_config_directory:
+        default: /etc/ansible
+        type: string
+
 node_templates:
     ansible_manager:
-        type: cloudify.nodes.Compute
+        type: cloudify.nodes.ApplicationModule
         interfaces:
             cloudify.interfaces.lifecycle:
                 create:
@@ -41,13 +52,3 @@ node_templates:
                     inputs:
                         package: { get_input: package_name }
                         package_manager: { get_input: package_manager_name }
-                add_production_host:
-                    implementation: ansible.ansible_plugin.tasks.add_production_host
-                    inputs:
-                        host: { get_input: new_host_name }
-                        address: { get_input: new_host_address}
-                add_playbook:
-                    implementation: ansible.main.tasks.add_playbook
-                    inputs:
-                        playbook: { get_inputs: new_playbook_name }
-                        entry: { get_input: local_path_to_playbook }

@@ -57,14 +57,23 @@ def run_shell_command(command):
 def add_production_host(host,address):
   '''
     this adds a production host address line to the production hosts file in /etc/ansible
-    in the near future, we will modify to handle updating a host or removing a host, as well as group, variable and role management
   '''
   entry = host,address
   write_to_file(ansible_home,"production",entry)
+  ctx.logger.info("Added {0} to production systems list.".format(entry))
+
+@ add_staging_host(host,address):
+  '''
+    this adds a staging host address line to the staging hosts file in /etc/ansible
+  '''
+  entry = host,address
+  write_to_file(ansible_home,"staging",entry)
+  ctx.logger.info("Added {0} to staging systems list.".format(entry))
 
 @operation
-def add_playbook(playbook,entry):
+def add_playbook(client_path,ansible_home):
   '''
-    adds a {playbook}.yml file in /etc/ansible with content {entry}
+    adds a playbook file in /etc/ansible with content {entry}
   '''
-  write_to_file(ansible_home,playbook,entry)
+  path = ctx.downloadresource(client_path,ansible_home)
+  ctx.logger.info("Added file: {0}".format(path))

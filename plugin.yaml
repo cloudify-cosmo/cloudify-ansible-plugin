@@ -1,6 +1,19 @@
 ##################################################################################
 # Cloudify Ansible built in types and plugins definitions.
 ##################################################################################
+    # DSL version, should appear in the main blueprint.yaml
+# and may appear in other imports. In such case, the versions must match
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+    # importing cloudify related types, plugins, workflow, etc...
+    # to speed things up, it is possible downloading this file,
+    # including it in the blueprint directory and importing it
+    # instead.
+    - http://www.getcloudify.org/spec/cloudify/3.1/types.yaml
+    # relative import of plugin.yaml that resides in the blueprint directory
+    - ansible_plugin/tests/blueprint/tests/blueprints/test_plugin.yaml
+
 plugins:
   ansible:
     executor: central_deployment_agent
