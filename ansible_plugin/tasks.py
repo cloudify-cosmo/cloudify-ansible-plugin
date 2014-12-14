@@ -26,7 +26,7 @@ from cloudify.decorators import operation
 
 ansible_home = "/etc/ansible"
 
-def _write_to_file(path,filename,entry):
+def write_to_file(path,filename,entry):
   if not os.path.exists(path):
     os.makedirs()
   path_to_file = os.path.join(path,filename)
@@ -39,7 +39,7 @@ def _write_to_file(path,filename,entry):
   f.close()
 
 # Runs the Shell Command
-def _run_shell_command(command):
+def run_shell_command(command):
   ctx.logger.info("Running shell command: {0}".format(command))
   try:
     run = subprocess.Popen(
@@ -60,11 +60,11 @@ def add_production_host(host,address):
     in the near future, we will modify to handle updating a host or removing a host, as well as group, variable and role management
   '''
   entry = host,address
-  _write_to_file(ansible_home,"production",entry)
+  write_to_file(ansible_home,"production",entry)
 
 @operation
 def add_playbook(playbook,entry):
   '''
     adds a {playbook}.yml file in /etc/ansible with content {entry}
   '''
-  _write_to_file(ansible_home,playbook,entry)
+  write_to_file(ansible_home,playbook,entry)
