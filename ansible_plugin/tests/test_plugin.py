@@ -28,7 +28,7 @@ class TestPlugin(unittest.TestCase):
 
         # inject input from test
         inputs = {
-            'package_name': 'ansible'
+            'package_name': 'cloudify-ansible-plugin'
         }
 
         # setup local workflow execution environment
