@@ -6,7 +6,6 @@ imports:
 plugins:
   ansible:
     executor: central_deployment_agent
-    install: false
 
 inputs:
     manager_ip:
