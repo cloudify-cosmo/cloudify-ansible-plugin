@@ -59,12 +59,6 @@ node_templates:
                         playbook: { get_inputs: new_playbook_name }
                         entry: { get_input: local_path_to_playbook }
 
-
-outputs:
-    test_output:
-        description: an output for the test
-        value: { get_attribute: [test_node_template, value_of_some_property]}
-
 node_types:
     cloudify.nodes.Compute:
         properties: { ip: {} }
