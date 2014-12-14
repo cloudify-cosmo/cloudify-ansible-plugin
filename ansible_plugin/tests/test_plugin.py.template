@@ -19,7 +19,6 @@ import unittest
 
 from cloudify.workflows import local
 
-
 class TestPlugin(unittest.TestCase):
 
     def setUp(self):
@@ -29,7 +28,7 @@ class TestPlugin(unittest.TestCase):
 
         # inject input from test
         inputs = {
-            'test_input': 'new_test_input'
+            'package_name': 'ansible'
         }
 
         # setup local workflow execution environment
