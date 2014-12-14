@@ -41,7 +41,7 @@ node_templates:
         type: cloudify.nodes.Compute
         interfaces:
             cloudify.interfaces.lifecycle:
-                install:
+                create:
                     implementation: ansible.ansible_plugin.install.install_package
                     inputs:
                         package: { get_input: package_name }
