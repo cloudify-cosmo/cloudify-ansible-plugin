@@ -154,6 +154,17 @@ def _update_package_manager(package_manager):
   	pass
   return o,e
 
+# validate the installation
+def _validate_installation(package):
+  ctx.logger.info("Validating {0}: ".format(package))
+  command = [pakcage,"--version"]
+  o,e = _run_shell_command(command)
+  if o:
+    ctx.logger.info("Installation successful.")
+  else:
+    ctx.logger.error("Installation failed.")
+
+
 # Installs a Package
 @operation
 def install_package(package_manager, package):
@@ -164,6 +175,6 @@ def install_package(package_manager, package):
     o,e = _run_shell_command(command)
   except TypeError:
   	ctx.logger.info("No Errors were raised in Command: ".format(command))
- 	pass
-  return o,e
+ 	  pass
+  _validate_installation(package)
 
