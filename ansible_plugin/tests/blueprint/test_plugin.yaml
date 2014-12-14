@@ -18,30 +18,7 @@ inputs:
     package_manager_name:
         default: "apt-get"
         type: string
-
-    new_staging_host_name:
-        type: string
-
-    new_staging_host_address:
-        type: string
-
-    new_production_host_name:
-        type: string
-
-    new_production_host_address:
-        type: string
-
-    new_playbook_name:
-        default: "playbook"
-        type: string
-
-    path_to_new_playbook:
-        type: string
-
-    ansible_config_directory:
-        default: /etc/ansible
-        type: string
-
+        
 node_templates:
     ansible_manager:
         type: cloudify.nodes.ApplicationModule
