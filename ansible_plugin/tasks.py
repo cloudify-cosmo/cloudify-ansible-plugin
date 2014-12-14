@@ -39,21 +39,19 @@ def write_to_file(path,filename,entry):
   f.close()
 
 @operation
-def add_production_host(host,address):
+def add_production_host(address):
   '''
     this adds a production host address line to the production hosts file in /etc/ansible
   '''
-  entry = host,address
-  write_to_file(ansible_home,"production",entry)
-  ctx.logger.info("Added {0} to production systems list.".format(entry))
+  write_to_file(ansible_home,"production",address)
+  ctx.logger.info("Added {0} to production systems list.".format(address))
 
-@ add_staging_host(host,address):
+@ add_staging_host(address):
   '''
     this adds a staging host address line to the staging hosts file in /etc/ansible
   '''
-  entry = host,address
-  write_to_file(ansible_home,"staging",entry)
-  ctx.logger.info("Added {0} to staging systems list.".format(entry))
+  write_to_file(ansible_home,"staging",address)
+  ctx.logger.info("Added {0} to staging systems list.".format(address))
 
 @operation
 def add_playbook(client_path,ansible_home):
