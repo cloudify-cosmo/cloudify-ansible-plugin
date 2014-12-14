@@ -39,12 +39,10 @@ inputs:
 node_templates:
     ansible_manager:
         type: cloudify.nodes.Compute
-        properties:
-            ip: { get_input: manager_ip }
         interfaces:
             cloudify.interfaces.lifecycle:
                 install:
-                    implementation: ansible.ansible_plugin.tasks.install_package
+                    implementation: ansible.ansible_plugin.install.install_package
                     inputs:
                         package: { get_input: package_name }
                         package_manager: { get_input: package_manager_name }
