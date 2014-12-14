@@ -1,20 +1,53 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+    - http://www.getcloudify.org/spec/cloudify/3.1/types.yaml
+
 plugins:
-    # Name could be anything, this name is what appears on the beginning of operation
-    # mappings.
-    plugin_name:
-        # Could be 'central_deployment_agent' or 'host_agent'.
-        # If 'central_deployment_agent', this plugin will be executed on the
-        # deployment dedicated agent, other wise it will be executed on the host agent.
-        # We set it the 'central_deployment_agent' here because 'host_agent' plugins should
-        # be contained in a host and this is not required for testing purposes
-        executor: central_deployment_agent
+  ansible:
+    executor: central_deployment_agent
 
-        # Setting install to false in testing environment. In the non-test plugin definition
-        # this property could be omitted usually (its default is true), in which case
-        # the source property should be set
-        install: false
+inputs:
+    manager_ip:
+        type: string
+    package_name:
+        default: "ansible"
+        type: string
 
-        # source: URL to archive containing the plugin or name of directory containing
-        #         the plugin if it is included in the the blueprint directory under the
-        #         "plugins" directory. Not required in testing environments as the plugin
-        #         need not be installed on any agent
+    package_manager_name:
+        default: "apt-get"
+        type: string
+
+    new_host_name:
+        type: string
+
+    new_host_address:
+        type: string
+
+    new_playbook_name:
+        default: "playbook"
+        type: string
+
+    path_to_new_playbook:
+        type: string
+
+node_templates:
+    ansible_manager:
+        type: cloudify.nodes.Compute
+        interfaces:
+            cloudify.interfaces.lifecycle:
+                create:
+                    implementation: ansible.ansible_plugin.install.install_package
+                    inputs:
+                        package: { get_input: package_name }
+                        package_manager: { get_input: package_manager_name }
+                add_production_host:
+                    implementation: ansible.ansible_plugin.tasks.add_production_host
+                    inputs:
+                        host: { get_input: new_host_name }
+                        address: { get_input: new_host_address}
+                add_playbook:
+                    implementation: ansible.main.tasks.add_playbook
+                    inputs:
+                        playbook: { get_inputs: new_playbook_name }
+                        entry: { get_input: local_path_to_playbook }
