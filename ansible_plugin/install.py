@@ -144,5 +144,5 @@ def install_package(package):
   _validate_installation(package)
 
 @operation
-def install(package):
+def install(**kwargs):
   install_package(package)
