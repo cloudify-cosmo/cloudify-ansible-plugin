@@ -143,7 +143,7 @@ def install_package(package):
   _update_package_manager(package_manager)
   _upgrade_package_manager(package_manager)
   q,y = _install_args(package_manager)
-  command = ["sudo",package_manager,"install",package,q,y]
+  command = ["sudo",package_manager,"install",package,q,y,"-f"]
   _run_shell_command(command)
   _validate_installation(package)
 
