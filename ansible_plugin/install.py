@@ -35,7 +35,7 @@ def _run_shell_command(command):
   try:
     run = subprocess.check_call(
       command)
-  except CalledProcessError:
+  except subprocess.CalledProcessError:
   	ctx.logger.error("Unable to run shell command: {0}".format(command))
   	raise NonRecoverableError("Command failed: {0}".format(command))
   return run
