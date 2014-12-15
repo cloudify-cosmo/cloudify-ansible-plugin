@@ -135,7 +135,6 @@ def _validate_installation(package):
     ctx.logger.info("Installation was successful")
 
 # Installs a Package
-@operation
 def install_package(package):
   package_manager = _get_package_manager()
   ctx.logger.info("Installing {0}".format(package))
@@ -144,3 +143,6 @@ def install_package(package):
   _run_shell_command(command)
   _validate_installation(package)
 
+@operation
+def install(package):
+  install_package(package)
