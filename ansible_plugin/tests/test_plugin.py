@@ -33,7 +33,7 @@ class TestPlugin(unittest.TestCase):
 
         # setup local workflow execution environment
         self.env = local.init_env(blueprint_path,
-                                  name=self._testMethodName,
+                                  name=self.install,
                                   inputs=inputs)
 
     def test_my_task(self):
