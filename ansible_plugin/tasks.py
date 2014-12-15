@@ -23,6 +23,7 @@ from cloudify import ctx
 
 # put the operation decorator on any function that is a task
 from cloudify.decorators import operation
+from cloudify.exceptions import CalledProcessError
 
 ansible_home = "/etc/ansible"
 
@@ -61,3 +62,14 @@ def add_playbook(client_path,ansible_home):
   '''
   path = ctx.downloadresource(client_path,ansible_home)
   ctx.logger.info("Added file: {0}".format(path))
+
+@operation
+def configure_directory(**kwargs):
+  '''
+    creates all of the folders that are recommended in ansible best practices
+  '''
+  if "my_ansible_configuration" in kwargs:
+    # add a method that downloads a zip file and unzips it in ansible_home
+  else:
+    _create_directories(directories) #something like for directory in directories os.makedirs(directory)
+
