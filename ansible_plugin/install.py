@@ -98,14 +98,14 @@ def _get_distro_version():
 def _add_repo(package_manager):
   ctx.logger.info("Installing Additional Repositories to {0}".format(package_manager))
   if package_manager == "yum":
-    _install_epel_repo()
+    _install_epel_repo(package_manager)
   elif package_manager == "apt-get":
-    _install_ppa_repo()
+    _install_ppa_repo(package_manager)
   else:
     ctx.logger.error("Not yum or apt-get.")
 
 # Installs the EPEL Repo
-def _install_epel_repo():
+def _install_epel_repo(package_manager):
   wget_url = "http://dl.fedoraproject.org/pub/epel/5/x86_64/"
   distro,version = _get_distro_version()
   if version == "5*":
@@ -126,7 +126,7 @@ def _install_epel_repo():
   _run_shell_command(command)
 
 # Installs the PPA repos
-def _install_ppa_repo():
+def _install_ppa_repo(package_manager):
   # Installs the Software Properties Common Dependency
   def _install_dependency(package_manager):
     q,y,f = _install_args(package_manager)
