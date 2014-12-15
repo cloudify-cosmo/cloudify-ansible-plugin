@@ -1,13 +1,5 @@
-cloudify-plugin-template
+cloudify-ansible-plugin
 ========================
-
-Cloudify plugin project template.
-
-To run the example plugin tests, the included `dev-requirements.txt` should be installed.
-
-```
-pip install -r dev-requirements.txt
-```
 
 Current Functionality:
  - Install Ansible on Manager
