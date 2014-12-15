@@ -118,7 +118,7 @@ def _add_repo(package_manager):
     _install_ppa_repo()
 
 # Updates a Package Manager
-def update_package_manager(package_manager):
+def _update_package_manager(package_manager):
   _add_repo(package_manager)
   ctx.logger.info("Updating {0}".format(package_manager))
   command = ["sudo",package_manager,"update"]
@@ -138,6 +138,8 @@ def _validate_installation(package):
 def install_package(package):
   package_manager = _get_package_manager()
   ctx.logger.info("Installing {0}".format(package))
+  _update_package_manager(package_manager)
+  _upgrade_package_manager(package_manager)
   q,y = _install_args(package_manager)
   command = ["sudo",package_manager,"install",package,q,y]
   _run_shell_command(command)
