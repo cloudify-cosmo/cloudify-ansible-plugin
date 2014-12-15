@@ -79,11 +79,11 @@ def _install_args(package_manager):
   if package_manager == "apt-get":
     quiet_output = "-qq"
     assume_yes = "-y"
-    fix_broken = ""
+    fix_broken = "-f"
   if package_manager == "yum":
     quiet_output = "-q"
     assume_yes = "-y"
-    fix_broken = "-f"
+    fix_broken = " "
   return quiet_output,assume_yes,fix_broken
 
  # Gets the Distrobution
