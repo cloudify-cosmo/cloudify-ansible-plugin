@@ -129,7 +129,7 @@ def _update_package_manager(package_manager):
 # validate the installation
 def _validate_installation(package):
   ctx.logger.info("Validating {0}: ".format(package))
-  command = [pakcage,"--version"]
+  command = [package,"--version"]
   code = _run_shell_command(command)
   if code > 0:
     ctx.logger.info("Installation was unsuccessful")
