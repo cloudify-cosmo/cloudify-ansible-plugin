@@ -76,7 +76,7 @@ def _install_args(package_manager):
 def _upgrade_package_manager(package_manager):
   q,y = _install_args(package_manager)
   ctx.logger.info("Upgrading {0}".format(package_manager))
-  command = ["sudo",package_manager,"upgrade",y,q]
+  command = ["sudo",package_manager,"upgrade",y,q,"-f"]
   _run_shell_command(command)
 
 # Installs the EPEL Repo
@@ -143,7 +143,7 @@ def install_package(package):
   _update_package_manager(package_manager)
   _upgrade_package_manager(package_manager)
   q,y = _install_args(package_manager)
-  command = ["sudo",package_manager,"install",package,q,y,"-f"]
+  command = ["sudo",package_manager,"install",package,q,y]
   _run_shell_command(command)
   _validate_installation(package)
 
