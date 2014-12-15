@@ -1,8 +1,0 @@
-* create basic configurations and have cloudify managee it
-
-what to expose at parameters:
- - playbook
- - if i map an operation to a webserver node and that node is contained in a host, fabric knows how to pull that and so will the ansible plugin do the same
- - run the playbook
-
-* Take Exiting Configuration as a zip file and install it.
