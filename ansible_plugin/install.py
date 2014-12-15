@@ -26,6 +26,9 @@ from cloudify import ctx
 # put the operation decorator on any function that is a task
 from cloudify.decorators import operation
 
+# Import Cloudify exception
+from cloudify.exceptions import NonRecoverableError
+
 # Runs any Shell Command
 def _run_shell_command(command):
   ctx.logger.info("Running shell command: {0}".format(command))
@@ -34,6 +37,7 @@ def _run_shell_command(command):
       command)
   except CalledProcessError:
   	ctx.logger.error("Unable to run shell command: {0}".format(command))
+  	raise NonRecoverableError("Command failed: {0}".format(command))
   return run
 
 # Gets the Distrobution
