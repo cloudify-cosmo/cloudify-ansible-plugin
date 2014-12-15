@@ -68,8 +68,8 @@ def configure_directory(**kwargs):
   '''
     creates all of the folders that are recommended in ansible best practices
   '''
-  if "my_ansible_configuration" in kwargs:
+  #if "my_ansible_configuration" in kwargs:
     # add a method that downloads a zip file and unzips it in ansible_home
-  else:
+  #else:
     _create_directories(directories) #something like for directory in directories os.makedirs(directory)
 
