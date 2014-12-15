@@ -57,9 +57,9 @@ def _get_package_manager():
 
 # Upgrade the Package Manager
 def _upgrade_package_manager(package_manager):
-  q,y,f = _install_args(package_manager)
+  q,y = _install_args(package_manager)
   ctx.logger.info("Upgrading {0}".format(package_manager))
-  command = ["sudo",package_manager,"upgrade",y,q,f]
+  command = ["sudo",package_manager,"upgrade",y,q]
   _run_shell_command(command)
 
 
@@ -69,8 +69,8 @@ def _install_package(package):
   ctx.logger.info("Installing {0}".format(package))
   _update_package_manager(package_manager)
   _upgrade_package_manager(package_manager)
-  q,y,f = _install_args(package_manager)
-  command = ["sudo",package_manager,"install",package,q,y,f]
+  q,y = _install_args(package_manager)
+  command = ["sudo",package_manager,"install",package,q,y]
   _run_shell_command(command)
   _validate_installation(package)
 
@@ -79,12 +79,10 @@ def _install_args(package_manager):
   if package_manager == "apt-get":
     quiet_output = "-qq"
     assume_yes = "-y"
-    fix_broken = "-f"
   if package_manager == "yum":
     quiet_output = "-q"
     assume_yes = "-y"
-    fix_broken = " "
-  return quiet_output,assume_yes,fix_broken
+  return quiet_output,assume_yes
 
  # Gets the Distrobution
 def _get_distro_version():
@@ -129,8 +127,10 @@ def _install_epel_repo(package_manager):
 def _install_ppa_repo(package_manager):
   # Installs the Software Properties Common Dependency
   def _install_dependency(package_manager):
-    q,y,f = _install_args(package_manager)
-    command = ["sudo","apt-get","install","software-properties-common",q,y,f]
+    command = ["sudo","apt-get","-f","install"]
+    _run_shell_command(command)
+    q,y = _install_args(package_manager)
+    command = ["sudo","apt-get","install","software-properties-common",q,y]
     _run_shell_command(command)
   _install_dependency(package_manager)
   command = ["sudo","apt-add-repository","ppa:ansible/ansible","-y"]
