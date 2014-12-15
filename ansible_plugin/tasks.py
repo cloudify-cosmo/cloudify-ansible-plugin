@@ -23,7 +23,6 @@ from cloudify import ctx
 
 # put the operation decorator on any function that is a task
 from cloudify.decorators import operation
-from cloudify.exceptions import CalledProcessError
 
 ansible_home = "/etc/ansible"
 
