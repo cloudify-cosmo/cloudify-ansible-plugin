@@ -29,25 +29,16 @@ from cloudify.decorators import operation
 # Import Cloudify exception
 from cloudify.exceptions import NonRecoverableError
 
-# Wraps _install_package()
-@operation
-def install(**kwargs):
-  if "package_name" in kwargs.items():
-    package = package_name
-  else:
-    package = "ansible"
-  _install_package(package)
-
-# Installs a Package
-def _install_package(package):
-  package_manager = _get_package_manager()
-  ctx.logger.info("Installing {0}".format(package))
-  _update_package_manager(package_manager)
-  _upgrade_package_manager(package_manager)
-  q,y,f = _install_args(package_manager)
-  command = ["sudo",package_manager,"install",package,q,y,f]
-  _run_shell_command(command)
-  _validate_installation(package)
+# Runs any Shell Command
+def _run_shell_command(command):
+  ctx.logger.info("Running shell command: {0}".format(command))
+  try:
+    run = subprocess.check_call(
+      command)
+  except subprocess.CalledProcessError:
+    ctx.logger.error("Unable to run shell command: {0}".format(command))
+    raise NonRecoverableError("Command failed: {0}".format(command))
+  return run
 
 # Returns the Package Manager for the distrobution
 def _get_package_manager():
@@ -122,6 +113,7 @@ def _upgrade_package_manager(package_manager):
   command = ["sudo",package_manager,"upgrade",y,q,f]
   _run_shell_command(command)
 
+
 # Returns Install Arguments for a Package Manager
 def _install_args(package_manager):
   if package_manager == "apt-get":
@@ -134,6 +126,7 @@ def _install_args(package_manager):
     fix_broken = "-f"
   return quiet_output,assume_yes,fix_broken
 
+
 # Gets the Distrobution
 def _get_distro_version():
   info = platform.dist()
@@ -141,16 +134,8 @@ def _get_distro_version():
   version = info[1]
   return distro,version
 
-# Runs any Shell Command
-def _run_shell_command(command):
-  ctx.logger.info("Running shell command: {0}".format(command))
-  try:
-    run = subprocess.check_call(
-      command)
-  except subprocess.CalledProcessError:
-    ctx.logger.error("Unable to run shell command: {0}".format(command))
-    raise NonRecoverableError("Command failed: {0}".format(command))
-  return run
+
+
 
 # validate the installation
 def _validate_installation(package):
@@ -163,3 +148,26 @@ def _validate_installation(package):
     ctx.logger.info("Installation was successful")
 
 
+
+
+# Wraps _install_package()
+@operation
+def install(**kwargs):
+  if "package_name" in kwargs.items():
+    package = package_name
+  else:
+    package = "ansible"
+  _install_package(package)
+
+
+
+# Installs a Package
+def _install_package(package):
+  package_manager = _get_package_manager()
+  ctx.logger.info("Installing {0}".format(package))
+  _update_package_manager(package_manager)
+  _upgrade_package_manager(package_manager)
+  q,y,f = _install_args(package_manager)
+  command = ["sudo",package_manager,"install",package,q,y,f]
+  _run_shell_command(command)
+  _validate_installation(package)
