@@ -104,10 +104,10 @@ def _install_epel_repo():
 def _install_ppa_repo():
   # Installs the Software Properties Common Dependency
   def _install_dependency():
-    command = ["sudo","apt-get","install","software-properties-common"]
+    command = ["sudo","apt-get","install","software-properties-common","-y"]
     _run_shell_command(command)
   _install_dependency()
-  command = ["sudo","apt-add-repository","ppa:ansible/ansible"]
+  command = ["sudo","apt-add-repository","ppa:ansible/ansible","-y"]
   _run_shell_command(command)
 
 # Decides which repos to install
