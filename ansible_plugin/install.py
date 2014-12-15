@@ -119,6 +119,8 @@ def _add_repo(package_manager):
 
 # Updates a Package Manager
 def _update_package_manager(package_manager):
+  command = ["sudo","apt-get","clean"]
+  _run_shell_command(command)
   _add_repo(package_manager)
   ctx.logger.info("Updating {0}".format(package_manager))
   command = ["sudo",package_manager,"update"]
