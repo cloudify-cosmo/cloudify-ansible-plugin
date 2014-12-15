@@ -27,6 +27,53 @@ from cloudify.decorators import operation
 # Import Cloudify exception
 from cloudify.exceptions import NonRecoverableError
 
+
+# Runs any Shell Command
+def _run_shell_command(command):
+  ctx.logger.info("Running shell command: {0}".format(command))
+  try:
+    run = subprocess.check_call(
+      command)
+  except subprocess.CalledProcessError:
+    ctx.logger.error("Unable to run shell command: {0}".format(command))
+    raise NonRecoverableError("Command failed: {0}".format(command))
+  return run
+
+
+# Returns the Package Manager for the distrobution
+def _get_package_manager():
+  package_manager = "apt-get"
+  distro,version = _get_distro_version()
+  if distro == "Ubuntu":
+    ctx.logger.info("{0} is the Linux distribution.".format(distro))
+    package_manager = "apt-get"
+  elif distro == "Centos":
+    ctx.logger.info("{0} is the Linux distribution.".format(distro))
+    package_manager = "yum"
+  else:
+    ctx.logger.error("Currently Operating System {0} is not supported".format(distro))
+    exit(1)
+  return package_manager
+
+# Upgrade the Package Manager
+def _upgrade_package_manager(package_manager):
+  q,y,f = _install_args(package_manager)
+  ctx.logger.info("Upgrading {0}".format(package_manager))
+  command = ["sudo",package_manager,"upgrade",y,q,f]
+  _run_shell_command(command)
+
+
+# Installs a Package
+def _install_package(package):
+  package_manager = _get_package_manager()
+  ctx.logger.info("Installing {0}".format(package))
+  _update_package_manager(package_manager)
+  _upgrade_package_manager(package_manager)
+  q,y,f = _install_args(package_manager)
+  command = ["sudo",package_manager,"install",package,q,y,f]
+  _run_shell_command(command)
+  _validate_installation(package)
+
 # Returns Install Arguments for a Package Manager
 def _install_args(package_manager):
   if package_manager == "apt-get":
@@ -46,16 +93,6 @@ def _get_distro_version():
   version = info[1]
   return distro,version
 
-# Runs any Shell Command
-def _run_shell_command(command):
-  ctx.logger.info("Running shell command: {0}".format(command))
-  try:
-    run = subprocess.check_call(
-      command)
-  except subprocess.CalledProcessError:
-    ctx.logger.error("Unable to run shell command: {0}".format(command))
-    raise NonRecoverableError("Command failed: {0}".format(command))
-  return run
 
 # Decides which repos to install
 def _add_repo(package_manager):
@@ -108,28 +145,6 @@ def _update_package_manager(package_manager):
   command = ["sudo",package_manager,"update"]
   _run_shell_command(command)
 
-# Upgrade the Package Manager
-def _upgrade_package_manager(package_manager):
-  q,y,f = _install_args(package_manager)
-  ctx.logger.info("Upgrading {0}".format(package_manager))
-  command = ["sudo",package_manager,"upgrade",y,q,f]
-  _run_shell_command(command)
-
-# Returns the Package Manager for the distrobution
-def _get_package_manager():
-  package_manager = "apt-get"
-  distro,version = _get_distro_version()
-  if distro == "Ubuntu":
-    ctx.logger.info("{0} is the Linux distribution.".format(distro))
-    package_manager = "apt-get"
-  elif distro == "Centos":
-    ctx.logger.info("{0} is the Linux distribution.".format(distro))
-    package_manager = "yum"
-  else:
-    ctx.logger.error("Currently Operating System {0} is not supported".format(distro))
-    exit(1)
-  return package_manager
-
 # validate the installation
 def _validate_installation(package):
   ctx.logger.info("Validating {0}: ".format(package))
@@ -140,16 +155,6 @@ def _validate_installation(package):
   else:
     ctx.logger.info("Installation was successful")
 
-# Installs a Package
-def _install_package(package):
-  package_manager = _get_package_manager()
-  ctx.logger.info("Installing {0}".format(package))
-  _update_package_manager(package_manager)
-  _upgrade_package_manager(package_manager)
-  q,y,f = _install_args(package_manager)
-  command = ["sudo",package_manager,"install",package,q,y,f]
-  _run_shell_command(command)
-  _validate_installation(package)
 
 # Wraps _install_package()
 @operation
