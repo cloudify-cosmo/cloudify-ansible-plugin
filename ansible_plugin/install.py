@@ -116,6 +116,8 @@ def _add_repo(package_manager):
     _install_epel_repo()
   elif package_manager == "apt-get":
     _install_ppa_repo()
+  else:
+    ctx.logger.error("Not yum or apt-get.")
 
 # Updates a Package Manager
 def _update_package_manager(package_manager):
