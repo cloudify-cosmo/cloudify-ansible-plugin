@@ -27,7 +27,6 @@ from cloudify.decorators import operation
 # Import Cloudify exception
 from cloudify.exceptions import NonRecoverableError
 
-
 # Runs any Shell Command
 def _run_shell_command(command):
   ctx.logger.info("Running shell command: {0}".format(command))
@@ -38,7 +37,6 @@ def _run_shell_command(command):
     ctx.logger.error("Unable to run shell command: {0}".format(command))
     raise NonRecoverableError("Command failed: {0}".format(command))
   return run
-
 
 # Returns the Package Manager for the distrobution
 def _get_package_manager():
@@ -61,7 +59,6 @@ def _upgrade_package_manager(package_manager):
   ctx.logger.info("Upgrading {0}".format(package_manager))
   command = ["sudo",package_manager,"upgrade",y,q]
   _run_shell_command(command)
-
 
 # Installs a Package
 def _install_package(package):
@@ -90,7 +87,6 @@ def _get_distro_version():
   distro = info[0]
   version = info[1]
   return distro,version
-
 
 # Decides which repos to install
 def _add_repo(package_manager):
@@ -154,7 +150,6 @@ def _validate_installation(package):
     ctx.logger.info("Installation was unsuccessful")
   else:
     ctx.logger.info("Installation was successful")
-
 
 # Wraps _install_package()
 @operation
