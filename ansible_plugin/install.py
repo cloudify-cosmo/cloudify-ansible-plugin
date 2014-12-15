@@ -145,4 +145,8 @@ def install_package(package):
 
 @operation
 def install(**kwargs):
+  if "package_name" in kwargs:
+    package = package_name
+  else:
+    package = "ansible"
   install_package(package)
