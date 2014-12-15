@@ -154,7 +154,7 @@ def _install_package(package):
 # Wraps _install_package()
 @operation
 def install(**kwargs):
-  if "package_name" in kwargs.items():
+  if "package_name" in kwargs.iteritems():
     package = package_name
   else:
     package = "ansible"
