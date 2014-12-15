@@ -127,7 +127,7 @@ def _install_epel_repo(package_manager):
 def _install_ppa_repo(package_manager):
   # Installs the Software Properties Common Dependency
   def _install_dependency(package_manager):
-    command = ["sudo","apt-get","-f","install"]
+    command = ["sudo","apt-get","-f","install","-y"]
     _run_shell_command(command)
     q,y = _install_args(package_manager)
     command = ["sudo","apt-get","install","software-properties-common",q,y]
