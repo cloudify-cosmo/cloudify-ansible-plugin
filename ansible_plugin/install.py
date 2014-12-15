@@ -22,12 +22,29 @@ import urllib
 
 # ctx is imported and used in operations
 from cloudify import ctx
-
 # put the operation decorator on any function that is a task
 from cloudify.decorators import operation
-
 # Import Cloudify exception
 from cloudify.exceptions import NonRecoverableError
+
+# Returns Install Arguments for a Package Manager
+def _install_args(package_manager):
+  if package_manager == "apt-get":
+    quiet_output = "-qq"
+    assume_yes = "-y"
+    fix_broken = ""
+  if package_manager == "yum":
+    quiet_output = "-q"
+    assume_yes = "-y"
+    fix_broken = "-f"
+  return quiet_output,assume_yes,fix_broken
+
+ # Gets the Distrobution
+def _get_distro_version():
+  info = platform.dist()
+  distro = info[0]
+  version = info[1]
+  return distro,version
 
 # Runs any Shell Command
 def _run_shell_command(command):
@@ -39,30 +56,6 @@ def _run_shell_command(command):
     ctx.logger.error("Unable to run shell command: {0}".format(command))
     raise NonRecoverableError("Command failed: {0}".format(command))
   return run
-
-# Returns the Package Manager for the distrobution
-def _get_package_manager():
-  package_manager = "apt-get"
-  distro,version = _get_distro_version()
-  if distro == "Ubuntu":
-    ctx.logger.info("{0} is the Linux distribution.".format(distro))
-    package_manager = "apt-get"
-  elif distro == "Centos":
-    ctx.logger.info("{0} is the Linux distribution.".format(distro))
-    package_manager = "yum"
-  else:
-    ctx.logger.error("Currently Operating System {0} is not supported".format(distro))
-    exit(1)
-  return package_manager
-
-# Updates a Package Manager
-def _update_package_manager(package_manager):
-  command = ["sudo","apt-get","clean"]
-  _run_shell_command(command)
-  _add_repo(package_manager)
-  ctx.logger.info("Updating {0}".format(package_manager))
-  command = ["sudo",package_manager,"update"]
-  _run_shell_command(command)
 
 # Decides which repos to install
 def _add_repo(package_manager):
@@ -106,6 +99,15 @@ def _install_ppa_repo():
   command = ["sudo","apt-add-repository","ppa:ansible/ansible","-y"]
   _run_shell_command(command)
 
+# Updates a Package Manager
+def _update_package_manager(package_manager):
+  command = ["sudo","apt-get","clean"]
+  _run_shell_command(command)
+  _add_repo(package_manager)
+  ctx.logger.info("Updating {0}".format(package_manager))
+  command = ["sudo",package_manager,"update"]
+  _run_shell_command(command)
+
 # Upgrade the Package Manager
 def _upgrade_package_manager(package_manager):
   q,y,f = _install_args(package_manager)
@@ -113,29 +115,20 @@ def _upgrade_package_manager(package_manager):
   command = ["sudo",package_manager,"upgrade",y,q,f]
   _run_shell_command(command)
 
-
-# Returns Install Arguments for a Package Manager
-def _install_args(package_manager):
-  if package_manager == "apt-get":
-    quiet_output = "-qq"
-    assume_yes = "-y"
-    fix_broken = ""
-  if package_manager == "yum":
-    quiet_output = "-q"
-    assume_yes = "-y"
-    fix_broken = "-f"
-  return quiet_output,assume_yes,fix_broken
-
-
-# Gets the Distrobution
-def _get_distro_version():
-  info = platform.dist()
-  distro = info[0]
-  version = info[1]
-  return distro,version
-
-
-
+# Returns the Package Manager for the distrobution
+def _get_package_manager():
+  package_manager = "apt-get"
+  distro,version = _get_distro_version()
+  if distro == "Ubuntu":
+    ctx.logger.info("{0} is the Linux distribution.".format(distro))
+    package_manager = "apt-get"
+  elif distro == "Centos":
+    ctx.logger.info("{0} is the Linux distribution.".format(distro))
+    package_manager = "yum"
+  else:
+    ctx.logger.error("Currently Operating System {0} is not supported".format(distro))
+    exit(1)
+  return package_manager
 
 # validate the installation
 def _validate_installation(package):
@@ -147,20 +140,6 @@ def _validate_installation(package):
   else:
     ctx.logger.info("Installation was successful")
 
-
-
-
-# Wraps _install_package()
-@operation
-def install(**kwargs):
-  if "package_name" in kwargs.items():
-    package = package_name
-  else:
-    package = "ansible"
-  _install_package(package)
-
-
-
 # Installs a Package
 def _install_package(package):
   package_manager = _get_package_manager()
@@ -171,3 +150,13 @@ def _install_package(package):
   command = ["sudo",package_manager,"install",package,q,y,f]
   _run_shell_command(command)
   _validate_installation(package)
+
+# Wraps _install_package()
+@operation
+def install(**kwargs):
+  if "package_name" in kwargs.items():
+    package = package_name
+  else:
+    package = "ansible"
+  _install_package(package)
+
