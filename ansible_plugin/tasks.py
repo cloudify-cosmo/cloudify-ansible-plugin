@@ -24,7 +24,7 @@ from cloudify import ctx
 # put the operation decorator on any function that is a task
 from cloudify.decorators import operation
 
-ansible_home = "/etc/ansible"
+ansible_home = "/etc/ansible/"
 
 def _write_to_file(path,filename,entry):
   if not os.path.exists(path):
@@ -38,21 +38,67 @@ def _write_to_file(path,filename,entry):
     f.write(entry)
   f.close()
 
-@operation
-def add_production_host(address):
-  '''
-    this adds a production host address line to the production hosts file in /etc/ansible
-  '''
-  _write_to_file(ansible_home,"production",address)
-  ctx.logger.info("Added {0} to production systems list.".format(address))
+def _search_file_string(path,filename,string):
+  thefile = os.path.join(path,filename)
+  with open(thefile) as search:
+    for line in search:
+      line = line.rstrip()
+      if line == string:
+        return True
+      else:
+        return False
+
+def add_line_to_location(path,filename,line,string):
+  success = False
+  new_file = os.path.join('/tmp',filename+".temp")
+  old_file = os.path.join(path,filename)
+  with open(new_file,'w') as outfile:
+    try:
+      with open(old_file,'r') as infile:
+        rows = iter(infile)
+        for row in rows:
+          if row == line:
+            outfile.write(row)
+            outfile.write(new_line)
+            success = True
+          else:
+            outfile.write(row)
+      infile.close()
+    except IOError as e:
+      success = False
+  outfile.close()
+  if success == True:
+    shutil.copyfile(new_file,old_file)
+    return success
+  else:
+    return success
 
 @operation
-def add_staging_host(address):
+def add_host_to_inventory(name,group,inventory,**kwargs):
   '''
-    this adds a staging host address line to the staging hosts file in /etc/ansible
+    this adds a host role, which may be a geographic or application or contextual role, to the specified inventory (staging, production).
   '''
-  _write_to_file(ansible_home,"staging",address)
-  ctx.logger.info("Added {0} to staging systems list.".format(address))
+  if _search_file_string(ansible_home,inventory,name):
+    ctx.logger.error("Unable to add {0} to {1}. Host already exists in this inventory.".format(name,inventory))
+  else:
+    _write_to_file(ansible_home,inventory,name)
+
+@operation
+def add_host_to_group(name,group,inventory,**kwargs):
+  '''
+    this puts a host under a group in inventory file
+  '''
+  group = "\n[" + group + "]\n"
+  name = name + '\n'
+  if add_line_to_location(ansible_home,inventory,group,name):
+    '''
+      if the group already exists in the inventory, the host will be added and add_line_to_location will return True. Otherwise, the group is added and the host under it
+    '''
+    ctx.logger.info("Added new host {0} under {1} in {2}.".format(name,group,inventory))
+  else:
+    new_line = group + name
+    _write_to_file(ansible_home,inventory,new_line)
+    ctx.logger.info("Added new host {0} under {1} in new file {2}.".format(name,group,inventory))
 
 @operation
 def add_playbook(client_path,ansible_home):
@@ -61,3 +107,15 @@ def add_playbook(client_path,ansible_home):
   '''
   path = ctx.downloadresource(client_path,ansible_home)
   ctx.logger.info("Added file: {0}".format(path))
+
+def run_playbook(playbook,**kwargs):
+  '''
+    runs ad-hoc command. provide existing ansible_playbook and any arguments,
+    i.e. alternative module directories (--module-path,"/usr/share/ansible")
+    i.e. alternative inventory hosts file (--inventory, "/usr/share/ansible/hosts")
+  '''
+  command = ["ansible_playbook",playbook]
+  for key,value in kwargs.iteritems():
+    command.append(key)
+    command.append(value)
+  _run_shell_command(command)
