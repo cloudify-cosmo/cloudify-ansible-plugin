@@ -171,6 +171,15 @@ def _update_package_manager(package_manager):
     _run_shell_command(command)
 
 
+def _try_pip_install():
+    """ The vagrant boxes fail, so I am adding this here to use pip
+        as a last resort
+    """
+
+    command = ['sudo', 'pip', 'install', 'ansible']
+    _run_shell_command(command)
+
+
 def _validate_installation(package):
     """ validate the installation
     """
@@ -178,10 +187,17 @@ def _validate_installation(package):
     ctx.logger.info('Validating {0}: '.format(package))
     command = [package, '--version']
     code = _run_shell_command(command)
-    if code > 0:
-        ctx.logger.info('Installation was unsuccessful')
-    else:
-        ctx.logger.info('Installation was successful')
+
+    counter = 0
+    while True:
+        counter = counter + 1
+        if code > 0:
+            ctx.logger.info('Installation was unsuccessful')
+            _try_pip_install()
+        else:
+            ctx.logger.info('Installation was successful')
+        if counter > 1:
+            ctx.logger.error('Installation was unsuccessful')
 
 
 @operation
