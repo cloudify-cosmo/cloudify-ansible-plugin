@@ -68,10 +68,15 @@ def _install_package(package):
 
     package_manager = _get_package_manager()
     ctx.logger.info('Installing {0}'.format(package))
-    _update_package_manager(package_manager)
-    q, y = _install_args(package_manager)
-    command = ['sudo', package_manager, 'install', package, q, y]
-    _run_shell_command(command)
+    command = ['sudo', 'pip', '--version']
+    code = _run_shell_command(command)
+    if code == 0:
+        _try_pip_install()
+    else:
+        _update_package_manager(package_manager)
+        q, y = _install_args(package_manager)
+        command = ['sudo', package_manager, 'install', package, q, y]
+        _run_shell_command(command)
     _validate_installation(package)
 
 
@@ -188,16 +193,10 @@ def _validate_installation(package):
     command = [package, '--version']
     code = _run_shell_command(command)
 
-    counter = 0
-    while True:
-        counter = counter + 1
-        if code > 0:
-            ctx.logger.info('Installation was unsuccessful')
-            _try_pip_install()
-        else:
-            ctx.logger.info('Installation was successful')
-        if counter > 1:
-            ctx.logger.error('Installation was unsuccessful')
+    if code > 0:
+        ctx.logger.info('Installation was unsuccessful')
+    else:
+        ctx.logger.info('Installation was successful')
 
 
 @operation
