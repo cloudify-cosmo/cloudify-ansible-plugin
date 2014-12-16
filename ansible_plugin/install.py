@@ -76,5 +76,12 @@ def _validate_installation(package):
 
 
 @operation
-def install(package):
+def install(**kwargs):
+    """ Wraps _install_package
+    """
+
+    if 'package_name' in kwargs.iteritems():
+        package = package_name
+    else:
+        package = 'ansible'
     _install_package(package)
