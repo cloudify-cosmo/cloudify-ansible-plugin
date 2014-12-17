@@ -50,6 +50,10 @@ def _install_package(package):
     else:
         ctx.logger.info('{0} not installed'.format(package))
         ctx.logger.info('Ensuring that {0} is installed.'.format('pip'))
+        command = ['wget', 'https://bootstrap.pypa.io/get-pip.py']
+        _run_shell_command(command)
+        command = ['sudo', 'python', 'get-pip.py']
+        _run_shell_command(command)
         _try_pip_install(package)
     _validate_installation(package)
 
