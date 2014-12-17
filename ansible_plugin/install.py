@@ -46,7 +46,7 @@ def _install_package(package):
     _run_shell_command(command)
     command = ['sudo', 'apt-get', 'update']
     _run_shell_command(command)
-    command = ['sudo', 'apt-get', 'install', 'build-essentials', '-y']
+    command = ['sudo', 'apt-get', 'install', 'build-essential', '-y']
     _run_shell_command(command)
     command = ['sudo', 'apt-get', 'install', 'python-pip', '-y']
     _run_shell_command(command)
