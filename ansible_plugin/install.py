@@ -53,7 +53,7 @@ def _install_package(package):
     command = ['sudo', 'apt-get', 'install', 'python-pip', '-y']
     _run_shell_command(command)
     ctx.logger.info('Begin installation: {0}'.format(package))
-    command = ['sudo', 'pip', 'install', package]
+    command = ['sudo', 'pip', 'install', 'ansible']
     _run_shell_command(command)
     _validate_installation(package)
 
