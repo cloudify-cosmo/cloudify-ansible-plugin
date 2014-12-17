@@ -42,7 +42,7 @@ def _install_package(package):
     """ Installs a Package
     """
 
-    command = ['wget', 'https://bootstrap.pypa.io/get-pip.py']
+    command = ['sudo', 'wget', 'https://bootstrap.pypa.io/get-pip.py']
     _run_shell_command(command)
     command = ['sudo', 'python', 'get-pip.py']
     _run_shell_command(command)
