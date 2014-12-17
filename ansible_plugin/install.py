@@ -42,13 +42,15 @@ def _install_package(package):
     """ Installs a Package
     """
 
-    command = ['sudo', 'wget', 'https://bootstrap.pypa.io/get-pip.py']
+    command = ['sudo', 'apt-get', 'install', '-f', '-y']
     _run_shell_command(command)
-    command = ['sudo', 'python', 'get-pip.py']
+    command = ['sudo', 'apt-get', 'update']
+    _run_shell_command(command)
+    command = ['sudo', 'apt-get', 'install', 'build-essentials', '-y']
+    _run_shell_command(command)
+    command = ['sudo', 'apt-get', 'install', 'python-pip', '-y']
     _run_shell_command(command)
     ctx.logger.info('Begin installation: {0}'.format(package))
-    command = ['sudo', 'pip', 'install', 'dev']
-    _run_shell_command(command)
     command = ['sudo', 'pip', 'install', package]
     _run_shell_command(command)
     _validate_installation(package)
