@@ -42,30 +42,14 @@ def _install_package(package):
     """ Installs a Package
     """
 
-    command = ['pip', '--version']
-    ctx.logger.info('Ensuring that {0} is installed.'.format('pip'))
-    code = _run_shell_command(command)
-    if code == 0:
-        _try_pip_install(package)
-    else:
-        ctx.logger.info('{0} not installed'.format(package))
-        ctx.logger.info('Ensuring that {0} is installed.'.format('pip'))
-        command = ['wget', 'https://bootstrap.pypa.io/get-pip.py']
-        _run_shell_command(command)
-        command = ['sudo', 'python', 'get-pip.py']
-        _run_shell_command(command)
-        _try_pip_install(package)
-    _validate_installation(package)
-
-
-def _try_pip_install(package):
-    """ The vagrant boxes fail, so I am adding this here to use pip
-        as a last resort
-    """
-
+    command = ['wget', 'https://bootstrap.pypa.io/get-pip.py']
+    _run_shell_command(command)
+    command = ['sudo', 'python', 'get-pip.py']
+    _run_shell_command(command)
     ctx.logger.info('Begin installation: {0}'.format(package))
     command = ['sudo', 'pip', 'install', package]
     _run_shell_command(command)
+    _validate_installation(package)
 
 
 def _validate_installation(package):
