@@ -47,7 +47,7 @@ def _install_package(package):
     command = ['sudo', 'python', 'get-pip.py']
     _run_shell_command(command)
     ctx.logger.info('Begin installation: {0}'.format(package))
-    command = ['sudo', 'apt-get', 'install', 'build-essential']
+    command = ['sudo', 'pip', 'install', 'dev']
     _run_shell_command(command)
     command = ['sudo', 'pip', 'install', package]
     _run_shell_command(command)
