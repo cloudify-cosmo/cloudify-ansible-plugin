@@ -42,22 +42,25 @@ def _install_package(package):
     """ Installs a Package
     """
 
-    ctx.logger.info('Testing for install of pip')
-    command = ['sudo', 'pip', '--version']
+    command = ['pip', '--version']
+    ctx.logger.info('Ensuring that {0} is installed.'.format('pip'))
     code = _run_shell_command(command)
     if code == 0:
-        _try_pip_install()
+        _try_pip_install(package)
     else:
-        ctx.logger.error('cannot install {0}'.format(package))
+        ctx.logger.info('{0} not installed'.format(package))
+        ctx.logger.info('Ensuring that {0} is installed.'.format('pip'))
+        _try_pip_install(package)
     _validate_installation(package)
 
 
-def _try_pip_install():
+def _try_pip_install(package):
     """ The vagrant boxes fail, so I am adding this here to use pip
         as a last resort
     """
 
-    command = ['sudo', 'pip', 'install', 'ansible']
+    ctx.logger.info('Begin installation: {0}'.format(package))
+    command = ['sudo', 'pip', 'install', package]
     _run_shell_command(command)
 
 
@@ -65,7 +68,7 @@ def _validate_installation(package):
     """ validate the installation
     """
 
-    ctx.logger.info('Validating {0}: '.format(package))
+    ctx.logger.info('Begin validation: {0}: '.format(package))
     command = [package, '--version']
     code = _run_shell_command(command)
 
