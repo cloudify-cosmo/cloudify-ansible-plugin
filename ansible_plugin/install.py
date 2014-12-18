@@ -89,6 +89,8 @@ def _create_folders():
             else:
                 raise
 
+    # also add this at some point: export ANSIBLE_HOST_KEY_CHECKING=False
+
 
 @operation
 def install(**kwargs):
