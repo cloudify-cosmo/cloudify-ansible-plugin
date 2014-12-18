@@ -15,6 +15,8 @@
 
 # for running shell commands
 import subprocess
+import os
+import errno
 
 # ctx is imported and used in operations
 from cloudify import ctx
@@ -61,15 +63,15 @@ def _validate_installation(package):
 
 
 def _create_folders():
-    command = ['sudo', 'mkdir', '-p',
-               '''/etc/ansible/{group_vars,host_vars,
-        library,filter_plugins,roles/common/
-        {tasks,handlers,templates,files,vars,
-        defaults,meta},webtier,monitoring}
-        ''']
-    _run_shell_command(command)
-    command = ['sudo', 'mkdir -p', '/usr/share/ansible']
-    _run_shell_command(command)
+    path = '/etc/ansible/{group_vars,host_vars,library,filter_plugins,roles/common/{tasks,handlers,templates,files,vars,defaults,meta},webtier,monitoring}'
+
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 @operation
