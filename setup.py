@@ -25,6 +25,6 @@ setup(
     packages=['ansible_plugin'],
     license='LICENSE',
     zip_safe=False,
-    install_requires=["cloudify-plugins-common==3.1"],
-    test_requires=["cloudify-dsl-parser==3.1","nose"]
+    install_requires=["cloudify-plugins-common==3.1", "ansible"],
+    test_requires=["cloudify-dsl-parser==3.1", "nose"]
 )
