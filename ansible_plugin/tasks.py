@@ -141,7 +141,7 @@ def add_host_to_group(host, group, inventory, **kwargs):
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
     else:
-        ansible_home = '~/ansible'
+        ansible_home = '/home/ubuntu/ansible'
 
     group = '[' + group + ']\n'
     host = host + '\n'

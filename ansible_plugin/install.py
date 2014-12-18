@@ -63,22 +63,22 @@ def _validate_installation(package):
 
 
 def _create_folders():
-    paths = ['~/ansible/',
-             '~/ansible/group_vars',
-             '~/ansible/host_vars',
-             '~/ansible/library',
-             '~/ansible/filter_plugins',
-             '~/ansible/roles',
-             '~/ansible/roles/common',
-             '~/ansible/roles/common/tasks',
-             '~/ansible/roles/common/handlers',
-             '~/ansible/roles/common/templates',
-             '~/ansible/roles/common/files',
-             '~/ansible/roles/common/vars',
-             '~/ansible/roles/common/defaults'
-             '~/ansible/roles/common/meta',
-             '~/ansible/webtier',
-             '~/ansible/monitoring']
+    paths = ['/home/ubuntu/ansible/',
+             '/home/ubuntu/ansible/group_vars',
+             '/home/ubuntu/ansible/host_vars',
+             '/home/ubuntu/ansible/library',
+             '/home/ubuntu/ansible/filter_plugins',
+             '/home/ubuntu/ansible/roles',
+             '/home/ubuntu/ansible/roles/common',
+             '/home/ubuntu/ansible/roles/common/tasks',
+             '/home/ubuntu/ansible/roles/common/handlers',
+             '/home/ubuntu/ansible/roles/common/templates',
+             '/home/ubuntu/ansible/roles/common/files',
+             '/home/ubuntu/ansible/roles/common/vars',
+             '/home/ubuntu/ansible/roles/common/defaults'
+             '/home/ubuntu/ansible/roles/common/meta',
+             '/home/ubuntu/ansible/webtier',
+             '/home/ubuntu/ansible/monitoring']
 
     for path in paths:
         try:
