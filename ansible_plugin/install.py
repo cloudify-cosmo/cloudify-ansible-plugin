@@ -63,15 +63,31 @@ def _validate_installation(package):
 
 
 def _create_folders():
-    path = '/etc/ansible/{group_vars,host_vars,library,filter_plugins,roles/common/{tasks,handlers,templates,files,vars,defaults,meta},webtier,monitoring}'
+    paths = ['/etc/ansible/',
+             '/etc/ansible/group_vars',
+             '/etc/ansible/host_vars',
+             '/etc/ansible/library',
+             '/etc/ansible/filter_plugins',
+             '/etc/ansible/roles',
+             '/etc/ansible/roles/common',
+             '/etc/ansible/roles/common/tasks',
+             '/etc/ansible/roles/common/handlers',
+             '/etc/ansible/roles/common/templates',
+             '/etc/ansible/roles/common/files',
+             '/etc/ansible/roles/common/vars',
+             '/etc/ansible/roles/common/defaults'
+             '/etc/ansible/roles/common/meta',
+             '/etc/ansible/webtier',
+             '/etc/ansible/monitoring']
 
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
+    for path in paths:
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
 
 
 @operation
