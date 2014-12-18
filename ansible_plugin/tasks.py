@@ -113,6 +113,8 @@ def _download_file(url, target_file):
                 url, type(e).__name__, e))
         return False
 
+    return True
+
 
 def _copy_file(file, target_file):
     """ copies 'file' from local machine and moves to
