@@ -63,22 +63,22 @@ def _validate_installation(package):
 
 
 def _create_folders():
-    paths = ['/etc/ansible/',
-             '/etc/ansible/group_vars',
-             '/etc/ansible/host_vars',
-             '/etc/ansible/library',
-             '/etc/ansible/filter_plugins',
-             '/etc/ansible/roles',
-             '/etc/ansible/roles/common',
-             '/etc/ansible/roles/common/tasks',
-             '/etc/ansible/roles/common/handlers',
-             '/etc/ansible/roles/common/templates',
-             '/etc/ansible/roles/common/files',
-             '/etc/ansible/roles/common/vars',
-             '/etc/ansible/roles/common/defaults'
-             '/etc/ansible/roles/common/meta',
-             '/etc/ansible/webtier',
-             '/etc/ansible/monitoring']
+    paths = ['~/ansible/',
+             '~/ansible/group_vars',
+             '~/ansible/host_vars',
+             '~/ansible/library',
+             '~/ansible/filter_plugins',
+             '~/ansible/roles',
+             '~/ansible/roles/common',
+             '~/ansible/roles/common/tasks',
+             '~/ansible/roles/common/handlers',
+             '~/ansible/roles/common/templates',
+             '~/ansible/roles/common/files',
+             '~/ansible/roles/common/vars',
+             '~/ansible/roles/common/defaults'
+             '~/ansible/roles/common/meta',
+             '~/ansible/webtier',
+             '~/ansible/monitoring']
 
     for path in paths:
         try:
