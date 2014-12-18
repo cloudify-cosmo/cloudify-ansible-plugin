@@ -53,9 +53,10 @@ def run_playbook(path, arguments, **kwargs):
     """runs a playbook
     """
 
-    command_path = '/home/ubuntu/cloudify.' + ctx.deployment.id + '/env/bin/'
+    command_path = '/home/ubuntu/cloudify.' + ctx.deployment.id
+    command_path = command_path + '/env/bin/ansible-playbook'
 
-    command = [command_path, 'ansible-playbook', path, arguments]
+    command = [command_path, path, arguments]
 
     ctx.logger.info("Running Playbook: [Shell Command]: {0}"
                     .format(command))
