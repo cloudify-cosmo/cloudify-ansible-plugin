@@ -249,7 +249,7 @@ def _write_to_file(path, filename, entry):
     """ writes a entry to a file
     """
     if not ospath.exists(path):
-        makedirs()
+        makedirs(path)
     path_to_file = ospath.join(path, filename)
     if not ospath.exists(path_to_file):
         f = open(path_to_file, 'w')
