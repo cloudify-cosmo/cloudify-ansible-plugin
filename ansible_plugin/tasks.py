@@ -70,7 +70,7 @@ def run_playbook(**kwargs):
     deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
     ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
 
-    arguments = ''
+    command = [ansible_binary]
 
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
@@ -78,25 +78,23 @@ def run_playbook(**kwargs):
         ansible_home = deployment_directory + '/env/etc/ansible'
 
     if 'inventory' in kwargs:
-        new_arg = '-i ' + ansible_home + kwargs['inventory']
+        new_arg = '-i ' + ansible_home + '/' + kwargs['inventory']
     else:
         new_arg = '-i' + ansible_home
 
-    arguments = arguments + new_arg
+    command.append(new_arg)
 
     if 'local_file' in kwargs:
         playbook = kwargs['local_file']
-        new_arg = ansible_home + playbook
+        new_arg = ansible_home + '/' + playbook
     elif 'playbook_url' in kwargs:
         playbook = kwargs['playbook_url']
-        new_arg = ansible_home + playbook
+        new_arg = ansible_home + '/' + playbook
     else:
         playbook = 'playbook.yml'
-        new_arg = ansible_home + playbook
+        new_arg = ansible_home + '/' + playbook
 
-    arguments = arguments + new_arg
-
-    command = [ansible_binary, arguments]
+    command.append(new_arg)
 
     ctx.logger.info("Running Playbook: [Shell Command]: {0}"
                     .format(command))
