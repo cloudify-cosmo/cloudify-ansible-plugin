@@ -85,10 +85,10 @@ def _validate(ansible_binary):
 
     if code > 0:
         ctx.logger.info('Installation was unsuccessful')
-        return True
+        return False
     else:
         ctx.logger.info('Installation was successful')
-        return False
+        return True
 
 
 def _run_shell_command(command):
