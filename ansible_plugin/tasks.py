@@ -77,10 +77,12 @@ def run_playbook(**kwargs):
     else:
         ansible_home = deployment_directory + '/env/etc/ansible'
 
+    command.append('-i')
+
     if 'inventory' in kwargs:
-        new_arg = '-i ' + ansible_home + '/' + kwargs['inventory']
+        new_arg = ansible_home + '/' + kwargs['inventory']
     else:
-        new_arg = '-i' + ansible_home
+        new_arg = ansible_home
 
     command.append(new_arg)
 
