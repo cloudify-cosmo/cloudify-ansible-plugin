@@ -63,7 +63,7 @@ node_templates:
         configure:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host_to_group
           inputs:
-            host: { get_attribute: [ new_host, floating_ip_address ] }
+            host: { get_attribute: [ virtual_ip, floating_ip_address ] }
             group: { get_input: test_group_name }
             inventory: { get_input: test_inventory_name }
     relationships:
