@@ -6,10 +6,11 @@ imports:
 
 plugins:
   cloudify-ansible-plugin:
-  executor: central_deployment_agent
-  source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
+    executor: central_deployment_agent
+    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
 
 inputs:
+
   agent_user:
     type: string
   image_name:
@@ -22,9 +23,9 @@ inputs:
     type: string
   where_to_get_the_playbook:
     type: string
-  module_name:
+  get_module_name:
     type: string
-  module_args:
+  get_module_args:
     type: string
   ansible_run_pattern:
     type: string
@@ -32,11 +33,12 @@ inputs:
     type: string
 
 node_templates:
+
   ansible_configuration:
     type: cloudify.nodes.ApplicationModule
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
+        configure:
           implementation: cloudify-ansible-plugin.ansible_plugin.configure.configure
 
   new_host:
@@ -61,7 +63,7 @@ node_templates:
         configure:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host_to_group
           inputs:
-            host: { get_attribute: { vm, floating_ip_address } }
+            host: { get_attribute: [ new_host, floating_ip_address ] }
             group: { get_input: test_group_name }
             inventory: { get_input: test_inventory_name }
     relationships:
@@ -73,7 +75,7 @@ node_templates:
   ansible_playbook:
     type: cloudify.nodes.ApplicationModule
     interfaces:
-      cloudify.interfaces.lifecycle
+      cloudify.interfaces.lifecycle:
         create:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.get_playbook
           inputs:
@@ -89,8 +91,8 @@ node_templates:
   run_playbook:
     type: cloudify.nodes.ApplicationModule
     interfaces:
-      cloudify.interfaces.lifecycle
-        start:
+      cloudify.interfaces.lifecycle:
+        create:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
           inputs:
             inventory: { get_attribute : [ new_host, ip ] }
@@ -100,21 +102,21 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: ansible_playbook
 
-  run_ansible:
-    type: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle
-        start:
-          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_ansible
-          inputs:
-            module_name : { get_input : get_module_name }
-            module_args : { get_input : get_module_args }
-            pattern : { get_input: ansible_run_pattern }
-            forks: { get_input : ansible_forks }
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: ansible_configuration
-      - type: cloudify.relationships.depends_on
-        target: new_host
-      - type: cloudify.relationships.depends_on
-        target: add_host_to_group
+#  run_ansible:
+#    type: cloudify.nodes.ApplicationModule
+#   interfaces:
+#      cloudify.interfaces.lifecycle:
+#        create:
+#          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_ansible
+#          inputs:
+#            module_name : { get_input : get_module_name }
+#            module_args : { get_input : get_module_args }
+#            pattern : { get_input: ansible_run_pattern }
+#            forks: { get_input : ansible_forks }
+#    relationships:
+#      - type: cloudify.relationships.depends_on
+#        target: ansible_configuration
+#      - type: cloudify.relationships.depends_on
+#        target: new_host
+#      - type: cloudify.relationships.depends_on
+#        target: add_host_to_group

@@ -33,7 +33,7 @@ def configure(**kwargs):
     ansible_binary = deployment_directory + '/env/bin/ansible'
 
     if _validate(ansible_binary):
-        pass
+        ctx.logger.info('Confirmed that ansible is on the manager.')
     else:
         ctx.logger.error('Unable to confirm that ansible is on the manager.')
         exit(1)
