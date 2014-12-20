@@ -75,13 +75,22 @@ def run_playbook(**kwargs):
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
     else:
-        ansible_home = deployment_directory + '/etc/ansible'
+        ansible_home = deployment_directory + '/env/etc/ansible'
 
     if 'inventory' in kwargs:
         new_arg = '-i ' + ansible_home + kwargs['inventory']
         arguments = arguments + new_arg
     else:
         new_arg = '-i' + ansible_home + ctx.deployment.id
+
+    if 'local_file' in kwargs:
+        playbook = kwargs['local_file']
+    elif 'playbook_url' in kwargs:
+        playbook = kwargs['playbook_url']
+    else:
+        playbook = 'playbook.yml'
+
+    new_arg = ansible_home + playbook
 
     command = [ansible_binary, arguments]
 
@@ -101,7 +110,7 @@ def get_playbook(**kwargs):
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
     else:
-        ansible_home = deployment_directory + '/etc/ansible'
+        ansible_home = deployment_directory + '/env/etc/ansible'
 
     if 'playbook_url' in kwargs:
         url = kwargs['playbook_url']
@@ -183,7 +192,7 @@ def add_host_to_group(host, group, inventory, **kwargs):
         ansible_home = kwargs['ansible_home']
     else:
         deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
-        ansible_home = deployment_directory + '/etc/ansible'
+        ansible_home = deployment_directory + '/env/etc/ansible'
 
     group = '[' + group + ']\n'
     host = host + '\n'
