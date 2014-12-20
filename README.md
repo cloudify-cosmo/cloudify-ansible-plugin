@@ -16,3 +16,21 @@ Current Functionality:
  - Uploads an Ansible Playbook to the manager (provided in the cwd during blueprint upload, or in a URL)
  - Runs an Ansible Playbook
 
+Operations in the tasks module and their inputs:
+run_playbook
+ inputs:
+  * ansible_home is a path to the ansible etc directory
+  * inventory is the name of the file containing the list of hosts that need the playbook applied to them
+  * a playbook identified by key "local\_file" or "playbook_url"
+
+get_playbook(**kwargs):
+ inputs:
+  * ansible_home is a path to the ansible etc directory
+  * a playbook identified by key "local\_file" or "playbook_url"
+
+add_host_to_group(host, group, inventory, **kwargs):
+ inputs:
+  * the host, probably a floating ip address
+  * the name of a group if you are giving multiple hosts
+  * inventory is the name of the file containing the list of hosts that need the playbook applied to them
+  * a playbook identified by key "local\_file" or "playbook_url"
