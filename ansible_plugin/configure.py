@@ -41,7 +41,7 @@ def configure(**kwargs):
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
     else:
-        ansible_home = deployment_directory + '/ansible'
+        ansible_home = deployment_directory + '/etc/ansible'
 
     paths = [ansible_home,
              ansible_home + '/group_vars',
@@ -69,7 +69,8 @@ def configure(**kwargs):
             else:
                 raise
 
-    command = ['export', 'ANSIBLE_HOST_KEY_CHECKING=False']
+    command = ['echo', '"[defaults]\nhost_key_checking = False"', ">>",
+               '/home/ubuntu/.ansible.cfg']
     _run_shell_command(command)
 
 
