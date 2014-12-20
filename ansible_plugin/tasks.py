@@ -161,7 +161,7 @@ def _copy_file(file, target_file):
     """
 
     try:
-        copy(file, target_file)
+        ctx.download_resource(file, target_file)
 
     except Error as e:
         print('Error {0}'.format(e))
