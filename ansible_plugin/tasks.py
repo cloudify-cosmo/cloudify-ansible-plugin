@@ -29,6 +29,7 @@ import ansible.runner
 from urllib2 import Request, urlopen, URLError, HTTPError
 from shutil import copy, Error
 import os.path as ospath
+from os.path import basename
 from os import makedirs
 
 
@@ -48,30 +49,64 @@ def _run_shell_command(command):
     return run
 
 
+def _run_shell_command_alt(command):
+    """this runs a shell command.
+    """
+
+    ctx.logger.info("Running shell command: {0}"
+                    .format(command))
+    try:
+        subprocess.check_call(command)
+    except subprocess.CalledProcessError as e:
+        ctx.logger.error("There are some errors: {0} {1}"
+                         .format(command, e))
+
+
 @operation
-def run_playbook(path, arguments, **kwargs):
+def run_playbook(**kwargs):
     """runs a playbook
     """
 
-    command_path = '/home/ubuntu/cloudify.' + ctx.deployment.id
-    command_path = command_path + '/env/bin/ansible-playbook'
+    deployment_directory = '/home/ubuntu/' + ctx.deployment.id
+    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
 
-    command = [command_path, path, arguments]
+    arguments = ''
+
+    if 'ansible_home' in kwargs:
+        ansible_home = kwargs['ansible_home']
+    else:
+        ansible_home = deployment_directory + '/ansible'
+
+    if 'inventory' in kwargs:
+        new_arg = '-i ' + ansible_home + kwargs['inventory']
+        arguments = arguments + new_arg
+    else:
+        new_arg = '-i' + ansible_home + ctx.deployment.id
+
+    command = [ansible_binary, arguments]
 
     ctx.logger.info("Running Playbook: [Shell Command]: {0}"
                     .format(command))
 
-    _run_shell_command(command)
+    _run_shell_command_alt(command)
 
 
 @operation
-def get_playbook(target_file, **kwargs):
-    """adds a playbook file in /etc/ansible with content {entry}
+def get_playbook(**kwargs):
+    """adds a playbook file in .../etc/ansible with content {entry}
     """
+
+    deployment_directory = '/home/ubuntu/' + ctx.deployment.id
+
+    if 'ansible_home' in kwargs:
+        ansible_home = kwargs['ansible_home']
+    else:
+        ansible_home = deployment_directory + '/ansible'
 
     if 'playbook_url' in kwargs:
         url = kwargs['playbook_url']
         ctx.logger.debug('getting Playbook file...')
+        target_file = ansible_home + '/' + basename(url)
         status = _download_file(url, target_file)
         if status == 0:
             ctx.logger.info(
@@ -83,6 +118,7 @@ def get_playbook(target_file, **kwargs):
                 .format(url))
     elif 'local_file' in kwargs:
         file = kwargs['local_file']
+        target_file = ansible_home + '/' + file
         status = _copy_file(file, target_file)
     else:
         ctx.logger.error("No valid file path or url provided.")
