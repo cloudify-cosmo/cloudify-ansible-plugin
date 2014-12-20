@@ -1,16 +1,18 @@
 cloudify-ansible-plugin
 ========================
 
-Current Functionality:
- - Install Ansible on Manager
- - Add Playbook into manager
- - Add Hosts to Production Hosts File
- - Add Hosts to Staging Hosts File
+The Ansible plugin can be used to run Ansible Playbooks or Modules during execution of a Cloudify Deployment. This plugin provides an agentless solution for configuration management.
 
-Planned:
- - add ansible-playbook command to lifecyle implementation as well as optional arguments
- - Create Directory Structure recommended in best practices
- - Pull Information from Manager about existing nodes managed by cloudify
- - Create implementations for adding existing nodes to ansible
- -  - map node_types to ansible inventory types
- -  - map node properties to ansible inventory arguments
+Plugin Requirements:
+ * Cloudify Manager
+ * Python 2.7
+
+Recommended:
+ * Tested on Ubuntu.
+
+Current Functionality:
+ - Installs and configures Ansible locally in the deploynent
+ - Adds a host (ip or hostname) to a group. Creates a group if one does not already exist.
+ - Uploads an Ansible Playbook to the manager (provided in the cwd during blueprint upload, or in a URL)
+ - Runs an Ansible Playbook
+
