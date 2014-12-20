@@ -79,7 +79,8 @@ node_templates:
         create:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.get_playbook
           inputs:
-            playbook_url: { get_input : where_to_get_the_playbook } # or local_file to a file in the local directory
+            local_file: { get_input : where_to_get_the_playbook } # or local_file to a file in the local directory
+            inventory: { get_input: test_inventory_name }
     relationships:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration
@@ -96,6 +97,7 @@ node_templates:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
           inputs:
             inventory: { get_attribute : [ new_host, ip ] }
+            local_file: { get_input : where_to_get_the_playbook }
     relationships:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration

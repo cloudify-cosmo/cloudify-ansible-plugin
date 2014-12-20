@@ -79,18 +79,22 @@ def run_playbook(**kwargs):
 
     if 'inventory' in kwargs:
         new_arg = '-i ' + ansible_home + kwargs['inventory']
-        arguments = arguments + new_arg
     else:
-        new_arg = '-i' + ansible_home + ctx.deployment.id
+        new_arg = '-i' + ansible_home
+
+    arguments = arguments + new_arg
 
     if 'local_file' in kwargs:
         playbook = kwargs['local_file']
+        new_arg = ansible_home + playbook
     elif 'playbook_url' in kwargs:
         playbook = kwargs['playbook_url']
+        new_arg = ansible_home + playbook
     else:
         playbook = 'playbook.yml'
+        new_arg = ansible_home + playbook
 
-    new_arg = ansible_home + playbook
+    arguments = arguments + new_arg
 
     command = [ansible_binary, arguments]
 
