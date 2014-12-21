@@ -98,6 +98,7 @@ def run_playbook(**kwargs):
         group = 'all'
 
     if 'inventory' in kwargs:
+<<<<<<< HEAD
         inventory = kwargs['inventory']
     else:
         inventory = 'hosts'
@@ -110,15 +111,38 @@ def run_playbook(**kwargs):
         _get_playbook(ansible_home, playbook_url=playbook)
     else:
         playbook = 'playbook.yml'
+=======
+        path_to_inventory = ansible_home + '/' + kwargs['inventory']
+    else:
+        path_to_inventory = ansible_home + 'hosts'
+        
+    if 'local_file' in kwargs:
+        playbook = kwargs['local_file']
+        path_to_playbook = ansible_home + '/' + playbook
+        _get_playbook(ansible_home, local_file=playbook)
+    elif 'playbook_url' in kwargs:
+        playbook = kwargs['playbook_url']
+        path_to_playbook = ansible_home + '/' + playbook
+        _get_playbook(ansible_home, playbook_url=playbook)
+    else:
+        playbook = 'playbook.yml'
+        path_to_playbook = ansible_home + '/' + playbook
+>>>>>>> master
         _get_playbook(ansible_home, local_file=playbook)
     
     _add_host_to_group(ansible_home, host, group, inventory)
     _remove_environment_var(deployment_directory)
+<<<<<<< HEAD
     
     ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
     path_to_playbook = ansible_home + '/' + playbook
     path_to_inventory = ansible_home + '/' + inventory
 
+=======
+
+    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
+
+>>>>>>> master
     command = [ansible_binary]
     command.append('--sudo')
     command.append('-i')
