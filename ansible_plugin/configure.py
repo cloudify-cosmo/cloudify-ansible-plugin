@@ -29,7 +29,8 @@ from cloudify.exceptions import NonRecoverableError
 @operation
 def configure(**kwargs):
 
-    deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
+    home_dir = '/home/ubuntu'
+    deployment_directory = home_dir + '/cloudify.' + ctx.deployment.id
     ansible_binary = deployment_directory + '/env/bin/ansible'
 
     if _validate(ansible_binary):
@@ -68,6 +69,26 @@ def configure(**kwargs):
                 pass
             else:
                 raise
+    
+    path = home_dir
+    filename = '.ansible.cfg'
+    entry = '[defaults]\nhost_key_checking=False'
+    _write_to_file(path, filename, entry)
+
+def _write_to_file(path, filename, entry):
+    """ writes a entry to a file
+    """
+    if not ospath.exists(path):
+        makedirs(path)
+    path_to_file = ospath.join(path, filename)
+    if not ospath.exists(path_to_file):
+        f = open(path_to_file, 'w')
+        f.write(entry)
+    else:
+        f = open(path_to_file, 'a')
+        f.write(entry)
+    f.close()
+
     
     ctx.logger.info("Ansible configured.")
 
