@@ -56,7 +56,6 @@ def _run_shell_command_alt(command):
     ctx.logger.info("Running shell command: {0}"
                     .format(command))
     run = subprocess.Popen(command, stdout=subprocess.PIPE)
-    lines = iter(run.communicate, "")
     for out,err in run.communicate():
         if out:
             ctx.logger.info('output: {0}'.format(out))
