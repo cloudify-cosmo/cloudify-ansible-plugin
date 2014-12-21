@@ -98,27 +98,26 @@ def run_playbook(**kwargs):
         group = 'all'
 
     if 'inventory' in kwargs:
-        path_to_inventory = ansible_home + '/' + kwargs['inventory']
+        inventory = kwargs['inventory']
     else:
-        path_to_inventory = ansible_home + 'hosts'
-        
+        inventory = 'hosts'
+
     if 'local_file' in kwargs:
         playbook = kwargs['local_file']
-        path_to_playbook = ansible_home + '/' + playbook
         _get_playbook(ansible_home, local_file=playbook)
     elif 'playbook_url' in kwargs:
         playbook = kwargs['playbook_url']
-        path_to_playbook = ansible_home + '/' + playbook
         _get_playbook(ansible_home, playbook_url=playbook)
     else:
         playbook = 'playbook.yml'
-        path_to_playbook = ansible_home + '/' + playbook
         _get_playbook(ansible_home, local_file=playbook)
     
     _add_host_to_group(ansible_home, host, group, inventory)
     _remove_environment_var(deployment_directory)
-
+    
     ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
+    path_to_playbook = ansible_home + '/' + playbook
+    path_to_inventory = ansible_home + '/' + inventory
 
     command = [ansible_binary]
     command.append('--sudo')
