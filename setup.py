@@ -26,6 +26,6 @@ setup(
     license='LICENSE',
     zip_safe=False,
     install_requires=["cloudify-plugins-common==3.1", "ansible"],
-    dependency_links=["git://github.com/EarthmanT/ansible.git"],
+    dependency_links=["git://github.com/EarthmanT/ansible.git#egg=ansible"],
     test_requires=["cloudify-dsl-parser==3.1", "nose"]
 )
