@@ -72,6 +72,14 @@ def run_playbook(**kwargs):
 
     deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
     ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
+    
+    changeme = [deployment_directory + '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py',
+             deployment_directory + '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py']
+    
+    for changemefile in changeme:
+        command = ['sed','-i', 's/\$HOME/\\/home\\/ubuntu/g', changemefile]
+        _run_shell_command(command)
+
 
     command = [ansible_binary]
 
