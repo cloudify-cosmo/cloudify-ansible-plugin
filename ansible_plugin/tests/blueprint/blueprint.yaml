@@ -31,6 +31,8 @@ inputs:
     type: string
   ansible_forks:
     type: string
+  agent_key_path:
+    type: string
 
 node_templates:
 
@@ -64,8 +66,8 @@ node_templates:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host_to_group
           inputs:
             host: { get_attribute: [ virtual_ip, floating_ip_address ] }
-            group: { get_input: test_group_name }
-            inventory: { get_input: test_inventory_name }
+            group: { get_input : test_group_name }
+            inventory: { get_input : test_inventory_name }
     relationships:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration
@@ -80,7 +82,6 @@ node_templates:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.get_playbook
           inputs:
             local_file: { get_input : where_to_get_the_playbook } # or local_file to a file in the local directory
-            inventory: { get_input: test_inventory_name }
     relationships:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration
@@ -96,29 +97,12 @@ node_templates:
         create:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
           inputs:
-            inventory: { get_attribute : [ new_host, ip ] }
-            local_file: { get_input : where_to_get_the_playbook }
+            local_file: { get_input : where_to_get_the_playbook } # or local_file to a file in the local directory
+            agent_key: { get_input : agent_key_path }
     relationships:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration
       - type: cloudify.relationships.depends_on
         target: ansible_playbook
 
-#  run_ansible:
-#    type: cloudify.nodes.ApplicationModule
-#   interfaces:
-#      cloudify.interfaces.lifecycle:
-#        create:
-#          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_ansible
-#          inputs:
-#            module_name : { get_input : get_module_name }
-#            module_args : { get_input : get_module_args }
-#            pattern : { get_input: ansible_run_pattern }
-#            forks: { get_input : ansible_forks }
-#    relationships:
-#      - type: cloudify.relationships.depends_on
-#        target: ansible_configuration
-#      - type: cloudify.relationships.depends_on
-#        target: new_host
-#      - type: cloudify.relationships.depends_on
-#        target: add_host_to_group
+  

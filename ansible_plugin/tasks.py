@@ -77,6 +77,8 @@ def run_playbook(**kwargs):
     else:
         ansible_home = deployment_directory + '/env/etc/ansible'
 
+    command.append('--sudo')
+
     command.append('-i')
 
     if 'inventory' in kwargs:
@@ -97,6 +99,16 @@ def run_playbook(**kwargs):
         new_arg = ansible_home + '/' + playbook
 
     command.append(new_arg)
+
+    new_arg = '--private-key'
+    command.append(new_arg)
+
+    if 'agent_key' in kwargs:
+        agent_key = kwargs['agent_key']
+    else:
+        agent_key = '/home/ubuntu/.ssh/agent_key.pem'
+
+    command.append(agent_key)
 
     ctx.logger.info("Running Playbook: [Shell Command]: {0}"
                     .format(command))
