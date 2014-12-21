@@ -43,6 +43,19 @@ node_templates:
         configure:
           implementation: cloudify-ansible-plugin.ansible_plugin.configure.configure
 
+  virtual_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+
+  webserver_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      resource_id: webserver-secgroup
+      security_group:
+        description: Security group for webservers
+      rules:
+        - port: 0
+          remote_ip_prefix: 0.0.0.0/0
+
   new_host:
     type: cloudify.openstack.nodes.Server
     properties:
@@ -54,9 +67,9 @@ node_templates:
     relationships:
       - type: cloudify.openstack.server_connected_to_floating_ip
         target: virtual_ip
-
-  virtual_ip:
-    type: cloudify.openstack.nodes.FloatingIP
+      relationships:
+        - type: cloudify.openstack.server_connected_to_security_group
+          target: webserver_security_group
 
   add_host_to_group:
     type: cloudify.nodes.ApplicationModule
@@ -65,7 +78,7 @@ node_templates:
         configure:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host_to_group
           inputs:
-            host: { get_attribute: [ virtual_ip, floating_ip_address ] }
+            host: { get_attribute: [ new_host, ip ] }
             group: { get_input : test_group_name }
             inventory: { get_input : test_inventory_name }
     relationships:

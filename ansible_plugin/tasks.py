@@ -56,7 +56,10 @@ def _run_shell_command_alt(command):
     ctx.logger.info("Running shell command: {0}"
                     .format(command))
     try:
-        subprocess.check_call(command)
+        run = subprocess.check_call(command, stdout=subprocess.PIPE)
+        lines = iter(run.stdout.readline, "")
+        for line in lines:
+            ctx.logger.info('command output: {0}'.format(line))
     except subprocess.CalledProcessError as e:
         ctx.logger.error("There are some errors: {0} {1}"
                          .format(command, e))
