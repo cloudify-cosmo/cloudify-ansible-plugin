@@ -43,7 +43,7 @@ def configure(**kwargs):
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
     else:
-        ansible_home = deployment_directory + '/etc/ansible'
+        ansible_home = deployment_directory + '/env/etc/ansible'
 
     paths = [ansible_home,
              ansible_home + '/group_vars',
