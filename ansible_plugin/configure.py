@@ -69,9 +69,6 @@ def configure(**kwargs):
             else:
                 raise
 
-    command = ['export', 'ANSIBLE_HOST_KEY_CHECKING=False']
-    _run_shell_command(command)
-
 
 def _validate(ansible_binary):
     """ validate that ansible is installed on the manager
