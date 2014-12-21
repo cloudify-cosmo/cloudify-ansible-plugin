@@ -68,7 +68,8 @@ def configure(**kwargs):
                 pass
             else:
                 raise
-
+    
+    ctx.logger.info("Ansible configured.")
 
 def _validate(ansible_binary):
     """ validate that ansible is installed on the manager
