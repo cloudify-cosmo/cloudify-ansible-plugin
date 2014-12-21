@@ -26,6 +26,5 @@ setup(
     license='LICENSE',
     zip_safe=False,
     install_requires=["cloudify-plugins-common==3.1", "ansible"],
-    dependency_links=["http://github.com/EarthmanT/ansible/tarball/master#egg=devel"],
     test_requires=["cloudify-dsl-parser==3.1", "nose"]
 )
