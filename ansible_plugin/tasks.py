@@ -33,7 +33,7 @@ from os.path import basename
 from os import makedirs
 
 
-def _run_shell_command(command):
+def _run_shell_command_call(command):
     """this runs a shell command.
     """
 
@@ -49,72 +49,94 @@ def _run_shell_command(command):
     return run
 
 
-def _run_shell_command_alt(command):
+def _run_shell_command_popen(command):
     """this runs a shell command.
     """
 
     ctx.logger.info("Running shell command: {0}"
                     .format(command))
-    try:
-        subprocess.check_call(command)
-    except subprocess.CalledProcessError as e:
-        ctx.logger.error("There are some errors: {0} {1}"
-                         .format(command, e))
+    run = subprocess.Popen(command, stdout=subprocess.PIPE)
+    output,error = run.communicate()
+    if output:
+        ctx.logger.info('output: {0}'.format(output))
+    elif error:
+        ctx.logger.error('error: {0}'.format(error))
+    else:
+        ctx.logger.error('unknown error')
 
 
 @operation
 def run_playbook(**kwargs):
     """runs a playbook
     """
+    
+    if 'user_home' in kwargs:
+        user_home = kwargs['user_home']
+    else:
+        user_home = '/home/ubuntu'
 
-    deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
-    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
-
-    command = [ansible_binary]
+    deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
 
     if 'ansible_home' in kwargs:
         ansible_home = kwargs['ansible_home']
     else:
         ansible_home = deployment_directory + '/env/etc/ansible'
 
-    command.append('-i')
+    if 'agent_key' in kwargs:
+        agent_key = kwargs['agent_key']
+    else:
+        agent_key = user_home + '/.ssh/agent_key.pem'
+    
+    if 'host' in kwargs:
+        host = kwargs['host']
+    else:
+        host = '127.0.0.1'
+    
+    if 'group' in kwargs:
+        group = kwargs['group']
+    else:
+        group = 'all'
 
     if 'inventory' in kwargs:
-        new_arg = ansible_home + '/' + kwargs['inventory']
+        path_to_inventory = ansible_home + '/' + kwargs['inventory']
     else:
-        new_arg = ansible_home
-
-    command.append(new_arg)
-
+        path_to_inventory = ansible_home + 'hosts'
+        
     if 'local_file' in kwargs:
         playbook = kwargs['local_file']
-        new_arg = ansible_home + '/' + playbook
+        path_to_playbook = ansible_home + '/' + playbook
+        _get_playbook(ansible_home, local_file=playbook)
     elif 'playbook_url' in kwargs:
         playbook = kwargs['playbook_url']
-        new_arg = ansible_home + '/' + playbook
+        path_to_playbook = ansible_home + '/' + playbook
+        _get_playbook(ansible_home, playbook_url=playbook)
     else:
         playbook = 'playbook.yml'
-        new_arg = ansible_home + '/' + playbook
+        path_to_playbook = ansible_home + '/' + playbook
+        _get_playbook(ansible_home, local_file=playbook)
+    
+    _add_host_to_group(ansible_home, host, group, inventory)
+    _remove_environment_var(deployment_directory)
 
-    command.append(new_arg)
+    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
+
+    command = [ansible_binary]
+    command.append('--sudo')
+    command.append('-i')
+    command.append(path_to_inventory)
+    command.append(path_to_playbook)
+    command.append('--private-key')
+    command.append(agent_key)
 
     ctx.logger.info("Running Playbook: [Shell Command]: {0}"
                     .format(command))
 
-    _run_shell_command_alt(command)
+    _run_shell_command_popen(command)
 
 
-@operation
-def get_playbook(**kwargs):
+def _get_playbook(ansible_home, **kwargs):
     """adds a playbook file in .../etc/ansible with content {entry}
     """
-
-    deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
-
-    if 'ansible_home' in kwargs:
-        ansible_home = kwargs['ansible_home']
-    else:
-        ansible_home = deployment_directory + '/env/etc/ansible'
 
     if 'playbook_url' in kwargs:
         url = kwargs['playbook_url']
@@ -186,20 +208,14 @@ def _copy_file(file, target_file):
     return True
 
 
-@operation
-def add_host_to_group(host, group, inventory, **kwargs):
+def _add_host_to_group(ansible_home, host, group, inventory):
     """
         this puts a host under a group in inventory file
     """
 
-    if 'ansible_home' in kwargs:
-        ansible_home = kwargs['ansible_home']
-    else:
-        deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
-        ansible_home = deployment_directory + '/env/etc/ansible'
-
     group = '[' + group + ']\n'
     host = host + '\n'
+    
     if _add_to_location(ansible_home, inventory, group, host):
         """
             if the group already exists in the inventory,
@@ -263,6 +279,15 @@ def _write_to_file(path, filename, entry):
         f.write(entry)
     f.close()
 
+
+def _remove_environment_var(deployment_directory):
+
+    changeme = [deployment_directory + '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py',
+             deployment_directory + '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py']
+    
+    for changemefile in changeme:
+        command = ['sed','-i', 's/\$HOME/\\/home\\/ubuntu/g', changemefile]
+        _run_shell_command_call(command)
 
 @operation
 def run_ansible(**kwargs):
