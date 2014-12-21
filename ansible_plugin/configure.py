@@ -69,8 +69,7 @@ def configure(**kwargs):
             else:
                 raise
 
-    command = ['echo', '"[defaults]\nhost_key_checking = False"', ">>",
-               '/home/ubuntu/.ansible.cfg']
+    command = ['export', 'ANSIBLE_HOST_KEY_CHECKING=False']
     _run_shell_command(command)
 
 
