@@ -56,13 +56,13 @@ def _run_shell_command_alt(command):
     ctx.logger.info("Running shell command: {0}"
                     .format(command))
     run = subprocess.Popen(command, stdout=subprocess.PIPE)
-    for out,err in run.communicate():
-        if out:
-            ctx.logger.info('output: {0}'.format(out))
-        elif err:
-            ctx.logger.error('error: {0}'.format(err)
-        else:
-            continue
+    output,error = run.communicate()
+    if output:
+        ctx.logger.info('output: {0}'.format(output))
+    elif error:
+        ctx.logger.error('error: {0}'.format(error))
+    else:
+        ctx.logger.error('unknown error')
 
 
 @operation
