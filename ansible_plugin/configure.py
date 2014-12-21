@@ -17,6 +17,7 @@
 import subprocess
 import os
 import errno
+import os.path as ospath
 
 # ctx is imported and used in operations
 from cloudify import ctx
