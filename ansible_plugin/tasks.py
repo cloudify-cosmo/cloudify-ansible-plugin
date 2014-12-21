@@ -55,10 +55,15 @@ def _run_shell_command_alt(command):
 
     ctx.logger.info("Running shell command: {0}"
                     .format(command))
-    run = subprocess.call(command, stdout=subprocess.PIPE)
-    lines = iter(run.stdout.readline, "")
-    for line in lines:
-        ctx.logger.info('command output: {0}'.format(line))
+    run = subprocess.Popen(command, stdout=subprocess.PIPE)
+    lines = iter(run.communicate, "")
+    for out,err in run.communicate():
+        if out:
+            ctx.logger.info('output: {0}'.format(out))
+        elif err:
+            ctx.logger.error('error: {0}'.format(err)
+        else:
+            continue
 
 
 @operation
