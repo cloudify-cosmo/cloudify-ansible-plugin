@@ -7,7 +7,7 @@ imports:
 plugins:
   cloudify-ansible-plugin:
     executor: central_deployment_agent
-    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
+    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/rollup.zip
 
 inputs:
 
@@ -69,6 +69,8 @@ node_templates:
         target: virtual_ip
       - type: cloudify.openstack.server_connected_to_security_group
         target: webserver_security_group
+<<<<<<< HEAD
+=======
 
   add_host_to_group:
     type: cloudify.nodes.ApplicationModule
@@ -85,12 +87,21 @@ node_templates:
         target: ansible_configuration
       - type: cloudify.relationships.depends_on
         target: virtual_ip
+>>>>>>> master
 
   ansible_playbook:
     type: cloudify.nodes.ApplicationModule
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
+<<<<<<< HEAD
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
+          inputs:
+            host: { get_attribute : [new_host, ip] }
+            group: { get_input : test_group_name }
+            inventory: { get_input : test_inventory_name }
+            local_file: { get_input : where_to_get_the_playbook } # playbook_url or local_file to a file in the local directory
+=======
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.get_playbook
           inputs:
             local_file: { get_input : where_to_get_the_playbook } # or local_file to a file in the local directory
@@ -110,11 +121,16 @@ node_templates:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
           inputs:
             local_file: { get_input : where_to_get_the_playbook } # or local_file to a file in the local directory
+>>>>>>> master
             agent_key: { get_input : agent_key_path }
     relationships:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration
       - type: cloudify.relationships.depends_on
+<<<<<<< HEAD
+        target: new_host  
+=======
         target: ansible_playbook
 
   
+>>>>>>> master

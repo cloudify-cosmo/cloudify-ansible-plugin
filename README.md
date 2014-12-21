@@ -16,6 +16,12 @@ Current Functionality:
  - Uploads an Ansible Playbook to the manager (provided in the cwd during blueprint upload, or in a URL)
  - Runs an Ansible Playbook
 
+<<<<<<< HEAD
+For a pre-configured blueprint and inputs file go to tests/blueprints.
+
+Operations in the tasks module and their inputs:
+run_playbook
+=======
 How to make sure that Ansible is installed on the manager:
 Ansible is installed per deployment. This keeps your file system organized. It also emphasizes the nature pluggable nature of the plugin.
 
@@ -35,6 +41,7 @@ How to use the Ansible Plugin:
 There are four operations: add_host_to_group, get_playbook, and run_playbook.
 
 add_host_to_group(host, group, inventory, **kwargs)
+>>>>>>> master
  inputs:
   * the host, probably a floating ip address
   * the name of a group if you are giving multiple hosts
