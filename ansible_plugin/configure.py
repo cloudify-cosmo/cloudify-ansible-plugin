@@ -17,6 +17,7 @@
 import subprocess
 import os
 import errno
+import os.path as ospath
 
 # ctx is imported and used in operations
 from cloudify import ctx
@@ -29,7 +30,8 @@ from cloudify.exceptions import NonRecoverableError
 @operation
 def configure(**kwargs):
 
-    deployment_directory = '/home/ubuntu/cloudify.' + ctx.deployment.id
+    user_home = '/home/ubuntu'
+    deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
     ansible_binary = deployment_directory + '/env/bin/ansible'
 
     if _validate(ansible_binary):
@@ -68,11 +70,28 @@ def configure(**kwargs):
                 pass
             else:
                 raise
+    
+    path = user_home
+    filename = '.ansible.cfg'
+    entry = '[defaults]\nhost_key_checking=False'
+    _write_to_file(path, filename, entry)
 
-    command = ['echo', '"[defaults]\nhost_key_checking = False"', ">>",
-               '/home/ubuntu/.ansible.cfg']
-    _run_shell_command(command)
 
+def _write_to_file(path, filename, entry):
+    """ writes a entry to a file
+    """
+    if not ospath.exists(path):
+        makedirs(path)
+    path_to_file = ospath.join(path, filename)
+    if not ospath.exists(path_to_file):
+        f = open(path_to_file, 'w')
+        f.write(entry)
+    else:
+        f = open(path_to_file, 'a')
+        f.write(entry)
+    f.close()
+    
+    ctx.logger.info("Ansible configured.")
 
 def _validate(ansible_binary):
     """ validate that ansible is installed on the manager
