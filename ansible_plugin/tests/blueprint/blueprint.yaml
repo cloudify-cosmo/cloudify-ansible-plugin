@@ -67,9 +67,8 @@ node_templates:
     relationships:
       - type: cloudify.openstack.server_connected_to_floating_ip
         target: virtual_ip
-      relationships:
-        - type: cloudify.openstack.server_connected_to_security_group
-          target: webserver_security_group
+      - type: cloudify.openstack.server_connected_to_security_group
+        target: webserver_security_group
 
   add_host_to_group:
     type: cloudify.nodes.ApplicationModule
