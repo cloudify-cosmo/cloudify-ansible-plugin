@@ -16,6 +16,8 @@ Current Functionality:
  - Uploads an Ansible Playbook to the manager (provided in the cwd during blueprint upload, or in a URL)
  - Runs an Ansible Playbook
 
+For a pre-configured blueprint and inputs file go to tests/blueprints.
+
 Operations in the tasks module and their inputs:
 run_playbook
  inputs:
