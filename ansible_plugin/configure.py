@@ -75,13 +75,7 @@ def configure(**kwargs):
     filename = '.ansible.cfg'
     entry = '[defaults]\nhost_key_checking=False'
     _write_to_file(path, filename, entry)
-    
-    files = [deployment_directory + '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py',
-             deployment_directory + '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py']
-    
-    for file in files:
-        command = ['sed','-i', 's/\$HOME/\\/home\\/ubuntu/g', file]
-        _run_shell_command(command)
+
 
 def _write_to_file(path, filename, entry):
     """ writes a entry to a file
