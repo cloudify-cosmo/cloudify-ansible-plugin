@@ -7,7 +7,7 @@ imports:
 plugins:
   cloudify-ansible-plugin:
     executor: central_deployment_agent
-    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/rollup.zip
+    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
 
 inputs:
 
