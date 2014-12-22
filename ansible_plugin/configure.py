@@ -28,22 +28,17 @@ from cloudify.exceptions import NonRecoverableError
 
 
 @operation
-def configure(**kwargs):
+def configure(user_home = '/home/ubuntu'):
 
-    user_home = '/home/ubuntu'
     deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
     ansible_binary = deployment_directory + '/env/bin/ansible'
+    ansible_home = deployment_directory + '/env/etc/ansible'
 
     if _validate(ansible_binary):
         ctx.logger.info('Confirmed that ansible is on the manager.')
     else:
         ctx.logger.error('Unable to confirm that ansible is on the manager.')
         exit(1)
-
-    if 'ansible_home' in kwargs:
-        ansible_home = kwargs['ansible_home']
-    else:
-        ansible_home = deployment_directory + '/env/etc/ansible'
 
     paths = [ansible_home,
              ansible_home + '/group_vars',
