@@ -310,3 +310,66 @@ def _log_results(results):
             ctx.logger.error('{0} >>>> {1}'.format(hostname, result))
     for (hostname, result) in results['dark'].items():
         ctx.logger.error('{0} >>>>> {1}'.format(hostname, result))
+
+@operation
+def run_playbook_only(**kwargs):
+    """runs a playbook
+    """
+    
+    if 'user_home' in kwargs:
+        user_home = kwargs['user_home']
+    else:
+        user_home = '/home/ubuntu'
+
+    deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
+
+    if 'ansible_home' in kwargs:
+        ansible_home = kwargs['ansible_home']
+    else:
+        ansible_home = deployment_directory + '/env/etc/ansible'
+
+    if 'agent_key' in kwargs:
+        agent_key = kwargs['agent_key']
+    else:
+        agent_key = user_home + '/.ssh/agent_key.pem'
+    
+    if 'host' in kwargs:
+        host = kwargs['host']
+    else:
+        host = '127.0.0.1'
+    
+    if 'group' in kwargs:
+        group = kwargs['group']
+    else:
+        group = 'all'
+
+    if 'inventory' in kwargs:
+        inventory = kwargs['inventory']
+    else:
+        inventory = 'hosts'
+
+    if 'local_file' in kwargs:
+        playbook = kwargs['local_file']
+    elif 'playbook_url' in kwargs:
+        playbook = kwargs['playbook_url']
+    else:
+        playbook = 'playbook.yml'
+    
+    _remove_environment_var(deployment_directory)
+    
+    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
+    path_to_playbook = ansible_home + '/' + playbook
+    path_to_inventory = ansible_home + '/' + inventory
+
+    command = [ansible_binary]
+    command.append('--sudo')
+    command.append('-i')
+    command.append(path_to_inventory)
+    command.append(path_to_playbook)
+    command.append('--private-key')
+    command.append(agent_key)
+
+    ctx.logger.info("Running Playbook: [Shell Command]: {0}"
+                    .format(command))
+
+    _run_shell_command_popen(command)
