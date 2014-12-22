@@ -104,15 +104,15 @@ def run_playbook(**kwargs):
 
     if 'local_file' in kwargs:
         playbook = kwargs['local_file']
-        _get_playbook(ansible_home, local_file=playbook)
+        get_playbook(ansible_home, local_file=playbook)
     elif 'playbook_url' in kwargs:
         playbook = kwargs['playbook_url']
-        _get_playbook(ansible_home, playbook_url=playbook)
+        get_playbook(ansible_home, playbook_url=playbook)
     else:
         playbook = 'playbook.yml'
-        _get_playbook(ansible_home, local_file=playbook)
+        get_playbook(ansible_home, local_file=playbook)
     
-    _add_host_to_group(ansible_home, host, group, inventory)
+    add_host(ansible_home, host, group, inventory)
     _remove_environment_var(deployment_directory)
     
     ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
@@ -132,8 +132,8 @@ def run_playbook(**kwargs):
 
     _run_shell_command_popen(command)
 
-
-def _get_playbook(ansible_home, **kwargs):
+@operation
+def get_playbook(ansible_home, **kwargs):
     """adds a playbook file in .../etc/ansible with content {entry}
     """
 
@@ -206,8 +206,8 @@ def _copy_file(file, target_file):
 
     return True
 
-
-def _add_host_to_group(ansible_home, host, group, inventory):
+@operation
+def add_host(ansible_home, host, group, inventory):
     """
         this puts a host under a group in inventory file
     """
