@@ -182,7 +182,7 @@ def _copy_file(file, target_file):
     return True
 
 @operation
-def add_host(ansible_home, host, group, inventory):
+def add_host(ansible_home, host, group, inventory, **kwargs):
     """
         this puts a host under a group in inventory file
     """
