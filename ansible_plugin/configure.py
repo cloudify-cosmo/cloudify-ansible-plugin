@@ -178,5 +178,4 @@ def run_shell_command(command):
             ctx.logger.error('error: {0}'.format(error))
             raise Exception('{0} returned {1}'.format(command, error))
     except:
-        e = sys.exc_info()[1]
         ctx.logger.error('error: {0}'.format(e))
