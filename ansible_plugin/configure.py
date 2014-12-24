@@ -137,7 +137,7 @@ def replace_string(file, old_string, new_string):
     with open(new_file, 'wt') as fout:
         with open(file, 'rt') as fin:
             for line in fin:
-                fout.write(line.replace(old_string, new_search))
+                fout.write(line.replace(old_string, new_string))
 
     copy(new_file, file)
     os.remove(new_file)
