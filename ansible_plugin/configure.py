@@ -72,7 +72,7 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
     deployment_home = joinpath(user_home, 'cloudify.' + ctx.deployment.id)
     playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
-    while True
+    while True:
         command = [playbook_binary, '--version']
         code = run_shell_command(command)
         if code == 0:
