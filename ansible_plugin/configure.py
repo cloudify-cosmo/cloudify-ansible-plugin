@@ -162,3 +162,21 @@ def write_to_file(path, filename, entry):
         f.close()
 
     return success
+def run_shell_command(command):
+    """this runs a shell command.
+    """
+    ctx.logger.info("Running shell command: {0}"
+                    .format(command))
+
+    try:
+        run = subprocess.Popen(command, stdout=subprocess.PIPE)
+        output, error = run.communicate()
+        if output:
+            for lines in output:
+                ctx.logger.info('lines: {0}'.format(lines))
+        elif error:
+            ctx.logger.error('error: {0}'.format(error))
+            raise Exception('{0} returned {1}'.format(command, error))
+    except:
+        e = sys.exc_info()[1]
+        ctx.logger.error('error: {0}'.format(e))
