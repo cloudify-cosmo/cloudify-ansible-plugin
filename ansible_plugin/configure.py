@@ -60,7 +60,7 @@ def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', *
     if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
         ctx.logger.info("Ansible configured.")
     else:
-        ctx.logger.info('Ansible not configured.')
+        ctx.logger.error('Ansible not configured.')
         raise NonRecoverableError('Ansible not configured.')
 
 @operation
