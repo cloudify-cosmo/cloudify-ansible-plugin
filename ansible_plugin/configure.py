@@ -68,7 +68,7 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
     """ validate that ansible is installed on the manager
     """
 
-    deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
+    deployment_home = joinpath(user_home, 'cloudify.' + ctx.deployment.id)
     playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
     command = [playbook_binary, '--version']
