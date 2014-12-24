@@ -178,4 +178,5 @@ def run_shell_command(command):
             ctx.logger.error('error: {0}'.format(error))
             raise Exception('{0} returned {1}'.format(command, error))
     except:
-        ctx.logger.error('Unknown Exception, command: {0}'.format(command))
+        e = sys.exc_info()[0]
+        ctx.logger.error('command failed: {0}, exception: {1}'.format(command, e))
