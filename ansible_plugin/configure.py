@@ -14,6 +14,7 @@
 #   * limitations under the License.
 
 # for running shell commands
+import sys
 import os
 from os.path import join as joinpath
 import errno
