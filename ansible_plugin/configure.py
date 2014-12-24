@@ -115,9 +115,9 @@ def download_resource(file, target_file):
 def create_directories(etc_ansible, paths):
 
     for path in paths:
-        joinpath(etc_ansible, path)
+        makeme = joinpath(etc_ansible, path)
         try:
-            os.makedirs(path)
+            os.makedirs(makeme)
         except OSError as e:
             if e.errno == errno.EEXIST and os.path.isdir(path):
                 pass
