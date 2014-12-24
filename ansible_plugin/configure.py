@@ -20,6 +20,7 @@ import time
 from os.path import join as joinpath
 import errno
 import subprocess
+from shutil import copy 
 
 # ctx is imported and used in operations
 from cloudify import ctx
@@ -123,10 +124,10 @@ def create_directories(etc_ansible, paths):
         try:
             os.makedirs(makeme)
         except OSError as e:
-            if e.errno == errno.EEXIST and os.path.isdir(path):
+            if e.errno == errno.EEXIST and os.path.isdir(makeme):
                 pass
             else:
-                raise NonRecoverableError('Cannot create directory {0}, error: {1}'.format(path, e))
+                raise NonRecoverableError('Cannot create directory {0}, error: {1}'.format(makeme, e))
 
 def replace_string(file, old_string, new_string):
 
