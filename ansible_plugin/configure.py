@@ -178,4 +178,4 @@ def run_shell_command(command):
             ctx.logger.error('error: {0}'.format(error))
             raise Exception('{0} returned {1}'.format(command, error))
     except:
-        ctx.logger.error('error: {0}'.format(e))
+        ctx.logger.error('Unknown Exception in run_shell_command.'))
