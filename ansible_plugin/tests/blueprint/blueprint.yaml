@@ -7,7 +7,7 @@ imports:
 plugins:
   cloudify-ansible-plugin:
     executor: central_deployment_agent
-    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/rollup.zip
+    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/New-Tasks.zip
 
 inputs:
 
@@ -40,50 +40,12 @@ node_templates:
     type: cloudify.nodes.ApplicationModule
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
-          implementation: cloudify-ansible-plugin.ansible_plugin.configure.configure
-
-  virtual_ip:
-    type: cloudify.openstack.nodes.FloatingIP
-
-  webserver_security_group:
-    type: cloudify.openstack.nodes.SecurityGroup
-    properties:
-      resource_id: webserver-secgroup
-      security_group:
-        description: Security group for webservers
-      rules:
-        - port: 0
-          remote_ip_prefix: 0.0.0.0/0
-
-  new_host:
-    type: cloudify.openstack.nodes.Server
-    properties:
-      cloudify_agent:
-        user: { get_input: agent_user }
-      server:
-        image_name: { get_input: image_name }
-        flavor_name: { get_input: flavor_name }
-    relationships:
-      - type: cloudify.openstack.server_connected_to_floating_ip
-        target: virtual_ip
-      - type: cloudify.openstack.server_connected_to_security_group
-        target: webserver_security_group
-
-  ansible_playbook:
-    type: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
         create:
-          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
-          inputs:
-            host: { get_attribute : [new_host, ip] }
-            group: { get_input : test_group_name }
-            inventory: { get_input : test_inventory_name }
-            local_file: { get_input : where_to_get_the_playbook } # playbook_url or local_file to a file in the local directory
-            agent_key: { get_input : agent_key_path }
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: ansible_configuration
-      - type: cloudify.relationships.depends_on
-        target: new_host  
+          implementation: cloudify-ansible-plugin.ansible_plugin.configure.make_directories
+        preconfigure:
+          implementation: cloudify-ansible-plugin.ansible_plugin.configure.put_ansible_conf
+        configure:
+          implementation: cloudify-ansible-plugin.ansible_plugin.configure.validate
+        postconfigure:
+          implementation: cloudify-ansible-plugin.ansible_plugin.configure.hard_code_home
+
