@@ -18,6 +18,7 @@ import sys
 import os
 import time
 from os.path import join as joinpath
+from os.path import basename
 import errno
 import subprocess
 from shutil import copy 
