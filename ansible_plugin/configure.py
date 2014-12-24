@@ -17,10 +17,6 @@
 import os
 from os.path import join as joinpath
 import errno
-from ansible_plugin import run_shell_command
-from ansible_plugin import ansible_home
-from ansible_plugin import write_to_file
-from ansible_plugin import playbook_binary
 
 # ctx is imported and used in operations
 from cloudify import ctx
