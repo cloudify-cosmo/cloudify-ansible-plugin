@@ -47,23 +47,17 @@ DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE = [
     'monitoring'
 ]
 
+
 @operation
-def make_directories(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
+def create(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
 
     deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
     etc_ansible = joinpath(deployment_home, 'env', 'etc', 'ansible')
 
     create_directories(etc_ansible, DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE)
+    put_ansible_conf(user_home, ansible_conf)
+    hard_code_home(user_home)
 
-
-@operation
-def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
-
-    if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
-        ctx.logger.info("Ansible configured.")
-    else:
-        ctx.logger.error('Ansible not configured.')
-        raise NonRecoverableError('Ansible not configured.')
 
 @operation
 def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwargs):
@@ -77,7 +71,15 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
     run_shell_command(command)
 
 
-@operation
+def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
+
+    if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
+        ctx.logger.info("Ansible configured.")
+    else:
+        ctx.logger.error('Ansible not configured.')
+        raise NonRecoverableError('Ansible not configured.')
+
+
 def hard_code_home(user_home = '/home/ubuntu', **kwargs):
     """ Ansible configures a writable directory in '$HOME/.ansible/cp',mode=0700
     Cloudify's workers can't use that variable, so we need to hard code the home.
@@ -137,33 +139,6 @@ def replace_string(file, old_string, new_string):
 
     copy(new_file, file)
     os.remove(new_file)
-
-def write_to_file(path, filename, entry):
-
-    if not pathexists(path):
-        makedirs(path)
-
-    path_to_file = joinpath(path, filename)
-
-    if not pathexists(path_to_file):
-        try:
-            f = open(path_to_file, 'w')
-            f.write(entry)
-            success = True
-        except IOError as e:
-            ctx.logger.error('Can\'t open file {0} for writing: {1}'.format(path_to_file, e))
-            success = False
-    else:
-        try:
-            f = open(path_to_file, 'a')
-            f.write(entry)
-            success = True
-        except IOError as e:
-            ctx.logger.error('Can\'t open file {0} for writing: {1}'.format(path_to_file, e))
-            success = False
-        f.close()
-
-    return success
 
 
 def run_shell_command(command):
