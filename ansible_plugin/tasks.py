@@ -68,7 +68,7 @@ def _run_shell_command_popen(command):
 @operation
 def run_playbook(
     host, group, inventory, agent_key,
-    user_home = '/home/ubuntu'
+    user_home = '/home/ubuntu',
         **kwargs):
     """runs a playbook
     """
