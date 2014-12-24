@@ -95,6 +95,9 @@ def hard_code_home(user_home = '/home/ubuntu', **kwargs):
 
     for ansible_file in ansible_files:
         replace_string(ansible_file, '$HOME', joinpath('/', home, user))
+    
+    ctx.logger.info('Confirmed that ansible is installed on the manager.')
+
 
 def download_resource(file, target_file):
     """ copies 'file' from local machine and moves to
