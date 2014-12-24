@@ -28,7 +28,7 @@ from cloudify.exceptions import NonRecoverableError
 
 
 @operation
-def configure(user_home = '/home/ubuntu'):
+def configure(user_home = '/home/ubuntu', **kwargs):
 
     deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
     ansible_binary = deployment_directory + '/env/bin/ansible'
