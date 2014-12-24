@@ -74,12 +74,8 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
     playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
     command = [playbook_binary, '--version']
-    code = run_shell_command(command)
+    run_shell_command(command)
 
-    if code == 0:
-        ctx.logger.info('Confirmed that ansible is installed on the manager.')
-    else:
-        ctx.logger.error('Unable to verify ansible installation.')
 
 @operation
 def hard_code_home(user_home = '/home/ubuntu', **kwargs):
@@ -92,8 +88,9 @@ def hard_code_home(user_home = '/home/ubuntu', **kwargs):
     user_home = user_home[1:]
     home, user = user_home.split('/')
 
-    ansible_files = [deployment_home + '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py',
-                     deployment_home + '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py']
+    ansible_files = [''.join([deployment_home, '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py',
+                     ''.join([deployment_home + '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py'])
+                    ]
 
     for ansible_file in ansible_files:
         replace_string(ansible_file, '$HOME', joinpath('/', home, user))
@@ -186,3 +183,4 @@ def run_shell_command(command):
     except:
         e = sys.exc_info()[0]
         ctx.logger.error('command failed: {0}, exception: {1}'.format(command, e))
+        raise Exception('{0} returned {1}'.format(command, e))
