@@ -19,6 +19,7 @@ import os
 import time
 from os.path import join as joinpath
 import errno
+from subprocess
 
 # ctx is imported and used in operations
 from cloudify import ctx
