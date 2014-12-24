@@ -131,7 +131,7 @@ def create_directories(etc_ansible, paths):
 
 def replace_string(file, old_string, new_string):
 
-    new_file = joinpath('/tmp', file)
+    new_file = joinpath('/tmp', basename(file))
 
     with open(new_file, 'wt') as fout:
         with open(file, 'rt') as fin:
