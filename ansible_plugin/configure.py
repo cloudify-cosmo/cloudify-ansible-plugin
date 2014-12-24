@@ -49,12 +49,16 @@ DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE = [
 ]
 
 @operation
-def configure(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg'):
+def make_directories(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
 
     deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
     etc_ansible = joinpath(deployment_home, 'env', 'etc', 'ansible')
 
     create_directories(etc_ansible, DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE)
+
+
+@operation
+def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
 
     if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
         ctx.logger.info("Ansible configured.")
@@ -63,7 +67,7 @@ def configure(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg'):
         raise NonRecoverableError('Ansible not configured.')
 
 @operation
-def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook'):
+def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwargs):
     """ validate that ansible is installed on the manager
     """
 
@@ -80,7 +84,7 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook'):
         raise NonRecoverableError('Ansible not installed.')
 
 @operation
-def hard_code_home(user_home = '/home/ubuntu'):
+def hard_code_home(user_home = '/home/ubuntu', **kwargs):
     """ Ansible configures a writable directory in '$HOME/.ansible/cp',mode=0700
     Cloudify's workers can't use that variable, so we need to hard code the home.
     """
