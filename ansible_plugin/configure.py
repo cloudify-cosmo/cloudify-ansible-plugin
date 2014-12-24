@@ -85,7 +85,7 @@ def hard_code_home(user_home = '/home/ubuntu', **kwargs):
     Cloudify's workers can't use that variable, so we need to hard code the home.
     """
 
-    deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
+    deployment_home = joinpath(user_home, ''.join(['cloudify.', ctx.deployment.id]))
 
     user_home = user_home[1:]
     home, user = user_home.split('/')
