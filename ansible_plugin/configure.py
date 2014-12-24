@@ -16,6 +16,7 @@
 # for running shell commands
 import sys
 import os
+import time
 from os.path import join as joinpath
 import errno
 
@@ -71,8 +72,12 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
     deployment_home = joinpath(user_home, 'cloudify.' + ctx.deployment.id)
     playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
-    command = [playbook_binary, '--version']
-    code = run_shell_command(command)
+    while True
+        command = [playbook_binary, '--version']
+        code = run_shell_command(command)
+        if code == 0:
+            break
+        time.sleep(10)
 
     if code == 0:
         ctx.logger.info('Confirmed that ansible is installed on the manager.')
