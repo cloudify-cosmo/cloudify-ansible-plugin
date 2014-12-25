@@ -76,7 +76,7 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
 def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
 
     if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
-        ctx.logger.info("Ansible configured.")
+        ctx.logger.info("Put {0} in {1}.".format(ansible_conf, user_home))
     else:
         ctx.logger.error('Ansible not configured.')
         raise NonRecoverableError('Ansible not configured.')
@@ -99,7 +99,7 @@ def hard_code_home(user_home = '/home/ubuntu', **kwargs):
     for ansible_file in ansible_files:
         replace_string(ansible_file, '$HOME', joinpath('/', home, user))
     
-    ctx.logger.info('Confirmed that ansible is installed on the manager.')
+    ctx.logger.info('Replaced $HOME with /{0}/{1}.'.format(home, user))
 
 
 def download_resource(file, target_file):
@@ -153,7 +153,7 @@ def run_shell_command(command):
         run = subprocess.Popen(command, stdout=subprocess.PIPE)
         output, error = run.communicate()
         if output:
-            ctx.logger.info('lines: {0}'.format(output))
+            ctx.logger.info('output: {0}'.format(output))
         elif error:
             ctx.logger.error('error: {0}'.format(error))
             raise Exception('{0} returned {1}'.format(command, error))
