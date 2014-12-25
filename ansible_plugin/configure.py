@@ -66,7 +66,7 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
     """ validate that ansible is installed on the manager
     """
 
-    deployment_home = joinpath(user_home, ''.join(['cloudify.', ctx.deployment.id]))
+    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
     playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
     command = [playbook_binary, '--version']
@@ -76,7 +76,7 @@ def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwa
 def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
 
     if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
-        ctx.logger.info("Put {0} in {1}.".format(ansible_conf, user_home))
+        ctx.logger.info('Put {0} in {1}.'.format(ansible_conf, user_home))
     else:
         ctx.logger.error('Ansible not configured.')
         raise NonRecoverableError('Ansible not configured.')
@@ -87,13 +87,13 @@ def hard_code_home(user_home = '/home/ubuntu', **kwargs):
     Cloudify's workers can't use that variable, so we need to hard code the home.
     """
 
-    deployment_home = joinpath(user_home, ''.join(['cloudify.', ctx.deployment.id]))
+    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
 
     user_home = user_home[1:]
     home, user = user_home.split('/')
 
-    ansible_files = [''.join([deployment_home, '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py']),
-                     ''.join([deployment_home, '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py'])
+    ansible_files = [joinpath(deployment_home, 'env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py'),
+                     joinpath(deployment_home, 'env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py')
                     ]
 
     for ansible_file in ansible_files:
