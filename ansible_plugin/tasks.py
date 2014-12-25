@@ -52,13 +52,11 @@ def run_playbook(
 
     add_host(etc_ansible, host, group, inventory)
 
-    get_playbook(etc_ansible, local_file)
-
     path_to_playbook = joinpath(etc_ansible, local_file)
     path_to_inventory = joinpath(etc_ansible, inventory)
 
     command = [ansible_binary, '--sudo', '-i',
-               path_to_inventory, path_to_playbook,
+               path_to_inventory, local_file,
                '--private-key', agent_key]
 
     run_shell_command(command)
