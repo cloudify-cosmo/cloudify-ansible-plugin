@@ -63,16 +63,6 @@ def run_playbook(
 
 
 @operation
-def get_playbook(etc_ansible, local_file, **kwargs):
-    """adds a playbook file in .../etc/ansible with content {entry}
-       use: cloudify.interfaces.lifecycle.configure
-    """
-
-    target_file = joinpath(etc_ansible, basename(local_file))
-    ctx.download_resource(local_file, target_file)
-
-
-@operation
 def add_host(etc_ansible, host, group, inventory, **kwargs):
     """
         this puts a host under a group in inventory file
@@ -174,31 +164,6 @@ def write_to_file(path, filename, entry):
             ctx.logger.error('Can\'t open file {0} for writing: {1}'
                              .format(path_to_file, e))
         f.close()
-
-
-@operation
-def run_ansible(**kwargs):
-    """ Makes an API call to Ansible Runner.
-        For a list of possible arguments, see:
-        https://github.com/ansible/ansible/
-        blob/devel/lib/ansible/runner/__init__.py
-        use cloudify.interfaces.lifecycle.start
-    """
-    ctx.logger.info("running ansible: ")
-    del kwargs['ctx']
-    runner = ansible.runner.Runner(**kwargs)
-    results = runner.run()
-    _log_results(results)
-
-
-def _log_results(results):
-    for (hostname, result) in results['contacted'].items():
-        if not 'failed' in result:
-            ctx.logger.info('{0} >>>> {1}'.format(hostname, result))
-        elif 'failed' in result:
-            ctx.logger.error('{0} >>>> {1}'.format(hostname, result))
-    for (hostname, result) in results['dark'].items():
-        ctx.logger.error('{0} >>>>> {1}'.format(hostname, result))
 
 
 def run_shell_command(command):
