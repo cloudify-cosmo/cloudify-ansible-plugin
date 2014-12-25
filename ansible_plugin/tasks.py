@@ -169,7 +169,7 @@ def write_to_file(path, filename, entry):
 def run_shell_command(command):
     """this runs a shell command.
     """
-    ctx.logger.info("Running shell command: {0}"
+    ctx.logger.info('Running shell command: {0}'
                     .format(command))
 
     try:
