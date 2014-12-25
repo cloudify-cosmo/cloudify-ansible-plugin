@@ -45,7 +45,7 @@ def run_playbook(
 
     """
 
-    deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
+    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
     etc_ansible = joinpath(deployment_home, 'env', 'etc', 'ansible')
     ansible_binary = joinpath(deployment_home, 'env', 'bin',
                               'ansible-playbook')
