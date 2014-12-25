@@ -81,8 +81,8 @@ def add_host(etc_ansible, host, group, inventory, **kwargs):
         use: cloudify.interfaces.lifecycle.configure
     """
 
-    group = '[' + group + ']\n'
-    host = host + '\n'
+    group = '{0}{1}{2}'.format('[', group, ']\n')
+    host = '{0}{1}'.format(host, '\n')
 
     if add_to_location(etc_ansible, inventory, group, host):
         """
@@ -93,7 +93,7 @@ def add_host(etc_ansible, host, group, inventory, **kwargs):
         print("Added new host {0} under {1} in {2}."
               .format(host, group, inventory))
     else:
-        new_line = group + host
+        new_line = '{0}{1}'.format(group, host)
         write_to_file(etc_ansible, inventory, new_line)
         print("""Added new host {0} under {1} in new file {2}."""
               .format(host, group, inventory))
@@ -105,7 +105,7 @@ def add_to_location(path, filename, search_string, string):
     """
 
     success = False
-    new_file = joinpath('/tmp', filename + ".temp")
+    new_file = joinpath('/tmp', basename(filename))
     old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
@@ -135,7 +135,7 @@ def add_to_location(path, filename, search_string, string):
 
 def replace_string(file, old_string, new_string):
 
-    new_file = joinpath('/tmp', file)
+    new_file = joinpath('/tmp', basename(file))
 
     try:
         with open(new_file, 'wt') as fout:
