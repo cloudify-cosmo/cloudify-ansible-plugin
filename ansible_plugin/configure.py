@@ -14,10 +14,14 @@
 #   * limitations under the License.
 
 # for running shell commands
-import subprocess
+import sys
 import os
+import time
+from os.path import join as joinpath
+from os.path import basename
 import errno
-import os.path as ospath
+import subprocess
+from shutil import copy 
 
 # ctx is imported and used in operations
 from cloudify import ctx
@@ -27,94 +31,133 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 
+DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE = [
+    'group_vars',
+    'host_vars',
+    'library',
+    'filter_plugins',
+    'roles',
+    'roles/common',
+    'roles/common/tasks',
+    'roles/common/handlers',
+    'roles/common/templates',
+    'roles/common/files',
+    'roles/common/vars',
+    'roles/common/defaults',
+    'roles/common/meta',
+    'webtier',
+    'monitoring'
+]
+
+
 @operation
-def configure(user_home = '/home/ubuntu', **kwargs):
+def create(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
 
-    deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
-    ansible_binary = deployment_directory + '/env/bin/ansible'
-    ansible_home = deployment_directory + '/env/etc/ansible'
+    deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
+    etc_ansible = joinpath(deployment_home, 'env', 'etc', 'ansible')
 
-    if _validate(ansible_binary):
-        ctx.logger.info('Confirmed that ansible is on the manager.')
-    else:
-        ctx.logger.error('Unable to confirm that ansible is on the manager.')
-        exit(1)
-
-    paths = [ansible_home,
-             ansible_home + '/group_vars',
-             ansible_home + '/host_vars',
-             ansible_home + '/library',
-             ansible_home + '/filter_plugins',
-             ansible_home + '/roles',
-             ansible_home + '/roles/common',
-             ansible_home + '/roles/common/tasks',
-             ansible_home + '/roles/common/handlers',
-             ansible_home + '/roles/common/templates',
-             ansible_home + '/roles/common/files',
-             ansible_home + '/roles/common/vars',
-             ansible_home + '/roles/common/defaults',
-             ansible_home + '/roles/common/meta',
-             ansible_home + '/webtier',
-             ansible_home + '/monitoring']
-
-    for path in paths:
-        try:
-            os.makedirs(path)
-        except OSError as e:
-            if e.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
-    
-    path = user_home
-    filename = '.ansible.cfg'
-    entry = '[defaults]\nhost_key_checking=False'
-    _write_to_file(path, filename, entry)
+    create_directories(etc_ansible, DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE)
+    put_ansible_conf(user_home, ansible_conf)
+    hard_code_home(user_home)
 
 
-def _write_to_file(path, filename, entry):
-    """ writes a entry to a file
-    """
-    if not ospath.exists(path):
-        makedirs(path)
-    path_to_file = ospath.join(path, filename)
-    if not ospath.exists(path_to_file):
-        f = open(path_to_file, 'w')
-        f.write(entry)
-    else:
-        f = open(path_to_file, 'a')
-        f.write(entry)
-    f.close()
-    
-    ctx.logger.info("Ansible configured.")
-
-def _validate(ansible_binary):
+@operation
+def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwargs):
     """ validate that ansible is installed on the manager
     """
 
-    ctx.logger.info('Validating that {0} is installed on the manager.'
-                    .format('ansible'))
+    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
+    playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
-    command = [ansible_binary, '--version']
-    code = _run_shell_command(command)
+    command = [playbook_binary, '--version']
+    run_shell_command(command)
 
-    if code > 0:
-        ctx.logger.info('Installation was unsuccessful')
-        return False
+
+def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
+
+    if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
+        ctx.logger.info('Put {0} in {1}.'.format(ansible_conf, user_home))
     else:
-        ctx.logger.info('Installation was successful')
-        return True
+        ctx.logger.error('Ansible not configured.')
+        raise NonRecoverableError('Ansible not configured.')
 
 
-def _run_shell_command(command):
-    """Runs a shell command
+def hard_code_home(user_home = '/home/ubuntu', **kwargs):
+    """ Ansible configures a writable directory in '$HOME/.ansible/cp',mode=0700
+    Cloudify's workers can't use that variable, so we need to hard code the home.
     """
 
-    ctx.logger.info('Running shell command: {0}'.format(command))
+    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
+
+    user_home = user_home[1:]
+    home, user = user_home.split('/')
+
+    ansible_files = [joinpath(deployment_home, 'env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py'),
+                     joinpath(deployment_home, 'env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py')
+                    ]
+
+    for ansible_file in ansible_files:
+        replace_string(ansible_file, '$HOME', joinpath('/', home, user))
+    
+    ctx.logger.info('Replaced $HOME with /{0}/{1}.'.format(home, user))
+
+
+def download_resource(file, target_file):
+    """ copies 'file' from local machine and moves to
+    target_file
+    """
+
     try:
-        run = subprocess.check_call(
-            command)
-    except subprocess.CalledProcessError:
-        ctx.logger.error('Unable to run shell command: {0}'.format(command))
-        raise NonRecoverableError('Command failed: {0}'.format(command))
-    return run
+        ctx.download_resource(file, target_file)
+    except Error as e:
+        print('Error {0}'.format(e))
+        raise exceptions.NonRecoverableError(
+            'Could not get "{0}" ({1}: {2})'.format(
+                file, type(e).__name__, e))
+        return False
+
+    return True
+
+def create_directories(etc_ansible, paths):
+
+    for path in paths:
+        makeme = joinpath(etc_ansible, path)
+        try:
+            os.makedirs(makeme)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(makeme):
+                pass
+            else:
+                raise NonRecoverableError('Cannot create directory {0}, error: {1}'.format(makeme, e))
+
+def replace_string(file, old_string, new_string):
+
+    new_file = joinpath('/tmp', basename(file))
+
+    with open(new_file, 'wt') as fout:
+        with open(file, 'rt') as fin:
+            for line in fin:
+                fout.write(line.replace(old_string, new_string))
+
+    copy(new_file, file)
+    os.remove(new_file)
+
+
+def run_shell_command(command):
+    """this runs a shell command.
+    """
+    ctx.logger.info("Running shell command: {0}"
+                    .format(command))
+
+    try:
+        run = subprocess.Popen(command, stdout=subprocess.PIPE)
+        output, error = run.communicate()
+        if output:
+            ctx.logger.info('output: {0}'.format(output))
+        elif error:
+            ctx.logger.error('error: {0}'.format(error))
+            raise Exception('{0} returned {1}'.format(command, error))
+    except:
+        e = sys.exc_info()[0]
+        ctx.logger.error('command failed: {0}, exception: {1}'.format(command, e))
+        raise Exception('{0} returned {1}'.format(command, e))
