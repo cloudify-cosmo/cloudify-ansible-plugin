@@ -211,11 +211,11 @@ def run_shell_command(command):
         run = subprocess.Popen(command, stdout=subprocess.PIPE)
         output, error = run.communicate()
         if output:
-            for lines in output:
-                ctx.logger.info('lines: {0}'.format(lines))
+            ctx.logger.info('output: {0}'.format(output))
         elif error:
             ctx.logger.error('error: {0}'.format(error))
             raise Exception('{0} returned {1}'.format(command, error))
     except:
-        e = sys.exc_info()[1]
-        ctx.logger.error('error: {0}'.format(e))
+        e = sys.exc_info()[0]
+        ctx.logger.error('command failed: {0}, exception: {1}'.format(command, e))
+        raise Exception('{0} returned {1}'.format(command, e))
