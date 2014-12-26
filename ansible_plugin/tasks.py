@@ -19,16 +19,10 @@ import sys
 
 # ctx is imported and used in operations
 from cloudify import ctx
-from cloudify import exceptions
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
-
-# for ansible api
-import ansible.runner
 
 # for handling files
-from urllib2 import Request, urlopen, URLError, HTTPError
-from shutil import copy, Error
+from shutil import copy
 from os.path import basename
 from os import makedirs
 from os.path import join as joinpath
@@ -37,54 +31,52 @@ import os
 
 
 @operation
-def run_playbook(
-    host, group, inventory, agent_key,
-    local_file, user_home='/home/ubuntu',
-        **kwargs):
-    """runs a playbook, use cloudify.interfaces.lifecycle.start
+def run_playbook(agent_key, user_home='/home/ubuntu/',
+                 inventory='hosts', playbook='playbook.yml',
+                 **kwargs):
 
-    """
+    deployment_home = joinpath(user_home, '{0}{1}'
+                               .format('cloudify.', ctx.deployment.id))
+    playbook_binary = joinpath(deployment_home,
+                               'env', 'bin', 'ansible-playbook')
 
-    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
-    etc_ansible = joinpath(deployment_home, 'env', 'etc', 'ansible')
-    ansible_binary = joinpath(deployment_home, 'env', 'bin',
-                              'ansible-playbook')
+    _run_playbook(playbook_binary, agent_key, user_home, inventory, playbook)
 
-    add_host(etc_ansible, host, group, inventory)
 
-    path_to_playbook = joinpath(etc_ansible, local_file)
-    path_to_inventory = joinpath(etc_ansible, inventory)
+def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
+                  inventory='hosts', playbook='playbook.yml'):
 
-    command = [ansible_binary, '--sudo', '-i',
-               path_to_inventory, local_file,
-               '--private-key', agent_key]
+    command = [playbook_binary, '--sudo', '-i',
+               inventory, playbook, '--private-key', agent_key]
+
+    ctx.logger.info('Running playbook: {0}.'.format(playbook))
 
     run_shell_command(command)
 
 
 @operation
-def add_host(etc_ansible, host, group, inventory, **kwargs):
-    """
-        this puts a host under a group in inventory file
-        use: cloudify.interfaces.lifecycle.configure
+def add_host(host, group, inventory, **kwargs):
+
+    group = '[{0}]\n'.format(group)
+    host = '{0}\n'.format(host)
+
+    _add_host(host, group, inventory)
+
+
+def _add_host(host, group, inventory):
+    """if the group already exists in the inventory,
+    the host will be added and add_line_to_location will
+    return True. Otherwise, the group is added and the host under it
     """
 
-    group = '{0}{1}{2}'.format('[', group, ']\n')
-    host = '{0}{1}'.format(host, '\n')
-
-    if add_to_location(etc_ansible, inventory, group, host):
-        """
-            if the group already exists in the inventory,
-            the host will be added and add_line_to_location will
-            return True. Otherwise, the group is added and the host under it
-        """
-        print("Added new host {0} under {1} in {2}."
-              .format(host, group, inventory))
+    if add_to_location(os.getcwd(), inventory, group, host):
+        ctx.logger.info('Added new host {0} under {1} in {2}.'
+                        .format(host, group, inventory))
     else:
         new_line = '{0}{1}'.format(group, host)
-        write_to_file(etc_ansible, inventory, new_line)
-        print("""Added new host {0} under {1} in new file {2}."""
-              .format(host, group, inventory))
+        write_to_file(os.getcwd(), inventory, new_line)
+        ctx.logger.info('Added new host {0} under {1} in {2}.'
+                        .format(host, group, inventory))
 
 
 def add_to_location(path, filename, search_string, string):
@@ -97,7 +89,6 @@ def add_to_location(path, filename, search_string, string):
     old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
-
         try:
             with open(old_file, 'r') as lines:
                 for line in lines:
@@ -119,27 +110,6 @@ def add_to_location(path, filename, search_string, string):
         return success
     else:
         return success
-
-
-def replace_string(file, old_string, new_string):
-
-    new_file = joinpath('/tmp', basename(file))
-
-    try:
-        with open(new_file, 'wt') as fout:
-            try:
-                with open(file, 'rt') as fin:
-                    for line in fin:
-                        fout.write(line.replace(old_string, new_string))
-            except IOError:
-                raise NonRecoverableError('Unabled to open file {0}.'
-                                          .format(file))
-    except IOError:
-        raise NonRecoverableError('Unabled to open temporary file {0}.'
-                                  .format(new_file))
-
-    copy(new_file, file)
-    os.remove(new_file)
 
 
 def write_to_file(path, filename, entry):
@@ -182,5 +152,6 @@ def run_shell_command(command):
             raise Exception('{0} returned {1}'.format(command, error))
     except:
         e = sys.exc_info()[0]
-        ctx.logger.error('command failed: {0}, exception: {1}'.format(command, e))
+        ctx.logger.error('command failed: {0}, exception: {1}'
+                         .format(command, e))
         raise Exception('{0} returned {1}'.format(command, e))

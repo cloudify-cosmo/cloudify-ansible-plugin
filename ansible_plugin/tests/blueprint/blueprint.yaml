@@ -7,7 +7,7 @@ imports:
 plugins:
   cloudify-ansible-plugin:
     executor: central_deployment_agent
-    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/New-Tasks.zip
+    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/newtask.zip
 
 inputs:
 
@@ -21,15 +21,7 @@ inputs:
     type: string
   test_inventory_name:
     type: string
-  where_to_get_the_playbook:
-    type: string
-  get_module_name:
-    type: string
-  get_module_args:
-    type: string
-  ansible_run_pattern:
-    type: string
-  ansible_forks:
+  playbook_file:
     type: string
   agent_key_path:
     type: string
@@ -41,11 +33,91 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: cloudify-ansible-plugin.ansible_plugin.configure.make_directories
-        preconfigure:
-          implementation: cloudify-ansible-plugin.ansible_plugin.configure.put_ansible_conf
+          implementation: cloudify-ansible-plugin.ansible_plugin.configure.create
         configure:
           implementation: cloudify-ansible-plugin.ansible_plugin.configure.validate
-        postconfigure:
-          implementation: cloudify-ansible-plugin.ansible_plugin.configure.hard_code_home
 
+  webserver_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      resource_id: webserver-secgroup
+      security_group:
+        description: Security group for webservers
+      rules:
+        - port: 0
+          remote_ip_prefix: 0.0.0.0/0
+
+  virtual_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+
+  new_host:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      install_agent: false
+      server:
+        image_name: { get_input: image_name }
+        flavor_name: { get_input: flavor_name }
+    relationships:
+      - type: cloudify.openstack.server_connected_to_floating_ip
+        target: virtual_ip
+      - type: cloudify.openstack.server_connected_to_security_group
+        target: webserver_security_group
+
+  add_host:
+    type: cloudify.ansible.host
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host
+          inputs:
+            host: { get_attribute : [ add_host, address ] }
+            group: { get_input : test_group_name }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: virtual_ip
+
+  apache_playbook:
+    type: cloudify.ansible.playbook
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
+          inputs:
+            host: { get_attribute : [add_host, address] }
+            group: { get_input : test_group_name }
+            inventory: { get_input : test_inventory_name }
+            local_file: { get_input : playbook_file } # playbook_url or local_file to a file in the local directory
+            agent_key: { get_input : agent_key_path }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: ansible_configuration
+      - type: cloudify.relationships.depends_on
+        target: add_host
+
+node_types:
+
+  cloudify.ansible.host:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host
+          inputs:
+            host:
+              default: ''
+            group:
+              default: ''
+
+  cloudify.ansible.playbook:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
+          inputs:
+            inventory:
+              default: ''
+            local_file:
+              default: ''
+            agent_key:
+              default: ''
