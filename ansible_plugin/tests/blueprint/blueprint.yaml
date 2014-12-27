@@ -68,12 +68,14 @@ node_templates:
         create:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host
           inputs:
-            host: { get_attribute : [ add_host, address ] }
+            host: { get_attribute : [ new_host, ip ] }
             group: { get_input : test_group_name }
             inventory: { get_input : test_inventory_name }
     relationships:
       - type: cloudify.relationships.depends_on
         target: virtual_ip
+      - type: cloudify.relationships.depends_on
+        target: new_host
 
   apache_playbook:
     type: cloudify.ansible.playbook
@@ -90,6 +92,8 @@ node_templates:
         target: ansible_configuration
       - type: cloudify.relationships.depends_on
         target: new_host
+      - type: cloudify.relationships.depends_on
+        target: add_host
 
 node_types:
 
