@@ -3,6 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_0
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.1/types.yaml
   - http://www.getcloudify.org/spec/openstack-plugin/1.1/plugin.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.1/plugin.yaml
 
 plugins:
   cloudify-ansible-plugin:
@@ -55,11 +56,21 @@ node_templates:
       server:
         image_name: { get_input: image_name }
         flavor_name: { get_input: flavor_name }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+          start:
+            implementation: fabric.fabric_plugin.tasks.run_commands
+            inputs:
+              commands:
+                - chmod 600 /home/ubuntu/.ssh/agent_key.pem
     relationships:
       - type: cloudify.openstack.server_connected_to_floating_ip
         target: virtual_ip
       - type: cloudify.openstack.server_connected_to_security_group
         target: webserver_security_group
+
+  manager:
+    type: cloudify.nodes.WebServer
 
   add_host:
     type: cloudify.ansible.host
