@@ -87,7 +87,7 @@ def add_to_location(path, filename, search_string, string):
     """
 
     success = False
-    new_file = joinpath('/tmp', filename)
+    new_file = '/tmp/inventory'
     old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
