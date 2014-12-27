@@ -27,6 +27,7 @@ from os import makedirs
 from os.path import join as joinpath
 from os.path import exists as pathexists
 import os
+import time
 
 
 @operation
@@ -55,7 +56,7 @@ def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
                '--private-key', agent_key, '--timeout=60']
 
     ctx.logger.info('Running playbook: {0}.'.format(playbook))
-
+    time.sleep(30)
     run_shell_command(command)
 
 
