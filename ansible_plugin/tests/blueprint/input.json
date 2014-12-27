@@ -4,9 +4,5 @@
   "test_group_name" : "test_group",
   "test_inventory_name" : "test_inventory",
   "playbook_file" : "playbook.yml",
-  "get_module_name" : "command",
-  "get_module_args" : "/usr/bin/uptime",
-  "ansible_run_pattern" : "127.0.0.1",
-  "ansible_forks" : "5",
   "agent_key_path" : "/home/ubuntu/.ssh/agent_key.pem"
 }
