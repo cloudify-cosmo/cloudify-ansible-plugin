@@ -54,7 +54,7 @@ def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
 
 
 @operation
-def add_host(host, group, inventory, **kwargs):
+def add_host(host, group='default', inventory='hosts', **kwargs):
 
     group = '[{0}]\n'.format(group)
     host = '{0}\n'.format(host)
