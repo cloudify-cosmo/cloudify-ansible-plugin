@@ -44,7 +44,7 @@ def run_playbook(agent_key, user_home='/home/ubuntu/',
 def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
                   inventory='hosts', playbook='playbook.yml'):
 
-    cwd = joinpath('opt', 'manager',
+    cwd = joinpath('/opt', 'manager',
                    'resources', 'blueprints',
                    ctx.blueprint.id)
 
@@ -64,7 +64,7 @@ def add_host(host, group='default', inventory='hosts', **kwargs):
     return True. Otherwise, the group is added and the host under it
     """
 
-    cwd = joinpath('opt', 'manager',
+    cwd = joinpath('/opt', 'manager',
                    'resources', 'blueprints',
                    ctx.blueprint.id)
 
