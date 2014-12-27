@@ -26,7 +26,6 @@ from shutil import copy
 from os import makedirs
 from os.path import join as joinpath
 from os.path import exists as pathexists
-import os
 
 
 @operation
@@ -60,15 +59,19 @@ def add_host(host, group='default', inventory='hosts', **kwargs):
     return True. Otherwise, the group is added and the host under it
     """
 
+    path = joinpath('opt', 'manager',
+                    'resources', 'blueprints',
+                    ctx.deployment.blueprint_id)
+
     group = '[{0}]\n'.format(group)
     host = '{0}\n'.format(host)
 
-    if add_to_location(os.getcwd(), inventory, group, host):
+    if add_to_location(path, inventory, group, host):
         ctx.logger.info('Added new host {0} under {1} in {2}.'
                         .format(host, group, inventory))
     else:
         new_line = '{0}{1}'.format(group, host)
-        write_to_file(os.getcwd(), inventory, new_line)
+        write_to_file(path, inventory, new_line)
         ctx.logger.info('Added new host {0} under {1} in {2}.'
                         .format(host, group, inventory))
 
@@ -79,7 +82,7 @@ def add_to_location(path, filename, search_string, string):
     """
 
     success = False
-    new_file = joinpath('/tmp', 'add_to_location')
+    new_file = joinpath('/tmp', filename)
     old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
