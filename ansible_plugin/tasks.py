@@ -46,7 +46,7 @@ def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
 
     cwd = joinpath('opt', 'manager',
                    'resources', 'blueprints',
-                   ctx.deployment.blueprint_id)
+                   ctx.blueprint.id)
 
     command = [playbook_binary, '--sudo', '-i',
                joinpath(cwd, inventory), joinpath(cwd, playbook),
@@ -66,7 +66,7 @@ def add_host(host, group='default', inventory='hosts', **kwargs):
 
     cwd = joinpath('opt', 'manager',
                    'resources', 'blueprints',
-                   ctx.deployment.blueprint_id)
+                   ctx.blueprint.id)
 
     group = '[{0}]\n'.format(group)
     host = '{0}\n'.format(host)
