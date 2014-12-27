@@ -52,7 +52,7 @@ def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
 
     command = [playbook_binary, '--sudo', '-i',
                joinpath(cwd, inventory), joinpath(cwd, playbook),
-               '--private-key', agent_key]
+               '--private-key', agent_key, '--timeout=60']
 
     ctx.logger.info('Running playbook: {0}.'.format(playbook))
 
