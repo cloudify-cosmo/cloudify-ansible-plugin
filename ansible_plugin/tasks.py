@@ -23,7 +23,6 @@ from cloudify.decorators import operation
 
 # for handling files
 from shutil import copy
-from os.path import basename
 from os import makedirs
 from os.path import join as joinpath
 from os.path import exists as pathexists
@@ -85,7 +84,7 @@ def add_to_location(path, filename, search_string, string):
     """
 
     success = False
-    new_file = joinpath('/tmp', basename(filename))
+    new_file = joinpath('/tmp', filename)
     old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
