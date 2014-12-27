@@ -16,12 +16,11 @@
 # for running shell commands
 import sys
 import os
-import time
 from os.path import join as joinpath
 from os.path import basename
 import errno
 import subprocess
-from shutil import copy 
+from shutil import copy
 
 # ctx is imported and used in operations
 from cloudify import ctx
@@ -51,54 +50,63 @@ DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE = [
 
 
 @operation
-def create(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
+def create(user_home='/home/ubuntu', ansible_conf='ansible.cfg', **kwargs):
 
     deployment_home = joinpath(user_home, 'cloudify.', ctx.deployment.id)
     etc_ansible = joinpath(deployment_home, 'env', 'etc', 'ansible')
 
-    create_directories(etc_ansible, DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE)
+    create_directories(etc_ansible,
+                       DEFAULT_ANSIBLE_BEST_PRACTICES_DIRECTORY_TREE)
     put_ansible_conf(user_home, ansible_conf)
     hard_code_home(user_home)
 
 
 @operation
-def validate(user_home = '/home/ubuntu', binary_name = 'ansible-playbook', **kwargs):
+def validate(user_home='/home/ubuntu',
+             binary_name='ansible-playbook',
+             **kwargs):
     """ validate that ansible is installed on the manager
     """
 
-    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
+    deployment_home = joinpath(user_home, '{0}{1}'
+                               .format('cloudify.', ctx.deployment.id))
     playbook_binary = joinpath(deployment_home, 'env', 'bin', binary_name)
 
     command = [playbook_binary, '--version']
     run_shell_command(command)
 
 
-def put_ansible_conf(user_home = '/home/ubuntu', ansible_conf = 'ansible.cfg', **kwargs):
+def put_ansible_conf(user_home='/home/ubuntu',
+                     ansible_conf='ansible.cfg',
+                     **kwargs):
 
-    if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg') ):
+    if download_resource(ansible_conf, joinpath(user_home, '.ansible.cfg')):
         ctx.logger.info('Put {0} in {1}.'.format(ansible_conf, user_home))
     else:
         ctx.logger.error('Ansible not configured.')
         raise NonRecoverableError('Ansible not configured.')
 
 
-def hard_code_home(user_home = '/home/ubuntu', **kwargs):
-    """ Ansible configures a writable directory in '$HOME/.ansible/cp',mode=0700
-    Cloudify's workers can't use that variable, so we need to hard code the home.
+def hard_code_home(user_home='/home/ubuntu', **kwargs):
+    """ Ansible configures a writable directory
+    in '$HOME/.ansible/cp',mode=0700
+    Cloudify's workers can't use that variable,
+    so we need to hard code the home.
     """
 
-    deployment_home = joinpath(user_home, '{0}{1}'.format('cloudify.', ctx.deployment.id))
+    deployment_home = joinpath(user_home, '{0}{1}'
+                               .format('cloudify.', ctx.deployment.id))
 
     user_home = user_home[1:]
     home, user = user_home.split('/')
 
     ansible_files = [joinpath(deployment_home, 'env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py'),
                      joinpath(deployment_home, 'env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py')
-                    ]
+                     ]
 
     for ansible_file in ansible_files:
         replace_string(ansible_file, '$HOME', joinpath('/', home, user))
-    
+
     ctx.logger.info('Replaced $HOME with /{0}/{1}.'.format(home, user))
 
 
@@ -109,14 +117,15 @@ def download_resource(file, target_file):
 
     try:
         ctx.download_resource(file, target_file)
-    except Error as e:
-        print('Error {0}'.format(e))
-        raise exceptions.NonRecoverableError(
+    except:
+        e = sys.exc_info()[0]
+        raise NonRecoverableError(
             'Could not get "{0}" ({1}: {2})'.format(
                 file, type(e).__name__, e))
         return False
 
     return True
+
 
 def create_directories(etc_ansible, paths):
 
@@ -128,7 +137,10 @@ def create_directories(etc_ansible, paths):
             if e.errno == errno.EEXIST and os.path.isdir(makeme):
                 pass
             else:
-                raise NonRecoverableError('Cannot create directory {0}, error: {1}'.format(makeme, e))
+                raise NonRecoverableError(
+                    'Cannot create directory {0}, error: {1}'
+                    .format(makeme, e))
+
 
 def replace_string(file, old_string, new_string):
 
@@ -159,5 +171,6 @@ def run_shell_command(command):
             raise Exception('{0} returned {1}'.format(command, error))
     except:
         e = sys.exc_info()[0]
-        ctx.logger.error('command failed: {0}, exception: {1}'.format(command, e))
+        ctx.logger.error('command failed: {0}, exception: {1}'
+                         .format(command, e))
         raise Exception('{0} returned {1}'.format(command, e))

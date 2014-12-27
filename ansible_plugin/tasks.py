@@ -15,207 +15,85 @@
 
 # for running shell commands
 import subprocess
+import sys
 
 # ctx is imported and used in operations
 from cloudify import ctx
-from cloudify import exceptions
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
-
-# for ansible api
-import ansible.runner
 
 # for handling files
-from urllib2 import Request, urlopen, URLError, HTTPError
-from shutil import copy, Error
-import os.path as ospath
-from os.path import basename
+from shutil import copy
 from os import makedirs
-
-
-def _run_shell_command_call(command):
-    """this runs a shell command.
-    """
-
-    ctx.logger.info("Running shell command: {0}"
-                    .format(command))
-    try:
-        run = subprocess.check_call(command)
-    except subprocess.CalledProcessError:
-        ctx.logger.error("Unable to run shell command: {0}"
-                         .format(command))
-        raise NonRecoverableError("Command failed: {0}"
-                                  .format(command))
-    return run
-
-
-def _run_shell_command_popen(command):
-    """this runs a shell command.
-    """
-
-    ctx.logger.info("Running shell command: {0}"
-                    .format(command))
-    run = subprocess.Popen(command, stdout=subprocess.PIPE)
-    output,error = run.communicate()
-    if output:
-        ctx.logger.info('output: {0}'.format(output))
-    elif error:
-        ctx.logger.error('error: {0}'.format(error))
-    else:
-        ctx.logger.error('unknown error')
+from os.path import join as joinpath
+from os.path import exists as pathexists
+import os
+import time
 
 
 @operation
-def run_playbook(
-    host, group, inventory, agent_key,
-    user_home = '/home/ubuntu',
-        **kwargs):
-    """runs a playbook
-    """
-    
-    deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
-    ansible_home = deployment_directory + '/env/etc/ansible'
-    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
+def run_playbook(agent_key, user_home='/home/ubuntu/',
+                 inventory='hosts', playbook='playbook.yml',
+                 **kwargs):
 
-    _remove_environment_var(deployment_directory)
-    add_host(ansible_home, host, group, inventory)
+    deployment_home = joinpath(user_home, '{0}{1}'
+                               .format('cloudify.', ctx.deployment.id))
+    playbook_binary = joinpath(deployment_home,
+                               'env', 'bin', 'ansible-playbook')
 
-    if 'local_file' in kwargs:
-        playbook = kwargs['local_file']
-        get_playbook(ansible_home, local_file=playbook)
-    elif 'playbook_url' in kwargs:
-        playbook = kwargs['playbook_url']
-        get_playbook(ansible_home, playbook_url=playbook)
-    else:
-        playbook = 'playbook.yml'
-        get_playbook(ansible_home, local_file=playbook)
-        
-    path_to_playbook = ansible_home + '/' + playbook
-    path_to_inventory = ansible_home + '/' + inventory
+    os.chmod(agent_key, 0600)
+    _run_playbook(playbook_binary, agent_key, user_home, inventory, playbook)
 
-    command = [ansible_binary]
-    command.append('--sudo')
-    command.append('-i')
-    command.append(path_to_inventory)
-    command.append(path_to_playbook)
-    command.append('--private-key')
-    command.append(agent_key)
 
-    ctx.logger.info("Running Playbook: [Shell Command]: {0}"
-                    .format(command))
+def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
+                  inventory='hosts', playbook='playbook.yml'):
 
-    _run_shell_command_popen(command)
+    cwd = joinpath('/opt', 'manager',
+                   'resources', 'blueprints',
+                   ctx.blueprint.id)
+
+    command = [playbook_binary, '--sudo', '-i',
+               joinpath(cwd, inventory), joinpath(cwd, playbook),
+               '--private-key', agent_key, '--timeout=60']
+
+    ctx.logger.info('Running playbook: {0}.'.format(playbook))
+    time.sleep(30)
+    run_shell_command(command)
 
 
 @operation
-def get_playbook(ansible_home, **kwargs):
-    """adds a playbook file in .../etc/ansible with content {entry}
+def add_host(host, group='default', inventory='hosts', **kwargs):
+    """if the group already exists in the inventory,
+    the host will be added and add_line_to_location will
+    return True. Otherwise, the group is added and the host under it
     """
 
-    if 'playbook_url' in kwargs:
-        url = kwargs['playbook_url']
-        ctx.logger.debug('getting Playbook file...')
-        target_file = ansible_home + '/' + basename(url)
-        status = _download_file(url, target_file)
-        if status == 0:
-            ctx.logger.info(
-                "Downloaded blueprint from url: {0}"
-                .format(url))
-        else:
-            ctx.logger.error(
-                "Unable to download blueprint from url: {0}"
-                .format(url))
-    elif 'local_file' in kwargs:
-        file = kwargs['local_file']
-        target_file = ansible_home + '/' + file
-        status = _copy_file(file, target_file)
+    cwd = joinpath('/opt', 'manager',
+                   'resources', 'blueprints',
+                   ctx.blueprint.id)
+
+    group = '[{0}]\n'.format(group)
+    host = '{0}\n'.format(host)
+
+    if add_to_location(cwd, inventory, group, host):
+        ctx.logger.info('Added new host {0} under {1} in {2}.'
+                        .format(host, group, inventory))
     else:
-        ctx.logger.error("No valid file path or url provided.")
+        new_line = '{0}{1}'.format(group, host)
+        write_to_file(cwd, inventory, new_line)
+        ctx.logger.info('Added new host {0} under {1} in {2}.'
+                        .format(host, group, inventory))
 
 
-def _download_file(url, target_file):
-    """ downloads a file from a url and places it in the requested directory
-    """
-
-    req = Request(url)
-
-    try:
-
-        file = urlopen(req)
-        with open(target_file, 'wb') as local_file:
-            data = file.read()
-            local_file.write(data)
-            local_file.close()
-
-    except HTTPError, e:
-        print('HTTPError {0} {1}'.format(e.code, url))
-        raise exceptions.NonRecoverableError(
-            'Could not get "{0}" ({1}: {2})'.format(
-                url, type(e).__name__, e))
-        return False
-
-    except URLError, e:
-        print('URLError {0} {1}'.format(e.reason, url))
-        raise exceptions.NonRecoverableError(
-            'Could not get "{0}" ({1}: {2})'.format(
-                url, type(e).__name__, e))
-        return False
-
-    return True
-
-
-def _copy_file(file, target_file):
-    """ copies 'file' from local machine and moves to
-        target_file
-    """
-
-    try:
-        ctx.download_resource(file, target_file)
-
-    except Error as e:
-        print('Error {0}'.format(e))
-        raise exceptions.NonRecoverableError(
-            'Could not get "{0}" ({1}: {2})'.format(
-                file, type(e).__name__, e))
-        return False
-
-    return True
-
-@operation
-def add_host(ansible_home, host, group, inventory, **kwargs):
-    """
-        this puts a host under a group in inventory file
-    """
-
-    group = '[' + group + ']\n'
-    host = host + '\n'
-    
-    if _add_to_location(ansible_home, inventory, group, host):
-        """
-            if the group already exists in the inventory,
-            the host will be added and add_line_to_location will
-            return True. Otherwise, the group is added and the host under it
-        """
-        print("Added new host {0} under {1} in {2}."
-              .format(host, group, inventory))
-    else:
-        new_line = group + host
-        _write_to_file(ansible_home, inventory, new_line)
-        print("""Added new host {0} under {1} in new file {2}."""
-              .format(host, group, inventory))
-
-
-def _add_to_location(path, filename, search_string, string):
+def add_to_location(path, filename, search_string, string):
     """ Find search_string in file and write string directrly
         below it.
     """
 
     success = False
-    new_file = ospath.join('/tmp', filename + ".temp")
-    old_file = ospath.join(path, filename)
+    new_file = '/tmp/inventory'
+    old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
-
         try:
             with open(old_file, 'r') as lines:
                 for line in lines:
@@ -239,87 +117,47 @@ def _add_to_location(path, filename, search_string, string):
         return success
 
 
-def _write_to_file(path, filename, entry):
-    """ writes a entry to a file
-    """
-    if not ospath.exists(path):
+def write_to_file(path, filename, entry):
+
+    if not pathexists(path):
         makedirs(path)
-    path_to_file = ospath.join(path, filename)
-    if not ospath.exists(path_to_file):
-        f = open(path_to_file, 'w')
-        f.write(entry)
+
+    path_to_file = joinpath(path, filename)
+
+    if not pathexists(path_to_file):
+        try:
+            f = open(path_to_file, 'w')
+            f.write(entry)
+            f.close()
+        except IOError as e:
+            ctx.logger.error('Can\'t open file {0} for writing: {1}'
+                             .format(path_to_file, e))
     else:
-        f = open(path_to_file, 'a')
-        f.write(entry)
-    f.close()
+        try:
+            f = open(path_to_file, 'a')
+            f.write(entry)
+            f.close()
+        except IOError as e:
+            ctx.logger.error('Can\'t open file {0} for writing: {1}'
+                             .format(path_to_file, e))
 
 
-def _remove_environment_var(deployment_directory):
-
-    changeme = [deployment_directory + '/env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py',
-             deployment_directory + '/env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py']
-    
-    for changemefile in changeme:
-        command = ['sed','-i', 's/\$HOME/\\/home\\/ubuntu/g', changemefile]
-        _run_shell_command_call(command)
-
-@operation
-def run_ansible(**kwargs):
-    """ Makes an API call to Ansible Runner.
-        For a list of possible arguments, see:
-        https://github.com/ansible/ansible/
-        blob/devel/lib/ansible/runner/__init__.py
+def run_shell_command(command):
+    """this runs a shell command.
     """
-    ctx.logger.info("running ansible: ")
-    del kwargs['ctx']
-    runner = ansible.runner.Runner(**kwargs)
-    results = runner.run()
-    _log_results(results)
-
-
-def _log_results(results):
-    for (hostname, result) in results['contacted'].items():
-        if not 'failed' in result:
-            ctx.logger.info('{0} >>>> {1}'.format(hostname, result))
-        elif 'failed' in result:
-            ctx.logger.error('{0} >>>> {1}'.format(hostname, result))
-    for (hostname, result) in results['dark'].items():
-        ctx.logger.error('{0} >>>>> {1}'.format(hostname, result))
-
-
-@operation
-def run_playbook_only(
-    inventory, agent_key,
-    user_home = '/home/ubuntu',
-    **kwargs):
-    """runs a playbook
-    """
-    
-    deployment_directory = user_home + '/cloudify.' + ctx.deployment.id
-    ansible_home = deployment_directory + '/env/etc/ansible'
-
-    _remove_environment_var(deployment_directory)
-
-    if 'local_file' in kwargs:
-        playbook = kwargs['local_file']
-    elif 'playbook_url' in kwargs:
-        playbook = kwargs['playbook_url']
-    else:
-        playbook = 'playbook.yml'
-        
-    ansible_binary = deployment_directory + '/env/bin/ansible-playbook'
-    path_to_playbook = ansible_home + '/' + playbook
-    path_to_inventory = ansible_home + '/' + inventory
-
-    command = [ansible_binary]
-    command.append('--sudo')
-    command.append('-i')
-    command.append(path_to_inventory)
-    command.append(path_to_playbook)
-    command.append('--private-key')
-    command.append(agent_key)
-
-    ctx.logger.info("Running Playbook: [Shell Command]: {0}"
+    ctx.logger.info('Running shell command: {0}'
                     .format(command))
 
-    _run_shell_command_popen(command)
+    try:
+        run = subprocess.Popen(command, stdout=subprocess.PIPE)
+        output, error = run.communicate()
+        if output:
+            ctx.logger.info('output: {0}'.format(output))
+        elif error:
+            ctx.logger.error('error: {0}'.format(error))
+            raise Exception('{0} returned {1}'.format(command, error))
+    except:
+        e = sys.exc_info()[0]
+        ctx.logger.error('command failed: {0}, exception: {1}'
+                         .format(command, e))
+        raise Exception('{0} returned {1}'.format(command, e))

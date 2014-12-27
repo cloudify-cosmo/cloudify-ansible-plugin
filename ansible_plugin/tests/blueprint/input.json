@@ -1,13 +1,8 @@
 {
-  "agent_user" : "ubuntu",
   "image_name" : "Ubuntu Server 12.04.5 LTS (amd64 20140927) - Partner Image",
   "flavor_name" : "standard.medium",
   "test_group_name" : "test_group",
-  "test_inventory_name" : "test_inventory",
-  "where_to_get_the_playbook" : "playbook.yml",
-  "get_module_name" : "command",
-  "get_module_args" : "/usr/bin/uptime",
-  "ansible_run_pattern" : "127.0.0.1",
-  "ansible_forks" : "5",
+  "test_inventory_name" : "staging",
+  "playbook_file" : "playbook.yml",
   "agent_key_path" : "/home/ubuntu/.ssh/agent_key.pem"
 }
