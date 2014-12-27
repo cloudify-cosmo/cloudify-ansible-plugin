@@ -100,12 +100,8 @@ def hard_code_home(user_home='/home/ubuntu', **kwargs):
     user_home = user_home[1:]
     home, user = user_home.split('/')
 
-    ansible_files = [joinpath(deployment_home, """env/lib/python2.7/
-                     site-packages/ansible/runner/connection_plugins/
-                     ssh.py"""),
-                     joinpath(deployment_home, """env/local/lib/python2.7/
-                     site-packages/ansible/runner/connection_plugins/
-                     ssh.py""")
+    ansible_files = [joinpath(deployment_home, 'env/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py'),
+                     joinpath(deployment_home, 'env/local/lib/python2.7/site-packages/ansible/runner/connection_plugins/ssh.py')
                      ]
 
     for ansible_file in ansible_files:
