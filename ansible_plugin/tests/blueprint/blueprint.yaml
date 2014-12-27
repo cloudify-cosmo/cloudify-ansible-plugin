@@ -104,6 +104,8 @@ node_types:
               default: ''
             group:
               default: ''
+            inventory:
+              default: ''
 
   cloudify.ansible.playbook:
     derived_from: cloudify.nodes.ApplicationModule
