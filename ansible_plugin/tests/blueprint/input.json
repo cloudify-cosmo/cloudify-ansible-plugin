@@ -2,7 +2,7 @@
   "image_name" : "Ubuntu Server 12.04.5 LTS (amd64 20140927) - Partner Image",
   "flavor_name" : "standard.medium",
   "test_group_name" : "test_group",
-  "test_inventory_name" : "test_inventory",
+  "test_inventory_name" : "staging",
   "playbook_file" : "playbook.yml",
   "agent_key_path" : "/home/ubuntu/.ssh/agent_key.pem"
 }
