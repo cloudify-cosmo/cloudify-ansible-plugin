@@ -55,18 +55,13 @@ def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
 
 @operation
 def add_host(host, group='default', inventory='hosts', **kwargs):
-
-    group = '[{0}]\n'.format(group)
-    host = '{0}\n'.format(host)
-
-    _add_host(host, group, inventory)
-
-
-def _add_host(host, group, inventory):
     """if the group already exists in the inventory,
     the host will be added and add_line_to_location will
     return True. Otherwise, the group is added and the host under it
     """
+
+    group = '[{0}]\n'.format(group)
+    host = '{0}\n'.format(host)
 
     if add_to_location(os.getcwd(), inventory, group, host):
         ctx.logger.info('Added new host {0} under {1} in {2}.'
@@ -84,7 +79,7 @@ def add_to_location(path, filename, search_string, string):
     """
 
     success = False
-    new_file = joinpath('/tmp', filename)
+    new_file = joinpath('/tmp', 'add_to_location')
     old_file = joinpath(path, filename)
 
     with open(new_file, 'w') as outfile:
