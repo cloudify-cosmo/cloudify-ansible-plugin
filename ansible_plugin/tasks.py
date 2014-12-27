@@ -26,6 +26,7 @@ from shutil import copy
 from os import makedirs
 from os.path import join as joinpath
 from os.path import exists as pathexists
+import os
 
 
 @operation
@@ -38,6 +39,7 @@ def run_playbook(agent_key, user_home='/home/ubuntu/',
     playbook_binary = joinpath(deployment_home,
                                'env', 'bin', 'ansible-playbook')
 
+    os.chmod(agent_key, 0600)
     _run_playbook(playbook_binary, agent_key, user_home, inventory, playbook)
 
 
