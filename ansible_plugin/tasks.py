@@ -44,8 +44,13 @@ def run_playbook(agent_key, user_home='/home/ubuntu/',
 def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
                   inventory='hosts', playbook='playbook.yml'):
 
+    cwd = joinpath('opt', 'manager',
+                   'resources', 'blueprints',
+                   ctx.deployment.blueprint_id)
+
     command = [playbook_binary, '--sudo', '-i',
-               inventory, playbook, '--private-key', agent_key]
+               joinpath(cwd, inventory), joinpath(cwd, playbook),
+               '--private-key', agent_key]
 
     ctx.logger.info('Running playbook: {0}.'.format(playbook))
 
@@ -59,19 +64,19 @@ def add_host(host, group='default', inventory='hosts', **kwargs):
     return True. Otherwise, the group is added and the host under it
     """
 
-    path = joinpath('opt', 'manager',
-                    'resources', 'blueprints',
-                    ctx.deployment.blueprint_id)
+    cwd = joinpath('opt', 'manager',
+                   'resources', 'blueprints',
+                   ctx.deployment.blueprint_id)
 
     group = '[{0}]\n'.format(group)
     host = '{0}\n'.format(host)
 
-    if add_to_location(path, inventory, group, host):
+    if add_to_location(cwd, inventory, group, host):
         ctx.logger.info('Added new host {0} under {1} in {2}.'
                         .format(host, group, inventory))
     else:
         new_line = '{0}{1}'.format(group, host)
-        write_to_file(path, inventory, new_line)
+        write_to_file(cwd, inventory, new_line)
         ctx.logger.info('Added new host {0} under {1} in {2}.'
                         .format(host, group, inventory))
 
