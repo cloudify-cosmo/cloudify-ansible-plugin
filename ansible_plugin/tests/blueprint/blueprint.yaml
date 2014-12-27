@@ -15,8 +15,6 @@ inputs:
     type: string
   flavor_name:
     type: string
-  test_host_name:
-    type: string
   test_group_name:
     type: string
   test_inventory_name:
