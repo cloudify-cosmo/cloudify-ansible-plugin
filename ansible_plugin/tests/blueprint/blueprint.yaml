@@ -89,7 +89,7 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: ansible_configuration
       - type: cloudify.relationships.depends_on
-        target: add_host
+        target: new_host
 
 node_types:
 
