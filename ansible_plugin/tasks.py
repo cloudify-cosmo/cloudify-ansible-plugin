@@ -117,6 +117,7 @@ def write_to_file(path, filename, entry):
         try:
             f = open(path_to_file, 'w')
             f.write(entry)
+            f.close()
         except IOError as e:
             ctx.logger.error('Can\'t open file {0} for writing: {1}'
                              .format(path_to_file, e))
@@ -124,10 +125,10 @@ def write_to_file(path, filename, entry):
         try:
             f = open(path_to_file, 'a')
             f.write(entry)
+            f.close()
         except IOError as e:
             ctx.logger.error('Can\'t open file {0} for writing: {1}'
                              .format(path_to_file, e))
-        f.close()
 
 
 def run_shell_command(command):
