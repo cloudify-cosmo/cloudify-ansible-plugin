@@ -1,0 +1,5 @@
+- hosts: all
+  tasks:
+  - name: run this command and ignore the result
+    shell: /bin/true
+    ignore_errors: True
