@@ -2,7 +2,6 @@ tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.1/types.yaml
-  - ../../../plugin.yaml
 
 plugins:
   cloudify-ansible-plugin:
@@ -46,3 +45,33 @@ node_templates:
             inventory: { get_input: test_inventory}
             local_file: { get_input: test_playbook }
             agent_key: { get_input: test_key }
+
+node_types:
+
+  cloudify.ansible.host:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host
+          inputs:
+            host:
+              default: ''
+            group:
+              default: ''
+            inventory:
+              default: ''
+
+  cloudify.ansible.playbook:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
+          inputs:
+            inventory:
+              default: ''
+            local_file:
+              default: ''
+            agent_key:
+              default: ''
