@@ -88,7 +88,7 @@ node_templates:
           implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
           inputs:
             inventory: { get_input : test_inventory_name }
-            local_file: { get_input : playbook_file } # playbook_url or local_file to a file in the local directory
+            local_file: { get_input : playbook_file } 
             agent_key: { get_input : agent_key_path }
     relationships:
       - type: cloudify.relationships.depends_on

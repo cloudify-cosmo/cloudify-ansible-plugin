@@ -13,6 +13,6 @@ Recommended:
 What it does:
  - Installs and configures Ansible locally in the deploynent
  - Adds a host (ip or hostname) to a group. Creates a group if one does not already exist.
- - Uploads an Ansible Playbook to the manager (provided in the cwd during blueprint upload, or in a URL)
+ - Uploads an Ansible Playbook to the manager (provided in the blueprint directory.)
  - Runs an Ansible Playbook
 
