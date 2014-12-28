@@ -18,36 +18,20 @@ import os
 import unittest
 
 from cloudify.workflows import local
-from cloudify.mocks import MockCloudifyContext
 
 class TestPlugin(unittest.TestCase):
 
     def setUp(self):
 
-        ctx = MockCloudifyContext(
-            blueprint_id='test_plugin',
-            deployment_id='test_plugin_deployment'
-        )
-
         # build blueprint path
         blueprint_path = os.path.join(os.path.dirname(__file__),
-                                      'blueprint', 'test_plugin.yaml')
-
-        # inject input from test
-        inputs = {
-            "test_host": "localhost",
-            "test_group" : "default",
-            "test_inventory" : "hosts",
-            "test_playbook": "test_playbook.yml",
-            "test_key": "~/.ssh/id_rsa"
-        }
+                                      'blueprint', 'test_configure.yaml')
 
         # setup local workflow execution environment
         self.env = local.init_env(blueprint_path,
-                                  name=self.test_plugin,
-                                  inputs=inputs)
+                                  name=self._testMethodName)
 
-    def test_plugin(self):
+    def test_configure(self):
 
         # execute install workflow
         self.env.execute('install', task_retries=0)
