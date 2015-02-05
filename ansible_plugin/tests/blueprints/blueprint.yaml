@@ -13,7 +13,7 @@ inputs:
   flavor:
     type: string
 
-  path_to_key:
+  key_name:
     type: string
 
   playbook_file:
@@ -53,7 +53,7 @@ node_templates:
         create:
           implementation: ansible.ansible_plugin.tasks.run_playbook
           inputs:
-            keypair: { get_input: path_to_key }
+            keypair: { get_input: key_name }
             playbook: { get_input: playbook_file }
             private_ip_address: { get_attribute: [ ansible_http_server, ip ] }
     relationships:
@@ -67,7 +67,7 @@ node_templates:
     type: cloudify.openstack.nodes.SecurityGroup
     properties:
       security_group:
-        name: ansible_security_group
+        name: 31ansible_security_group
       rules:
         - remote_ip_prefix: 0.0.0.0/0
           port: 80
