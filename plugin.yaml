@@ -6,6 +6,6 @@
 tosca_definitions_version: cloudify_dsl_1_0
 
 plugins:
-  cloudify-ansible-plugin:
+  ansible:
     executor: central_deployment_agent
     source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
