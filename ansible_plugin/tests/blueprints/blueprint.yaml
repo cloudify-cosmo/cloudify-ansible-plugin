@@ -1,0 +1,44 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+  - http://www.getcloudify.org/spec/openstack-plugin/1.1/plugin.yaml
+  - https://raw.githubusercontent.com/EarthmanT/cloudify-ansible-plugin/master/plugin.yaml
+
+node_templates:
+
+  openstack_server:
+    derived_from: cloudify.openstack.nodes.Server
+    properties:
+      cloudify_agent:
+        default:
+          user: ubuntu
+      server:
+        default:
+          image_name: Ubuntu Server 12.04.2 LTS (amd64 20130318) - Partner Image
+          flavor_name: standard.small
+
+    interfaces:
+      cloudify.interfaces.ansible:
+        install:
+          implementation: ansible.tasks.run_playbook
+          inputs:
+            playbook: playbook.yaml
+            private_ip_address: { get_attribute: [ SELF, ip ] }
+
+    relationships:
+      - type: cloudify.openstack.server_connected_to_security_group
+        target: openstack_security_group
+      - type: cloudify.openstack.server_connected_to_floating_ip
+        target: openstack_floating_ip
+
+  openstack_floating_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+
+  openstack_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      security_group:
+        name: openstack_security_group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          port: 80

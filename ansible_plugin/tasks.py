@@ -13,151 +13,87 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-# for running shell commands
-import subprocess
-import sys
-
-# ctx is imported and used in operations
-from cloudify import ctx
-from cloudify.decorators import operation
-
-# for handling files
-from shutil import copy
-from os import makedirs
+# Built-in Imports
 from os.path import join as joinpath
-from os.path import exists as pathexists
-import os
-import time
+from subprocess import Popen, PIPE
+
+# Third-party Imports
+
+# Cloudify imports
+from cloudify import ctx
+# from cloudify.state import ctx_parameters as inputs
+from cloudify.decorators import operation
+from cloudify import exceptions
 
 
 @operation
-def run_playbook(agent_key, user_home='/home/ubuntu/',
-                 inventory='hosts', playbook='playbook.yml',
-                 **kwargs):
+def run_playbook(playbook, private_ip_address, **kwargs):
+    """ Runs a playbook as part of a Cloudify lifecycle operation """
 
-    deployment_home = joinpath(user_home, '{0}{1}'
-                               .format('cloudify.', ctx.deployment.id))
-    playbook_binary = joinpath(deployment_home,
-                               'env', 'bin', 'ansible-playbook')
+    ctx.logger.debug('Getting the path to the playbook.')
+    playbook_path = get_playbook_path(playbook)
+    ctx.logger.debug('Got the playbook path: {}.'.format(playbook_path))
 
-    os.chmod(agent_key, 0600)
-    _run_playbook(playbook_binary, agent_key, user_home, inventory, playbook)
+    ctx.logger.debug('Getting the inventory path.')
+    inventory_path = get_inventory_path(private_ip_address)
+    ctx.logger.debug('Got the inventory path: {}.'.format(inventory_path))
 
+    command = ['ansible-playbook', playbook_path,
+               ''.join('--inventory=', inventory_path)]
 
-def _run_playbook(playbook_binary, agent_key, user_home='/home/ubuntu/',
-                  inventory='hosts', playbook='playbook.yml'):
+    ctx.logger.info('Running command: {}.'.format(command))
 
-    cwd = joinpath('/opt', 'manager',
-                   'resources', 'blueprints',
-                   ctx.blueprint.id)
+    output = run_command(command)
 
-    command = [playbook_binary, '--sudo', '-i',
-               joinpath(cwd, inventory), joinpath(cwd, playbook),
-               '--private-key', agent_key, '--timeout=60']
+    ctx.logger.info('Command Output: {}.'.format(output))
 
-    ctx.logger.info('Running playbook: {0}.'.format(playbook))
-    time.sleep(30)
-    run_shell_command(command)
+    ctx.logger.info('Finished running the Ansible Playbook.')
 
 
-@operation
-def add_host(host, group='default', inventory='hosts', **kwargs):
-    """if the group already exists in the inventory,
-    the host will be added and add_line_to_location will
-    return True. Otherwise, the group is added and the host under it
-    """
+def get_playbook_path(playbook):
 
-    cwd = joinpath('/opt', 'manager',
-                   'resources', 'blueprints',
-                   ctx.blueprint.id)
-
-    group = '[{0}]\n'.format(group)
-    host = '{0}\n'.format(host)
-
-    if add_to_location(cwd, inventory, group, host):
-        ctx.logger.info('Added new host {0} under {1} in {2}.'
-                        .format(host, group, inventory))
-    else:
-        new_line = '{0}{1}'.format(group, host)
-        write_to_file(cwd, inventory, new_line)
-        ctx.logger.info('Added new host {0} under {1} in {2}.'
-                        .format(host, group, inventory))
-
-
-def add_to_location(path, filename, search_string, string):
-    """ Find search_string in file and write string directrly
-        below it.
-    """
-
-    success = False
-    new_file = '/tmp/inventory'
-    old_file = joinpath(path, filename)
-
-    with open(new_file, 'w') as outfile:
-        try:
-            with open(old_file, 'r') as lines:
-                for line in lines:
-                    if line == search_string:
-                        outfile.write(line)
-                        outfile.write(string)
-                        success = True
-                    else:
-                        outfile.write(line)
-
-            lines.close()
-        except IOError:
-            success = False
-
-    outfile.close()
-
-    if success is True:
-        copy(new_file, old_file)
-        return success
-    else:
-        return success
-
-
-def write_to_file(path, filename, entry):
-
-    if not pathexists(path):
-        makedirs(path)
-
-    path_to_file = joinpath(path, filename)
-
-    if not pathexists(path_to_file):
-        try:
-            f = open(path_to_file, 'w')
-            f.write(entry)
-            f.close()
-        except IOError as e:
-            ctx.logger.error('Can\'t open file {0} for writing: {1}'
-                             .format(path_to_file, e))
-    else:
-        try:
-            f = open(path_to_file, 'a')
-            f.write(entry)
-            f.close()
-        except IOError as e:
-            ctx.logger.error('Can\'t open file {0} for writing: {1}'
-                             .format(path_to_file, e))
-
-
-def run_shell_command(command):
-    """this runs a shell command.
-    """
-    ctx.logger.info('Running shell command: {0}'
-                    .format(command))
+    path_to_file = joinpath('/tmp', ctx.instance.id, 'playbook.file')
 
     try:
-        run = subprocess.Popen(command, stdout=subprocess.PIPE)
-        output, error = run.communicate()
-        if output:
-            ctx.logger.info('output: {0}'.format(output))
-        elif error:
-            ctx.logger.error('error: {0}'.format(error))
-            raise Exception('{0} returned {1}'.format(command, error))
-    except:
-        e = sys.exc_info()[0]
-        ctx.logger.error('command failed: {0}, exception: {1}'
-                         .format(command, e))
-        raise Exception('{0} returned {1}'.format(command, e))
+        temp_file_path = ctx.download_resource(playbook, path_to_file)
+    except Exception as e:
+        raise exceptions.NonRecoverableError(
+            'Could not get playbook file: {}.'.format(str(e)))
+
+    return temp_file_path
+
+
+def get_inventory_path(hostname):
+
+    path_to_file = joinpath('/tmp', '{}_{}'.format(ctx.instance.id, hostname))
+
+    with open(path_to_file, 'w') as f:
+        try:
+            f.write(hostname)
+        except IOError as e:
+            ctx.logger.error('Can\'t open file {0} for writing: {1}'
+                             .format(path_to_file, e))
+    f.close()
+
+    return path_to_file
+
+
+def run_command(command):
+
+    try:
+        run = Popen(command, stdout=PIPE)
+    except Exception as e:
+        raise exceptions.NonRecoverableError(
+            'Unable to run command. Error {}'.format(str(e)))
+
+    try:
+        output = run.communicate()
+    except Exception as e:
+        raise exceptions.NonRecoverableError(
+            'Unable to run command. Error {}'.format(str(e)))
+
+    if run.returncode != 0:
+        raise exceptions.NonRecoverableError(
+            'Non-zero returncode. Output {}.'.format(output))
+
+    return output
