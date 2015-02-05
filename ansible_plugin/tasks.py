@@ -27,17 +27,19 @@ from cloudify import exceptions
 
 
 @operation
-def run_playbook(playbook, hosts, **kwargs):
+def run_playbook(playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
 
-    ctx.logger.info('Running an Ansible Playbook.')
+    ctx.logger.debug('Getting the path to the playbook.')
+    playbook_path = get_playbook_path(playbook)
+    ctx.logger.debug('Got the playbook path: {}.'.format(playbook_path))
 
-    playbook_path = get_playbook_path(playbook, ctx=ctx)
-
-    inventory = get_inventory_path(hosts)
+    ctx.logger.debug('Getting the inventory path.')
+    inventory_path = get_inventory_path(private_ip_address)
+    ctx.logger.debug('Got the inventory path: {}.'.format(inventory_path))
 
     command = ['ansible-playbook', playbook_path,
-               ''.join('--inventory=', inventory)]
+               ''.join('--inventory=', inventory_path)]
 
     ctx.logger.info('Running command: {}.'.format(command))
 
@@ -48,12 +50,12 @@ def run_playbook(playbook, hosts, **kwargs):
     ctx.logger.info('Finished running the Ansible Playbook.')
 
 
-def get_playbook_path(playbook, ctx):
+def get_playbook_path(playbook):
 
-    temp_file = joinpath('/tmp', ctx.instance.id, 'playbook.file')
+    path_to_file = joinpath('/tmp', ctx.instance.id, 'playbook.file')
 
     try:
-        temp_file_path = ctx.download_resource(playbook, temp_file)
+        temp_file_path = ctx.download_resource(playbook, path_to_file)
     except Exception as e:
         raise exceptions.NonRecoverableError(
             'Could not get playbook file: {}.'.format(str(e)))
@@ -61,15 +63,19 @@ def get_playbook_path(playbook, ctx):
     return temp_file_path
 
 
-def get_inventory_path(hosts):
+def get_inventory_path(hostname):
 
-    with open('/tmp/inventory', 'a') as f:
-        for host in hosts:
-            f.write('{}\n'.format(host))
+    path_to_file = joinpath('/tmp', '{}_{}'.format(ctx.instance.id, hostname))
 
+    with open(path_to_file, 'w') as f:
+        try:
+            f.write(hostname)
+        except IOError as e:
+            ctx.logger.error('Can\'t open file {0} for writing: {1}'
+                             .format(path_to_file, e))
     f.close()
 
-    return '/tmp/inventory'
+    return path_to_file
 
 
 def run_command(command):
