@@ -37,7 +37,7 @@ def get_playbook_path(playbook):
 
     try:
         path_to_file = ctx.download_resource(playbook)
-    except Exception as e:
+    except exceptions.HttpException as e:
         raise exceptions.NonRecoverableError(
             'Could not get playbook file: {}.'.format(str(e)))
 
