@@ -23,10 +23,11 @@ node_types:
 
   ansible.nodes.Application:
     derived_from: cloudify.nodes.ApplicationModule
-    workflows:
-      install:
-        implementation: ansible.ansible_plugin.tasks.run_playbook
-        inputs: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        install:
+          implementation: ansible.ansible_plugin.tasks.run_playbook
+          inputs: {}
 
 node_templates:
 
@@ -47,13 +48,14 @@ node_templates:
 
   apache_instance:
     type: ansible.nodes.Application
-    workflows:
-      install:
-        implementation: ansible.ansible_plugin.tasks.run_playbook
-        inputs:
-          keypair: { get_input: key_name }
-          playbook: { get_input: playbook_file }
-          private_ip_address: { get_attribute: [ ansible_http_server, ip ] }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: ansible.ansible_plugin.tasks.run_playbook
+          inputs:
+            keypair: { get_input: key_name }
+            playbook: { get_input: playbook_file }
+            private_ip_address: { get_attribute: [ ansible_http_server, ip ] }
     relationships:
       - type: cloudify.relationships.contained_in
         target: ansible_http_server
