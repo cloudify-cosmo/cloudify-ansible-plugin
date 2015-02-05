@@ -27,7 +27,7 @@ from cloudify import exceptions
 
 
 @operation
-def run_playbook(playbook, private_ip_address, **kwargs):
+def run_playbook(path_to_key, playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
 
     ctx.logger.debug('Getting the path to the playbook.')
@@ -38,8 +38,9 @@ def run_playbook(playbook, private_ip_address, **kwargs):
     inventory_path = get_inventory_path(private_ip_address)
     ctx.logger.debug('Got the inventory path: {}.'.format(inventory_path))
 
-    command = ['ansible-playbook', playbook_path,
-               ''.join('--inventory=', inventory_path)]
+    command = ['ansible-playbook', '--sudo', '-i',
+               inventory_path, playbook_path,
+               '--private-key, path_to_key, '--timeout=60']
 
     ctx.logger.info('Running command: {}.'.format(command))
 
