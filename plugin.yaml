@@ -9,33 +9,3 @@ plugins:
   cloudify-ansible-plugin:
     executor: central_deployment_agent
     source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
-
-node_types:
-
-  cloudify.ansible.host:
-    derived_from: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.add_host
-          inputs:
-            host:
-              default: ''
-            group:
-              default: ''
-            inventory:
-              default: ''
-
-  cloudify.ansible.playbook:
-    derived_from: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        start:
-          implementation: cloudify-ansible-plugin.ansible_plugin.tasks.run_playbook
-          inputs:
-            inventory:
-              default: ''
-            local_file:
-              default: ''
-            agent_key:
-              default: ''
