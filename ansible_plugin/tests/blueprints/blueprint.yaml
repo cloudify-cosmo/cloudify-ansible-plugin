@@ -19,6 +19,16 @@ inputs:
   playbook_file:
     type: string
 
+node_types:
+
+  ansible.nodes.Application:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: ansible.tasks.run_playbook
+          inputs: {}
+
 node_templates:
 
   ansible_http_server:
@@ -36,8 +46,8 @@ node_templates:
       - type: cloudify.openstack.server_connected_to_floating_ip
         target: ansible_floating_ip
 
-  apache_web_server:
-    type: cloudify.nodes.WebServer
+  apache_instance:
+    type: ansible.nodes.Application
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -57,7 +67,7 @@ node_templates:
     type: cloudify.openstack.nodes.SecurityGroup
     properties:
       security_group:
-        name: openstack_security_group
+        name: ansible_security_group
       rules:
         - remote_ip_prefix: 0.0.0.0/0
           port: 80
