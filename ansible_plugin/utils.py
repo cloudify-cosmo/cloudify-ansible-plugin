@@ -55,9 +55,23 @@ def get_inventory_path(hostname):
         try:
             f.write(hostname)
         except IOError as e:
-            ctx.logger.error('Can\'t open file {0} for writing: {1}'
-                             .format(path_to_file, e))
+            raise exceptions.NonRecoverableError(
+                'Could not open Inventory file for writing: '
+                '{}.'.format(str(e)))
     f.close()
+
+    return path_to_file
+
+
+def get_keypair_path(keypair):
+
+    home = os.path.expanduser("~")
+    path_to_file = \
+        os.path.join(home, '.ssh', keypair)
+
+    if not os.path.exists(path_to_file):
+        raise exceptions.NonRecoverableError(
+            'Keypair file does not exist.')
 
     return path_to_file
 

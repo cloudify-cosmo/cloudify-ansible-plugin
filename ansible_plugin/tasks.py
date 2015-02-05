@@ -25,8 +25,11 @@ from ansible_plugin import utils
 
 
 @operation
-def run_playbook(path_to_key, playbook, private_ip_address, **kwargs):
+def run_playbook(keypair, playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
+
+    ctx.logger.debug('Getting the path to the keypair.')
+    path_to_key = utils.get_keypair_path(keypair)
 
     ctx.logger.debug('Getting the path to the playbook.')
     playbook_path = utils.get_playbook_path(playbook)
