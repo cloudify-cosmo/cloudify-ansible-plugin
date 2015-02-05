@@ -25,7 +25,9 @@ node_types:
     derived_from: cloudify.nodes.ApplicationModule
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
+        configure:
+          implementation: ansible.ansible_plugin.tasks.configure
+        start:
           implementation: ansible.ansible_plugin.tasks.run_playbook
           inputs: {}
 
@@ -50,7 +52,9 @@ node_templates:
     type: ansible.nodes.Application
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
+        configure:
+          implementation: ansible.ansible_plugin.tasks.configure
+        start:
           implementation: ansible.ansible_plugin.tasks.run_playbook
           inputs:
             keypair: { get_input: key_name }
