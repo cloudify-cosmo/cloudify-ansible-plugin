@@ -35,21 +35,19 @@ def get_executible_path(executible_name):
 
 def get_playbook_path(playbook):
 
-    path_to_file = os.path.join('/tmp', ctx.instance.id, 'playbook.file')
-
     try:
-        temp_file_path = ctx.download_resource(playbook, path_to_file)
+        path_to_file = ctx.download_resource(playbook)
     except Exception as e:
         raise exceptions.NonRecoverableError(
             'Could not get playbook file: {}.'.format(str(e)))
 
-    return temp_file_path
+    return path_to_file
 
 
 def get_inventory_path(hostname):
 
     path_to_file = \
-        os.path.join('/tmp', '{}_{}'.format(ctx.instance.id, hostname))
+        os.path.join('/tmp', '{}.inventory'.format(ctx.deployment.id))
 
     with open(path_to_file, 'w') as f:
         try:

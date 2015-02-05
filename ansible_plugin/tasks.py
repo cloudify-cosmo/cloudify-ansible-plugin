@@ -20,11 +20,11 @@ import os
 
 # Cloudify imports
 from cloudify import ctx
-from cloudify.decorators import operation
 from ansible_plugin import utils
+from cloudify.decorators import workflow
 
 
-@operation
+@workflow
 def run_playbook(keypair, playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
 
