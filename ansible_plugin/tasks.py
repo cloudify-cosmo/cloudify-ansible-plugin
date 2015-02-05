@@ -28,16 +28,17 @@ from ansible_plugin import utils
 def run_playbook(keypair, playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
 
-    ctx.logger.debug('Getting the path to the keypair.')
+    ctx.logger.info('Getting the path to the keypair.')
     path_to_key = utils.get_keypair_path(keypair)
+    ctx.logger.info('Got the keypair path: {}'.format(path_to_key))
 
-    ctx.logger.debug('Getting the path to the playbook.')
+    ctx.logger.info('Getting the path to the playbook.')
     playbook_path = utils.get_playbook_path(playbook)
-    ctx.logger.debug('Got the playbook path: {}.'.format(playbook_path))
+    ctx.logger.info('Got the playbook path: {}.'.format(playbook_path))
 
-    ctx.logger.debug('Getting the inventory path.')
+    ctx.logger.info('Getting the inventory path.')
     inventory_path = utils.get_inventory_path(private_ip_address)
-    ctx.logger.debug('Got the inventory path: {}.'.format(inventory_path))
+    ctx.logger.info('Got the inventory path: {}.'.format(inventory_path))
 
     executible = utils.get_executible_path('ansible-playbook')
 
