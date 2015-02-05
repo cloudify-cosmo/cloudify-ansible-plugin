@@ -22,6 +22,25 @@ import os
 from cloudify import ctx
 from ansible_plugin import utils
 from cloudify.decorators import operation
+from cloudify import exceptions
+
+
+@operation
+def configure(**kwargs):
+
+    ctx.logger.info('Configuring Anisble.')
+    home = os.path.expanduser("~")
+    file_path = os.path.join(home, '.ansible')
+    string = 'host_key_checking=False'
+    with open(file_path, 'w') as f:
+        try:
+            f.write(string)
+        except IOError as e:
+            raise exceptions.NonRecoverableError(
+                'Could not open Inventory file for writing: '
+                '{}.'.format(str(e)))
+    f.close()
+    ctx.logger.info('Configured Ansible.')
 
 
 @operation
@@ -42,7 +61,7 @@ def run_playbook(keypair, playbook, private_ip_address, **kwargs):
 
     executible = utils.get_executible_path('ansible-playbook')
 
-    command = [executible, '--sudo', '-i', inventory_path,
+    command = [executible, '-i', inventory_path,
                playbook_path, '--private-key', path_to_key,
                '--timeout=60']
 
