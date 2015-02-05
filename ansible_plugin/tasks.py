@@ -40,6 +40,9 @@ def configure(**kwargs):
                 'Could not open Inventory file for writing: '
                 '{}.'.format(str(e)))
     f.close()
+    ctx.logger.info('Hard coding home.')
+    utils.hard_code_home()
+    ctx.logger.info('Hard coded home.')
     ctx.logger.info('Configured Ansible.')
 
 
