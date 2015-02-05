@@ -25,7 +25,7 @@ node_types:
     derived_from: cloudify.nodes.ApplicationModule
     interfaces:
       cloudify.interfaces.lifecycle:
-        install:
+        create:
           implementation: ansible.ansible_plugin.tasks.run_playbook
           inputs: {}
 
