@@ -30,26 +30,28 @@ node_templates:
       server:
         image_name: { get_input: image }
         flavor_name: { get_input: flavor }
-
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: ansible.tasks.run_playbook
-          inputs:
-            playbook: { get_input: playbook_file }
-            private_ip_address: { get_attribute: [ SELF, ip ] }
-            keypair: { get_input: path_to_key }
-
     relationships:
       - type: cloudify.openstack.server_connected_to_security_group
         target: ansible_security_group
       - type: cloudify.openstack.server_connected_to_floating_ip
         target: ansible_floating_ip
 
+  apache_web_server:
+    type: cloudify.nodes.WebServer
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: ansible.tasks.run_playbook
+          inputs:
+            keypair: { get_input: path_to_key }
+            playbook: { get_input: playbook_file }
+            private_ip_address: { get_attribute: [ ansible_http_server, ip ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: ansible_http_server
 
   ansible_floating_ip:
     type: cloudify.openstack.nodes.FloatingIP
-
 
   ansible_security_group:
     type: cloudify.openstack.nodes.SecurityGroup
