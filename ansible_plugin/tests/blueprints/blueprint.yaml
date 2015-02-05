@@ -7,21 +7,17 @@ imports:
 
 inputs:
 
-  image_name:
+  image:
     type: string
-    default: Ubuntu Server 12.04.2 LTS (amd64 20130318) - Partner Image
 
-  flavor_name:
+  flavor:
     type: string
-    default: standard.small
 
   path_to_key:
     type: string
-    default: ~/.ssh/agent_key.pem
 
   playbook_file:
     type: string
-    default: playbook.yaml
 
 node_templates:
 
@@ -32,12 +28,12 @@ node_templates:
         default:
           user: ubuntu
       server:
-        image: { get_input: image_name }
-        flavor: { get_input: flavor_name }
+        image_name: { get_input: image }
+        flavor_name: { get_input: flavor }
 
     interfaces:
-      cloudify.interfaces.ansible:
-        install:
+      cloudify.interfaces.lifecycle:
+        configure:
           implementation: ansible.tasks.run_playbook
           inputs:
             playbook: { get_input: playbook_file }

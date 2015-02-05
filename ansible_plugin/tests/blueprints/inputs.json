@@ -1,6 +1,6 @@
 {
-  "image_name": "Ubuntu Server 12.04.5 LTS (amd64 20140927) - Partner Image",
-  "flavor_name": "standard.small", 
+  "image": "Ubuntu Server 12.04.5 LTS (amd64 20140927) - Partner Image",
+  "flavor": "standard.small", 
   "path_to_key": "~/.ssh/agent_key.pem",
   "playbook_file": "playbook.yaml"
 }
