@@ -15,6 +15,7 @@
 
 # Built-in Imports
 import os
+import shutil
 
 # Third-party Imports
 
@@ -38,8 +39,11 @@ def configure(user, keypair, **kwargs):
 
     os.environ["USER"] = user
     os.environ["HOME"] = home = os.path.expanduser("~")
-    if not os.path.exists(os.path.join(home, '.ansible')):
-        os.makedirs(os.path.join(home, '.ansible'))
+
+    if os.path.exists(os.path.join(home, '.ansible')):
+        shutil.rmtree(os.path.join(home, '.ansible'))
+
+    os.makedirs(os.path.join(home, '.ansible'))
 
     ctx.logger.info('Configuring Anisble.')
     file_path = utils.write_configuration_file(configuration)
