@@ -32,8 +32,8 @@ def configure(user, **kwargs):
 
     ctx.logger.info('Configuring Anisble.')
 
-    os.environ["USER"] = home = user
-    os.environ["HOME"] = os.path.expanduser("~")
+    os.environ["USER"] = user
+    os.environ["HOME"] = home = os.path.expanduser("~")
 
     file_path = utils.write_configuration_file(configuration)
 

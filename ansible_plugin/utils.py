@@ -89,9 +89,8 @@ def run_command(command):
             'Unable to run command. Error {}'.format(str(e)))
 
     if run.returncode != 0:
-        raise exceptions.RecoverableError(
-            'Non-zero returncode. Output {}.'.format(output),
-            retry_after=5)
+        raise exceptions.NonRecoverableError(
+            'Non-zero returncode. Output {}.'.format(output))
 
     return output
 
