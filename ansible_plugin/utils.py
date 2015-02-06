@@ -141,9 +141,9 @@ def replace_string(file, old_string, new_string):
 
 def write_configuration_file(config):
 
-    pwd = os.getcwd()
+    home = os.path.expanduser("~")
 
-    file_path = os.path.join(pwd, '.ansible.cfg')
+    file_path = os.path.join(home, '.ansible.cfg')
 
     with open(file_path, 'w') as f:
         try:
