@@ -30,7 +30,7 @@ def configure(**kwargs):
 
     ctx.logger.info('Configuring Anisble.')
     home = os.path.expanduser("~")
-    file_path = os.path.join(home, '.ansible')
+    file_path = os.path.join(home, '.ansible.cfg')
     string = 'host_key_checking=False'
     with open(file_path, 'w') as f:
         try:
