@@ -55,13 +55,13 @@ def run_playbook(keypair, playbook, private_ip_address, **kwargs):
     inventory_path = utils.get_inventory_path(private_ip_address)
     ctx.logger.info('Got the inventory path: {}.'.format(inventory_path))
 
+    os.chmod(path_to_key, 0600)
+
     executible = utils.get_executible_path('ansible-playbook')
 
     command = [executible, '--sudo', '-i', inventory_path,
                playbook_path, '--private-key', path_to_key,
-               '--timeout=60']
-
-    os.chmod(path_to_key, 0600)
+               '--timeout=60', '--forks=1']
 
     ctx.logger.info('Running command: {}.'.format(command))
 

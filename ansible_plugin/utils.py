@@ -15,7 +15,6 @@
 
 # Built-in Imports
 import os
-from shutil import copy
 from subprocess import Popen, PIPE
 
 # Third-party Imports
@@ -90,53 +89,11 @@ def run_command(command):
             'Unable to run command. Error {}'.format(str(e)))
 
     if run.returncode != 0:
-        raise exceptions.NonRecoverableError(
-            'Non-zero returncode. Output {}.'.format(output))
+        raise exceptions.RecoverableError(
+            'Non-zero returncode. Output {}.'.format(output),
+            retry_after=5)
 
     return output
-
-
-def hard_code_home():
-    """ Ansible configures a writable directory
-    in '$HOME/.ansible/cp',mode=0700
-    Cloudify's workers can't use that variable,
-    so we need to hard code the home.
-    """
-
-    home = os.path.expanduser("~")
-    deployment_home = \
-        os.path.join(home, '{}{}'.format('cloudify.', ctx.deployment.id))
-
-    home = home[1:]
-    home_folder, username = home.split('/')
-
-    ansible_files = [os.path.join(deployment_home,
-                                  'env/lib/python2.7/site-packages/ansible/'
-                                  'runner/connection_plugins/ssh.py'),
-                     os.path.join(deployment_home,
-                                  'env/local/lib/python2.7/'
-                                  'site-packages/ansible/runner/'
-                                  'connection_plugins/ssh.py')]
-
-    for ansible_file in ansible_files:
-        replace_string(ansible_file, '$HOME',
-                       os.path.join('/', home_folder, username))
-
-    ctx.logger.info('Replaced $HOME with /{0}/{1}.'.format(
-        home_folder, username))
-
-
-def replace_string(file, old_string, new_string):
-
-    new_file = os.path.join('/tmp', os.path.basename(file))
-
-    with open(new_file, 'wt') as fout:
-        with open(file, 'rt') as fin:
-            for line in fin:
-                fout.write(line.replace(old_string, new_string))
-
-    copy(new_file, file)
-    os.remove(new_file)
 
 
 def write_configuration_file(config):
