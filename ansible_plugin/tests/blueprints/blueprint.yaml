@@ -33,7 +33,7 @@ node_types:
           implementation: ansible.ansible_plugin.tasks.configure
           inputs: {}
         start:
-          implementation: ansible.ansible_plugin.tasks.run_playbook
+          implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs: {}
 
 node_templates:
@@ -62,7 +62,7 @@ node_templates:
           inputs:
             user: { get_input: agent_user }
         start:
-          implementation: ansible.ansible_plugin.tasks.run_playbook
+          implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:
             keypair: { get_input: key_name }
             playbook: { get_input: playbook_file }

@@ -46,7 +46,7 @@ def configure(user, **kwargs):
 
 
 @operation
-def run_playbook(keypair, playbook, private_ip_address, **kwargs):
+def ansible_playbook(keypair, playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
 
     ctx.logger.info('Getting the path to the keypair.')
