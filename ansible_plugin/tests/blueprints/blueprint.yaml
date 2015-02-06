@@ -61,10 +61,10 @@ node_templates:
           implementation: ansible.ansible_plugin.tasks.configure
           inputs:
             user: { get_input: agent_user }
+            keypair: { get_input: key_name }
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:
-            keypair: { get_input: key_name }
             playbook: { get_input: playbook_file }
             private_ip_address: { get_attribute: [ ansible_http_server, ip ] }
     relationships:

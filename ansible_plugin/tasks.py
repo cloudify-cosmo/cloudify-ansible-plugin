@@ -25,33 +25,31 @@ from cloudify.decorators import operation
 
 
 @operation
-def configure(user, **kwargs):
+def configure(user, keypair, **kwargs):
 
-    configuration = '[defaults]\nhost_key_checking=False ' \
-                    'remote_user=ubuntu'
+    ctx.logger.info('Getting the path to the keypair.')
+    path_to_key = utils.get_keypair_path(keypair)
+    os.chmod(path_to_key, 0600)
+    ctx.logger.info('Got the keypair path: {}'.format(path_to_key))
 
-    ctx.logger.info('Configuring Anisble.')
+    configuration = '[defaults]\n' \
+                    'host_key_checking=False\n' \
+                    'private_key_file={}\n'.format(path_to_key)
 
     os.environ["USER"] = user
     os.environ["HOME"] = home = os.path.expanduser("~")
-
-    file_path = utils.write_configuration_file(configuration)
-
-    os.environ['ANSIBLE_CONFIG'] = os.path.dirname(os.path.realpath(file_path))
-
     if not os.path.exists(os.path.join(home, '.ansible')):
         os.makedirs(os.path.join(home, '.ansible'))
 
+    ctx.logger.info('Configuring Anisble.')
+    file_path = utils.write_configuration_file(configuration)
+    os.environ['ANSIBLE_CONFIG'] = os.path.dirname(os.path.realpath(file_path))
     ctx.logger.info('Configured Ansible.')
 
 
 @operation
-def ansible_playbook(keypair, playbook, private_ip_address, **kwargs):
+def ansible_playbook(playbook, private_ip_address, **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
-
-    ctx.logger.info('Getting the path to the keypair.')
-    path_to_key = utils.get_keypair_path(keypair)
-    ctx.logger.info('Got the keypair path: {}'.format(path_to_key))
 
     ctx.logger.info('Getting the path to the playbook.')
     playbook_path = utils.get_playbook_path(playbook)
@@ -61,13 +59,10 @@ def ansible_playbook(keypair, playbook, private_ip_address, **kwargs):
     inventory_path = utils.get_inventory_path(private_ip_address)
     ctx.logger.info('Got the inventory path: {}.'.format(inventory_path))
 
-    os.chmod(path_to_key, 0600)
-
     executible = utils.get_executible_path('ansible-playbook')
 
     command = [executible, '-i', inventory_path,
-               playbook_path, '--private-key', path_to_key,
-               '--timeout=60', '-vvvv']
+               playbook_path, '--timeout=60', '-vvvv']
 
     ctx.logger.info('Running command: {}.'.format(command))
 
