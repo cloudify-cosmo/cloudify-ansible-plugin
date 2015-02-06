@@ -27,14 +27,20 @@ from cloudify.decorators import operation
 @operation
 def configure(user, **kwargs):
 
+    configuration = '[defaults]\nhost_key_checking=False ' \
+                    'remote_user=ubuntu'
+
     ctx.logger.info('Configuring Anisble.')
 
-    os.environ["USER"] = user
+    os.environ["USER"] = home = user
     os.environ["HOME"] = os.path.expanduser("~")
 
-    file_path = utils.write_configuration_file('host_key_checking=False')
+    file_path = utils.write_configuration_file(configuration)
 
     os.environ['ANSIBLE_CONFIG'] = os.path.dirname(os.path.realpath(file_path))
+
+    if not os.path.exists(os.path.join(home, '.ansible')):
+        os.makedirs(os.path.join(home, '.ansible'))
 
     ctx.logger.info('Configured Ansible.')
 
