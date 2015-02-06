@@ -33,10 +33,6 @@ def configure(user, keypair, **kwargs):
     os.chmod(path_to_key, 0600)
     ctx.logger.info('Got the keypair path: {}'.format(path_to_key))
 
-    configuration = '[defaults]\n' \
-                    'host_key_checking=False\n' \
-                    'private_key_file={}\n'.format(path_to_key)
-
     os.environ["USER"] = user
     os.environ["HOME"] = home = os.path.expanduser("~")
 
@@ -44,6 +40,10 @@ def configure(user, keypair, **kwargs):
         shutil.rmtree(os.path.join(home, '.ansible'))
 
     os.makedirs(os.path.join(home, '.ansible'))
+
+    configuration = '[defaults]\n' \
+                    'host_key_checking=False\n' \
+                    'private_key_file={}\n'.format(path_to_key)
 
     ctx.logger.info('Configuring Anisble.')
     file_path = utils.write_configuration_file(configuration)
