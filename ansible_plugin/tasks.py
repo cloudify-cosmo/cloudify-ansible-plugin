@@ -66,8 +66,7 @@ def ansible_playbook(keypair, playbook, private_ip_address, **kwargs):
     executible = utils.get_executible_path('ansible-playbook')
 
     command = [executible, '--sudo', '-i', inventory_path,
-               playbook_path, '--private-key', path_to_key,
-               '--timeout=60', '--forks=1', '-vvvv']
+               playbook_path, '--private-key', path_to_key]
 
     ctx.logger.info('Running command: {}.'.format(command))
 
