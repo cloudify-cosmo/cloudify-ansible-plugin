@@ -23,6 +23,18 @@ inputs:
     type: string
     default: ubuntu
 
+node_types:
+  ansible.nodes.Application:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: ansible.ansible_plugin.tasks.configure
+          inputs: {}
+        start:
+          implementation: ansible.ansible_plugin.tasks.ansible_playbook
+          inputs: {}
+
 node_templates:
 
   ansible_http_server:

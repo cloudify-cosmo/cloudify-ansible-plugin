@@ -9,15 +9,3 @@ plugins:
   ansible:
     executor: central_deployment_agent
     source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
-
-node_types:
-  ansible.nodes.Application:
-    derived_from: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: ansible.ansible_plugin.tasks.configure
-          inputs: {}
-        start:
-          implementation: ansible.ansible_plugin.tasks.ansible_playbook
-          inputs: {}
