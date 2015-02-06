@@ -42,8 +42,8 @@ def configure(user, keypair, **kwargs):
     ctx.logger.info('Configured Ansible.')
 
     os.environ['ANSIBLE_CONFIG'] = file_path
-    os.environ["USER"] = user
-    os.environ["HOME"] = home = os.path.expanduser("~")
+    os.environ['USER'] = user
+    os.environ['HOME'] = home = os.path.expanduser("~")
 
     if os.path.exists(os.path.join(home, '.ansible')):
         shutil.rmtree(os.path.join(home, '.ansible'))
@@ -65,7 +65,7 @@ def ansible_playbook(playbook, private_ip_address, **kwargs):
 
     executible = utils.get_executible_path('ansible-playbook')
 
-    command = [executible, '-i', inventory_path,
+    command = [executible, '--sudo', '-i', inventory_path,
                playbook_path, '--timeout=60', '-vvvv']
 
     ctx.logger.info('Running command: {}.'.format(command))
