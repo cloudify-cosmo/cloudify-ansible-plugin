@@ -67,7 +67,7 @@ def ansible_playbook(keypair, playbook, private_ip_address, **kwargs):
 
     command = [executible, '--sudo', '-i', inventory_path,
                playbook_path, '--private-key', path_to_key,
-               '--timeout=60', '--forks=1']
+               '--timeout=60', '--forks=1', '-vvvv']
 
     ctx.logger.info('Running command: {}.'.format(command))
 
