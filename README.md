@@ -25,16 +25,16 @@ Create node type with a configure and a create lifecycle operation. Map them to 
 
 node_types:
 
-  ansible.nodes.Application:
-    derived_from: cloudify.nodes.ApplicationModule
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: ansible.ansible_plugin.tasks.configure
-          inputs: {}
-        start:
-          implementation: ansible.ansible_plugin.tasks.ansible_playbook
-          inputs: {}
+    ansible.nodes.Application:
+      derived_from: cloudify.nodes.ApplicationModule
+      interfaces:
+        cloudify.interfaces.lifecycle:
+          configure:
+            implementation: ansible.ansible_plugin.tasks.configure
+            inputs: {}
+          start:
+            implementation: ansible.ansible_plugin.tasks.ansible_playbook
+            inputs: {}
 
 Then create a node_template of that node type. Make sure that there are user and keypair inputs to your configure operation, and that there are playbook and private_ip_address inputs to your create operation.
 
