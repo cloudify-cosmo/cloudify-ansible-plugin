@@ -137,3 +137,21 @@ def replace_string(file, old_string, new_string):
 
     copy(new_file, file)
     os.remove(new_file)
+
+
+def write_configuration_file(config):
+
+    pwd = os.getcwd()
+
+    file_path = os.path.join(pwd, '.ansible.cfg')
+
+    with open(file_path, 'w') as f:
+        try:
+            f.write(config)
+        except IOError as e:
+            raise exceptions.NonRecoverableError(
+                'Could not open Configuration file for writing: '
+                '{}.'.format(str(e)))
+    f.close()
+
+    return file_path

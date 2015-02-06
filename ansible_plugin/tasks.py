@@ -22,28 +22,19 @@ import os
 from cloudify import ctx
 from ansible_plugin import utils
 from cloudify.decorators import operation
-from cloudify import exceptions
 
 
 @operation
 def configure(**kwargs):
 
     ctx.logger.info('Configuring Anisble.')
+
     os.environ["USER"] = ctx.node.properties['cloudify_agent']['user']
-    home = os.path.expanduser("~")
-    file_path = os.path.join(home, '.ansible.cfg')
-    string = 'host_key_checking=False'
-    with open(file_path, 'w') as f:
-        try:
-            f.write(string)
-        except IOError as e:
-            raise exceptions.NonRecoverableError(
-                'Could not open Inventory file for writing: '
-                '{}.'.format(str(e)))
-    f.close()
-    ctx.logger.info('Hard coding home.')
-    utils.hard_code_home()
-    ctx.logger.info('Hard coded home.')
+
+    file_path = utils.write_configuration_file('host_key_checking=False')
+
+    os.environ['ANSIBLE_CONFIG'] = os.path.dirname(os.path.realpath(file_path))
+
     ctx.logger.info('Configured Ansible.')
 
 
