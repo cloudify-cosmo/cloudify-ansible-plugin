@@ -11,19 +11,36 @@ Tested on:
 
 How to use it:
 
+In your blueprint directory include the playbook that you want to run.
+
+    $ ls
+    blueprint.yaml  playbook.yaml 
+
 Import the plugin.yaml file in your Cloudify Blueprint:
 
     imports:
       - https://raw.githubusercontent.com/EarthmanT/cloudify-ansible-plugin/master/plugin.yaml
 
-Create node that inherits the ansible.nodes.Application node type. In your blueprint directory include the playbook that you want to run.
+Create node type with a configure and a create lifecycle operation. Map them to the configure and ansible_playbook functions in the tasks module.
 
-    $ ls
-    blueprint.yaml	playbook.yaml	
+node_types:
 
-Add a reference to that file in the node_template for the application layer that you will configure with Ansible. Add the private ip address for the host that you want to run the playbook against.
+  ansible.nodes.Application:
+    derived_from: cloudify.nodes.ApplicationModule
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: ansible.ansible_plugin.tasks.configure
+          inputs: {}
+        start:
+          implementation: ansible.ansible_plugin.tasks.ansible_playbook
+          inputs: {}
 
-    application_configure:
+Then create a node_template of that node type. Make sure that there are user and keypair inputs to your configure operation, and that there are playbook and private_ip_address inputs to your create operation.
+
+Add a reference to the playbook file in the node_template.
+
+     application_configure:
       type: ansible.nodes.Application
       interfaces:
         cloudify.interfaces.lifecycle:

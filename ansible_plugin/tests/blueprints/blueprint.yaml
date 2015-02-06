@@ -24,6 +24,7 @@ inputs:
     default: ubuntu
 
 node_types:
+
   ansible.nodes.Application:
     derived_from: cloudify.nodes.ApplicationModule
     interfaces:
