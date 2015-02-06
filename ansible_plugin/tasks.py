@@ -25,11 +25,11 @@ from cloudify.decorators import operation
 
 
 @operation
-def configure(**kwargs):
+def configure(user, **kwargs):
 
     ctx.logger.info('Configuring Anisble.')
 
-    os.environ["USER"] = ctx.node.properties['cloudify_agent']['user']
+    os.environ["USER"] = user
 
     file_path = utils.write_configuration_file('host_key_checking=False')
 

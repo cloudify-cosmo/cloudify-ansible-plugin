@@ -19,6 +19,10 @@ inputs:
   playbook_file:
     type: string
 
+  agent_user:
+    type: string
+    default: ubuntu
+
 node_types:
 
   ansible.nodes.Application:
@@ -27,6 +31,7 @@ node_types:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: ansible.ansible_plugin.tasks.configure
+          inputs: {}
         start:
           implementation: ansible.ansible_plugin.tasks.run_playbook
           inputs: {}
@@ -38,7 +43,7 @@ node_templates:
     properties:
       cloudify_agent:
         default:
-          user: ubuntu
+          user: { get_input: agent_user }
       server:
         image_name: { get_input: image }
         flavor_name: { get_input: flavor }
@@ -54,6 +59,8 @@ node_templates:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: ansible.ansible_plugin.tasks.configure
+          inputs:
+            user: { get_input: agent_user }
         start:
           implementation: ansible.ansible_plugin.tasks.run_playbook
           inputs:
