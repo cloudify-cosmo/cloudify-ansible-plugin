@@ -29,6 +29,7 @@ from cloudify import exceptions
 def configure(**kwargs):
 
     ctx.logger.info('Configuring Anisble.')
+    os.environ["USER"] = ctx.node.properties['cloudify_agent']['user']
     home = os.path.expanduser("~")
     file_path = os.path.join(home, '.ansible.cfg')
     string = 'host_key_checking=False'
