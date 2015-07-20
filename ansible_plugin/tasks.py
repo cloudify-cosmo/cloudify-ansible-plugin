@@ -65,9 +65,11 @@ def ansible_playbook(playbook, private_ip_address, **kwargs):
     ctx.logger.info('Got the inventory path: {}.'.format(inventory_path))
 
     executible = utils.get_executible_path('ansible-playbook')
+    user = utils.get_agent_user()
 
-    command = [executible, '--sudo', '-i', inventory_path,
-               playbook_path, '--timeout=60', '-vvvv']
+    command = [executible, '--sudo', '-u', user, 
+               '-i', inventory_path, playbook_path,
+               '--timeout=60', '-vvvv']
 
     ctx.logger.info('Running command: {}.'.format(command))
 
