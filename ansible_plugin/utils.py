@@ -50,7 +50,7 @@ def get_playbook_path(playbook):
 def get_inventory_path(inventory):
 
     if not inventory:
-        inventory.append(ctx.host_ip)
+        inventory.append(ctx.instance.host_ip)
 
     _, path_to_file = tempfile.mkstemp()
 
