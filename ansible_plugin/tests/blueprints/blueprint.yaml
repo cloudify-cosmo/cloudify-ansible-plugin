@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/3.3m2/types.yaml
-  - http://www.getcloudify.org/spec/openstack-plugin/1.3m2/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/3.2/types.yaml
+  - http://www.getcloudify.org/spec/aws-plugin/1.2/plugin.yaml
   - https://raw.githubusercontent.com/EarthmanT/cloudify-ansible-plugin/master/plugin.yaml
 
 inputs:
@@ -35,18 +35,17 @@ node_types:
 node_templates:
 
   ansible_http_server:
-    type: cloudify.openstack.nodes.Server
+    type: cloudify.aws.nodes.Instance
     properties:
       cloudify_agent:
         user: { get_input: agent_user }
-      server:
-        image: { get_input: image }
-        flavor: { get_input: flavor }
-    relationships:
-      - type: cloudify.openstack.server_connected_to_security_group
-        target: ansible_security_group
-      - type: cloudify.openstack.server_connected_to_floating_ip
-        target: ansible_floating_ip
+      image_id: { get_input: image }
+      instance_type: { get_input: flavor }
+    # relationships:
+      # - type: cloudify.openstack.server_connected_to_security_group
+      #   target: ansible_security_group
+      # - type: cloudify.openstack.server_connected_to_floating_ip
+      #   target: ansible_floating_ip
 
   apache_instance:
     type: ansible.nodes.Application
@@ -66,14 +65,14 @@ node_templates:
       - type: cloudify.relationships.contained_in
         target: ansible_http_server
 
-  ansible_floating_ip:
-    type: cloudify.openstack.nodes.FloatingIP
+  # ansible_floating_ip:
+  #   type: cloudify.openstack.nodes.FloatingIP
 
-  ansible_security_group:
-    type: cloudify.openstack.nodes.SecurityGroup
-    properties:
-      security_group:
-        name: ansible_security_group
-      rules:
-        - remote_ip_prefix: 0.0.0.0/0
-          port: 80
+  # ansible_security_group:
+  #   type: cloudify.openstack.nodes.SecurityGroup
+  #   properties:
+  #     security_group:
+  #       name: ansible_security_group
+  #     rules:
+  #       - remote_ip_prefix: 0.0.0.0/0
+  #         port: 80

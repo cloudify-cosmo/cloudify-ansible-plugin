@@ -18,12 +18,12 @@ from setuptools import setup
 
 setup(
     name='cloudify-ansible-plugin',
-    version='1.3a2',
+    version='1.2',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     description='Integrates with cloudify to deploy Ansible Playbooks',
     packages=['ansible_plugin'],
     license='LICENSE',
     zip_safe=False,
-    install_requires=["cloudify-plugins-common==3.3a2", "ansible==1.8.2"]
+    install_requires=["cloudify-plugins-common==3.2"]
 )

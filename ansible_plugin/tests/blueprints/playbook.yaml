@@ -1,7 +1,7 @@
 - hosts: all
   tasks:
     - name: 1. install Apache
-      apt: name=apache2 state=present
+      apt: name=apache2 state=present update_cache=yes
 
     - name: 2. start Apache
       service: name=apache2 state=running enabled=yes
