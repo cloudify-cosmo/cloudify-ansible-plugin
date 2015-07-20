@@ -27,9 +27,9 @@ from cloudify.decorators import operation
 
 
 @operation
-def configure(**kwargs):
+def configure(user, key, **kwargs):
 
-    agent_key_path = utils.get_keypair_path()
+    agent_key_path = utils.get_keypair_path(key)
     _, path_to_key = tempfile.mkstemp()
     shutil.copyfile(agent_key_path, path_to_key)
     os.chmod(path_to_key, 0600)
@@ -43,7 +43,7 @@ def configure(**kwargs):
     ctx.logger.info('Configured Ansible.')
 
     os.environ['ANSIBLE_CONFIG'] = file_path
-    os.environ['USER'] = utils.get_agent_user()
+    os.environ['USER'] = utils.get_agent_user(user)
     os.environ['HOME'] = home = os.path.expanduser("~")
 
     if os.path.exists(os.path.join(home, '.ansible')):

@@ -16,6 +16,9 @@ inputs:
   playbook_file:
     type: string
 
+  agent_user:
+    default: ubuntu
+
 node_types:
 
   ansible.nodes.Application:
@@ -34,6 +37,8 @@ node_templates:
   ansible_http_server:
     type: cloudify.openstack.nodes.Server
     properties:
+      cloudify_agent:
+        user: { get_input: agent_user }
       server:
         image: { get_input: image }
         flavor: { get_input: flavor }
@@ -49,6 +54,9 @@ node_templates:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: ansible.ansible_plugin.tasks.configure
+          inputs:
+            user: { get_property: [ ansible_http_server, cloudify_agent, user ] }
+            key: ''
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:

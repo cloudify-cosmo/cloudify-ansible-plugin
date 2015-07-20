@@ -63,21 +63,24 @@ def get_inventory_path(hostname):
     return path_to_file
 
 
-def get_agent_user():
+def get_agent_user(user):
 
-    user = ctx.bootstrap_context.cloudify_agent.user
+    if not user:
+        user = ctx.bootstrap_context.cloudify_agent.user
 
     return user
 
 
-def get_keypair_path():
+def get_keypair_path(key):
 
-    if CLOUDIFY_MANAGER_PRIVATE_KEY_PATH in os.environ:
-        key = os.environ[CLOUDIFY_MANAGER_PRIVATE_KEY_PATH]
-    else:
-        key = ctx.bootstrap_context.cloudify_agent.agent_key_path
+    if not key:
+        if CLOUDIFY_MANAGER_PRIVATE_KEY_PATH in os.environ:
+            key = os.environ[CLOUDIFY_MANAGER_PRIVATE_KEY_PATH]
+        else:
+            key = ctx.bootstrap_context.cloudify_agent.agent_key_path
+        key = os.path.expanduser(key)
 
-    return os.path.expanduser(key)
+    return key
 
 
 def run_command(command):
