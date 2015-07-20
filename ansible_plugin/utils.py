@@ -23,6 +23,8 @@ from subprocess import Popen, PIPE
 from cloudify import ctx
 from cloudify import exceptions
 
+CLOUDIFY_MANAGER_PRIVATE_KEY_PATH = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
+
 
 def get_executible_path(executible_name):
 
@@ -61,9 +63,22 @@ def get_inventory_path(hostname):
     return path_to_file
 
 
-def get_keypair_path(keypair):
+def get_agent_user():
 
-    return ctx.bootstrap_context.cloudify_agent.agent_key_path
+    user = ctx.bootstrap_context.cloudify_agent.user
+
+    return user
+
+
+def get_keypair_path():
+
+    if CLOUDIFY_MANAGER_PRIVATE_KEY_PATH in os.environ:
+        key = os.environ[CLOUDIFY_MANAGER_PRIVATE_KEY_PATH]
+    else:
+        key = ctx.bootstrap_context.cloudify_agent.agent_key_path
+
+    return key
+
 
 def run_command(command):
 
