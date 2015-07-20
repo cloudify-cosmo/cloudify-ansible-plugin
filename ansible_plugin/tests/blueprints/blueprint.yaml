@@ -27,25 +27,28 @@ node_types:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: ansible.ansible_plugin.tasks.configure
-          inputs: {}
+          inputs:
+            user:
+              default: {}
+            key:
+              default: {}
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
-          inputs: {}
+          inputs:
+            playbooks:
+              default: {}
+            inventory:
+              default: {}
 
 node_templates:
 
-  ansible_http_server:
+  host:
     type: cloudify.aws.nodes.Instance
     properties:
       cloudify_agent:
         user: { get_input: agent_user }
       image_id: { get_input: image }
       instance_type: { get_input: flavor }
-    # relationships:
-      # - type: cloudify.openstack.server_connected_to_security_group
-      #   target: ansible_security_group
-      # - type: cloudify.openstack.server_connected_to_floating_ip
-      #   target: ansible_floating_ip
 
   apache_instance:
     type: ansible.nodes.Application
@@ -54,25 +57,13 @@ node_templates:
         configure:
           implementation: ansible.ansible_plugin.tasks.configure
           inputs:
-            user: { get_property: [ ansible_http_server, cloudify_agent, user ] }
+            user: { get_property: [ host, cloudify_agent, user ] }
             key: ''
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:
             playbook: { get_input: playbook_file }
-            private_ip_address: { get_attribute: [ ansible_http_server, ip ] }
     relationships:
       - type: cloudify.relationships.contained_in
-        target: ansible_http_server
+        target: host
 
-  # ansible_floating_ip:
-  #   type: cloudify.openstack.nodes.FloatingIP
-
-  # ansible_security_group:
-  #   type: cloudify.openstack.nodes.SecurityGroup
-  #   properties:
-  #     security_group:
-  #       name: ansible_security_group
-  #     rules:
-  #       - remote_ip_prefix: 0.0.0.0/0
-  #         port: 80

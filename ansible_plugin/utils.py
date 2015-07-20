@@ -15,6 +15,7 @@
 
 # Built-in Imports
 import os
+import tempfile
 from subprocess import Popen, PIPE
 
 # Third-party Imports
@@ -46,27 +47,28 @@ def get_playbook_path(playbook):
     return path_to_file
 
 
-def get_inventory_path(hostname):
+def get_inventory_path(inventory=list()):
 
-    path_to_file = \
-        os.path.join('/tmp', '{}.inventory'.format(ctx.deployment.id))
+    if not inventory:
+        inventory.append(ctx.host_ip)
+
+    _, path_to_file = tempfile.mkstemp()
 
     with open(path_to_file, 'w') as f:
-        try:
-            f.write(hostname)
-        except IOError as e:
-            raise exceptions.NonRecoverableError(
-                'Could not open Inventory file for writing: '
-                '{}.'.format(str(e)))
-    f.close()
+        for host in inventory:
+            f.write('{0}\n'.format(host))
 
     return path_to_file
 
 
 def get_agent_user(user=None):
-
+    
     if not user:
-        user = ctx.bootstrap_context.cloudify_agent.user
+        if 'user' not in ctx.instance.runtime_properties:
+            user = ctx.bootstrap_context.cloudify_agent.user
+            ctx.instance.runtime_properties['user'] = user
+        else:
+            user = ctx.instance.runtime_properties['user']
 
     return user
 
