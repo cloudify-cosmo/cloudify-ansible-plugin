@@ -16,6 +16,7 @@
 # Built-in Imports
 import os
 import shutil
+import tempfile
 
 # Third-party Imports
 
@@ -26,10 +27,12 @@ from cloudify.decorators import operation
 
 
 @operation
-def configure(user, keypair, **kwargs):
+def configure(user, **kwargs):
 
     ctx.logger.info('Getting the path to the keypair.')
-    path_to_key = utils.get_keypair_path(keypair)
+    agent_key_path = utils.get_keypair_path(keypair)
+    path_to_key = tempfile.mkstemp()
+    shutil.copy2(agent_key_path, path_to_key)
     os.chmod(path_to_key, 0600)
     ctx.logger.info('Got the keypair path: {}'.format(path_to_key))
 

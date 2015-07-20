@@ -13,9 +13,6 @@ inputs:
   flavor:
     type: string
 
-  key_name:
-    type: string
-
   playbook_file:
     type: string
 
@@ -42,11 +39,10 @@ node_templates:
     type: cloudify.openstack.nodes.Server
     properties:
       cloudify_agent:
-        default:
-          user: { get_input: agent_user }
+        user: { get_input: agent_user }
       server:
-        image_name: { get_input: image }
-        flavor_name: { get_input: flavor }
+        image: { get_input: image }
+        flavor: { get_input: flavor }
     relationships:
       - type: cloudify.openstack.server_connected_to_security_group
         target: ansible_security_group
@@ -60,8 +56,7 @@ node_templates:
         configure:
           implementation: ansible.ansible_plugin.tasks.configure
           inputs:
-            user: { get_input: agent_user }
-            keypair: { get_input: key_name }
+            user: { get_property: cloudify_agent, user }
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:

@@ -63,16 +63,7 @@ def get_inventory_path(hostname):
 
 def get_keypair_path(keypair):
 
-    home = os.path.expanduser("~")
-    path_to_file = \
-        os.path.join(home, '.ssh', keypair)
-
-    if not os.path.exists(path_to_file):
-        raise exceptions.NonRecoverableError(
-            'Keypair file does not exist.')
-
-    return path_to_file
-
+    return ctx.bootstrap_context.cloudify_agent.agent_key_path
 
 def run_command(command):
 
