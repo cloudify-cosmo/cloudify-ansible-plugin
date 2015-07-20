@@ -77,7 +77,7 @@ def get_keypair_path():
     else:
         key = ctx.bootstrap_context.cloudify_agent.agent_key_path
 
-    return key
+    return os.path.expanduser(key)
 
 
 def run_command(command):

@@ -36,7 +36,7 @@ def configure(**kwargs):
 
     configuration = '[defaults]\n' \
                     'host_key_checking=False\n' \
-                    'private_key_file={}\n'.format(path_to_key)
+                    'private_key_file={0}\n'.format(path_to_key)
 
     ctx.logger.info('Configuring Anisble.')
     file_path = utils.write_configuration_file(configuration)
