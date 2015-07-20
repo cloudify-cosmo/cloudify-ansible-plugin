@@ -27,7 +27,7 @@ from cloudify.decorators import operation
 
 
 @operation
-def configure(user, key, **kwargs):
+def configure(user=None, key=None, **kwargs):
 
     agent_key_path = utils.get_keypair_path(key)
     _, path_to_key = tempfile.mkstemp()
@@ -53,7 +53,7 @@ def configure(user, key, **kwargs):
 
 
 @operation
-def ansible_playbook(playbooks, inventory, **kwargs):
+def ansible_playbook(playbooks, inventory=list(), **kwargs):
     """ Runs a playbook as part of a Cloudify lifecycle operation """
 
     inventory_path = utils.get_inventory_path(inventory)

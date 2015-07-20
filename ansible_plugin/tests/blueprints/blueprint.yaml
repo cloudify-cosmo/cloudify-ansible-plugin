@@ -37,8 +37,6 @@ node_types:
           inputs:
             playbooks:
               default: {}
-            inventory:
-              default: {}
 
 node_templates:
 
@@ -58,7 +56,6 @@ node_templates:
           implementation: ansible.ansible_plugin.tasks.configure
           inputs:
             user: { get_property: [ host, cloudify_agent, user ] }
-            key: ''
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:

@@ -47,7 +47,7 @@ def get_playbook_path(playbook):
     return path_to_file
 
 
-def get_inventory_path(inventory=list()):
+def get_inventory_path(inventory):
 
     if not inventory:
         inventory.append(ctx.host_ip)
