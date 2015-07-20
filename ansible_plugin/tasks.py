@@ -30,8 +30,8 @@ from cloudify.decorators import operation
 def configure(**kwargs):
 
     agent_key_path = utils.get_keypair_path()
-    path_to_key = tempfile.mkstemp()
-    shutil.copy2(agent_key_path, path_to_key)
+    _, path_to_key = tempfile.mkstemp()
+    shutil.copyfile(agent_key_path, path_to_key)
     os.chmod(path_to_key, 0600)
 
     configuration = '[defaults]\n' \
