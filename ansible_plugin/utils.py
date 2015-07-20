@@ -85,6 +85,18 @@ def get_keypair_path(key=None):
     return key
 
 
+def write_configuration_file(config):
+
+    home = os.path.expanduser("~")
+
+    file_path = os.path.join(home, '.ansible.cfg')
+
+    with open(file_path, 'w') as f:
+        f.write(config)
+
+    return file_path
+
+
 def run_command(command):
 
     try:
@@ -104,21 +116,3 @@ def run_command(command):
             'Non-zero returncode. Output {}.'.format(output))
 
     return output
-
-
-def write_configuration_file(config):
-
-    home = os.path.expanduser("~")
-
-    file_path = os.path.join(home, '.ansible.cfg')
-
-    with open(file_path, 'w') as f:
-        try:
-            f.write(config)
-        except IOError as e:
-            raise exceptions.NonRecoverableError(
-                'Could not open Configuration file for writing: '
-                '{}.'.format(str(e)))
-    f.close()
-
-    return file_path
