@@ -62,7 +62,8 @@ node_templates:
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:
-            playbook: { get_input: playbook_file }
+            playbooks:
+              - { get_input: playbook_file }
     relationships:
       - type: cloudify.relationships.contained_in
         target: host
