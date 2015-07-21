@@ -69,6 +69,8 @@ def get_agent_user(user=None):
             ctx.instance.runtime_properties['user'] = user
         else:
             user = ctx.instance.runtime_properties['user']
+    elif if 'user' not in ctx.instance.runtime_properties:
+        ctx.instance.runtime_properties['user'] = user
 
     return user
 
