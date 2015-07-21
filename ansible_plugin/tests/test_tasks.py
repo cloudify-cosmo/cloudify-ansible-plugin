@@ -17,7 +17,7 @@
 import os
 import tempfile
 import testtools
-import subproccess
+import subprocess
 from Crypto.PublicKey import RSA
 
 from cloudify.workflows import local
@@ -35,11 +35,36 @@ BLUEPRINTS = [
 
 class TestAnsiblePlugin(testtools.TestCase):
 
+    def _run_shell(self, cmd):
+        p = subprocess.Popen(cmd , shell=True)
+        out, err = p.communicate()
+        return out
+
+    def _init_env(self, bp_path, inputs):
+
+        return local.init_env(bp_path,
+                              name=self._testMethodName,
+                              inputs=inputs)
+
+    def _exec_env(self, workflow_name, parameters):
+
+        return self.env.execute(workflow_name,
+                                parameters=parameters,
+                                task_retries=0)
+
+    def _get_blueprint_path(self, blueprint):
+
+        return os.path.join(os.path.dirname(__file__),
+                            'blueprint', blueprint)
+
     def _user(self, user=None):
+
         if not user:
-            return os.getlogin()
+            user = os.getlogin()
+        return user
 
     def _key(self, key=None):
+
         if not key:
             rsa_material = RSA.generate(2048)
             _, key = tempfile.mkstemp()
@@ -48,30 +73,36 @@ class TestAnsiblePlugin(testtools.TestCase):
                 f.write(pubkey.exportKey('OpenSSH'))
         return key
 
-    def _run(self, blueprint='local.yaml',
-                   playbook='playbook.yaml',
-                   user, key,
-                   workflow_name='install'):
+    def _run(self, user=self._user(),
+             key=self._key(),
+             blueprint='local.yaml',
+             playbook='apache.yaml',
+             workflow_name='install',
+             properties=None):
 
         inputs = {
             'playbook_file': playbook,
             'agent_user': user,
-            'key_file': key
+            'key_file': key,
+            'host_ip': '127.0.0.1'
         }
 
-        blueprint_path = os.path.join(os.path.dirname(__file__),
-                                      'blueprint', blueprint)
-
-        self.env = local.init_env(blueprint_path,
-                                  name=self._testMethodName,
-                                  inputs=inputs)
-
-        result = self.env.execute(workflow_name,
-                                  parameters=parameters,
-                                  task_retries=0)
+        blueprint_path = self._get_blueprint_path(blueprint)
+        self.env = self._init_env(blueprint_path, inputs)
+        result = _exec_env(workflow_name, properties)
 
         if not result:
-            result = self.env.storage.get_node_instances()[0][
-                'runtime_properties']
+            node_instances = \
+                self.env.storage.get_node_instances()
+            result = node_instances[0]['runtime_properties']
 
         return result
+
+    def test_install_clean(self):
+        def stop_apache(self):
+            _run_shell('sudo service apache stop')
+        def uninstall_apache(self):
+            _run_shell('sudo apt-get remove -y apache2')
+        self.addCleanup(uninstall_apache)
+        self.addCleanup(stop_apache)
+        self._run()

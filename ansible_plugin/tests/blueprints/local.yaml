@@ -6,13 +6,13 @@ imports:
 inputs:
 
   playbook_file:
-    type: string
+    type: apache.yaml
 
   agent_user:
     default: ubuntu
 
   key_file:
-    default: key_file
+    default: ~/.ssh/agent_key.pem
 
   host_ip:
     default: 127.0.0.1
