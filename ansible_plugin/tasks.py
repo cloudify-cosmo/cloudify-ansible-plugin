@@ -30,13 +30,10 @@ from cloudify.decorators import operation
 def configure(user=None, key=None, **kwargs):
 
     agent_key_path = utils.get_keypair_path(key)
-    _, path_to_key = tempfile.mkstemp()
-    shutil.copyfile(agent_key_path, path_to_key)
-    os.chmod(path_to_key, 0600)
 
     configuration = '[defaults]\n' \
                     'host_key_checking=False\n' \
-                    'private_key_file={0}\n'.format(path_to_key)
+                    'private_key_file={0}\n'.format(agent_key_path)
 
     ctx.logger.info('Configuring Anisble.')
     file_path = utils.write_configuration_file(configuration)
@@ -63,7 +60,6 @@ def ansible_playbook(playbooks, inventory=list(), **kwargs):
         playbook_path = utils.get_playbook_path(playbook)
         ctx.logger.info('Playbook path: {0}.'.format(playbook_path))
         user = utils.get_agent_user()
-        # executible = utils.get_executible_path('ansible-playbook')
         command = ['ansible-playbook', '--sudo', '-u', user, 
                    '-i', inventory_path, playbook_path,
                    '--timeout=60', '-vvvv']

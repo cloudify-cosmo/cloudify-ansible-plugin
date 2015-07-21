@@ -27,15 +27,6 @@ from cloudify import exceptions
 CLOUDIFY_MANAGER_PRIVATE_KEY_PATH = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 
-def get_executible_path(executible_name):
-
-    home = os.path.expanduser("~")
-    deployment_home = \
-        os.path.join(home, '{}{}'.format('cloudify.', ctx.deployment.id))
-
-    return os.path.join(deployment_home, 'env', 'bin', executible_name)
-
-
 def get_playbook_path(playbook):
 
     try:
@@ -78,12 +69,18 @@ def get_agent_user(user=None):
 def get_keypair_path(key=None):
 
     if not key:
-        if CLOUDIFY_MANAGER_PRIVATE_KEY_PATH in os.environ:
+        if 'key' in ctx.instance.runtime_properties:
+            key = ctx.instance.runtime_properties['key']
+        elif CLOUDIFY_MANAGER_PRIVATE_KEY_PATH in os.environ:
             key = os.environ[CLOUDIFY_MANAGER_PRIVATE_KEY_PATH]
         else:
             key = ctx.bootstrap_context.cloudify_agent.agent_key_path
 
+    if 'key' not in ctx.instance.runtime_properties:
+        ctx.instance.runtime_properties['key'] = key
+
     key = os.path.expanduser(key)
+    os.chmod(key, 0600)
 
     return key
 
