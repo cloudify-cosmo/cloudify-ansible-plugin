@@ -14,6 +14,9 @@ inputs:
   key_file:
     default: key_file
 
+  host_ip:
+    default: 127.0.0.1
+
 node_types:
 
   ansible.nodes.Application:
@@ -42,6 +45,7 @@ node_templates:
       cloudify_agent:
         user: { get_input: agent_user }
         key: { get_input: key_file }
+      ip: { get_input: host_ip }
 
   apache_server:
     type: ansible.nodes.Application
