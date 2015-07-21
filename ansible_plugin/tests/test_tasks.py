@@ -16,7 +16,6 @@
 
 import os
 import testtools
-import subprocess
 
 from cloudify.workflows import local
 
@@ -33,12 +32,8 @@ BLUEPRINTS = [
 
 class TestAnsiblePlugin(testtools.TestCase):
 
-    def _run_shell(self, cmd):
-        p = subprocess.Popen(cmd, shell=True)
-        out, err = p.communicate()
-        return out
-
     def _init_env(self, bp_path, inputs):
+        """ Initialize the cfy local environment """
 
         return local.init_env(bp_path,
                               name=self._testMethodName,
@@ -46,23 +41,27 @@ class TestAnsiblePlugin(testtools.TestCase):
                               ignored_modules=IGNORE)
 
     def _exec_env(self, workflow_name, parameters):
+        """ execute a local workflow """
 
         return self.env.execute(workflow_name,
                                 parameters=parameters,
                                 task_retries=0)
 
     def _get_blueprint_path(self, blueprint):
+        """ get the path to a blueprint in the blueprints dir """
 
         return os.path.join(os.path.dirname(__file__),
                             'blueprint', blueprint)
 
     def _user(self, user=None):
+        """ get the user """
 
         if not user:
             user = os.getlogin()
         return user
 
     def _key(self, user, key=None):
+        """ get the path to the key """
 
         if not key:
             key = os.path.expanduser('~/.ssh/agent_key.pem')
@@ -72,6 +71,8 @@ class TestAnsiblePlugin(testtools.TestCase):
              blueprint='local.yaml',
              workflow_name='install',
              properties=None):
+
+        """ Setup a Test """
 
         user = user if user else self._user()
         key = key if key else self._key(user)

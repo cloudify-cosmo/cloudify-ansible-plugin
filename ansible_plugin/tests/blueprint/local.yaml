@@ -34,7 +34,7 @@ node_types:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:
             playbooks:
-              default: {}
+              default: []
 
 node_templates:
 
