@@ -80,7 +80,8 @@ def get_keypair_path(key=None):
             key = os.environ[CLOUDIFY_MANAGER_PRIVATE_KEY_PATH]
         else:
             key = ctx.bootstrap_context.cloudify_agent.agent_key_path
-        key = os.path.expanduser(key)
+
+    key = os.path.expanduser(key)
 
     return key
 
