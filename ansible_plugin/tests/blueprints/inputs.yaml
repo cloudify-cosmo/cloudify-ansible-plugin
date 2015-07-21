@@ -1,0 +1,4 @@
+key_file: ~/.ssh/agent_key.pem
+playbook_file: playbook.yaml
+agent_user: vagrant
+host_ip: 127.0.0.1
