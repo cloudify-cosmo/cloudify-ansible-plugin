@@ -2,22 +2,17 @@ tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.2/types.yaml
-  - http://www.getcloudify.org/spec/aws-plugin/1.2/plugin.yaml
-  - https://raw.githubusercontent.com/EarthmanT/cloudify-ansible-plugin/master/plugin.yaml
 
 inputs:
-
-  image:
-    type: string
-
-  flavor:
-    type: string
 
   playbook_file:
     type: string
 
   agent_user:
     default: ubuntu
+
+  key_file:
+    default: key_file
 
 node_types:
 
@@ -41,14 +36,14 @@ node_types:
 node_templates:
 
   host:
-    type: cloudify.aws.nodes.Instance
+    type: cloudify.nodes.Compute
     properties:
+      install_agent: false
       cloudify_agent:
         user: { get_input: agent_user }
-      image_id: { get_input: image }
-      instance_type: { get_input: flavor }
+        key: { get_input: key_file }
 
-  apache_instance:
+  apache_server:
     type: ansible.nodes.Application
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -56,6 +51,7 @@ node_templates:
           implementation: ansible.ansible_plugin.tasks.configure
           inputs:
             user: { get_property: [ host, cloudify_agent, user ] }
+            key: { get_property: [ host, cloudify_agent, key ] }
         start:
           implementation: ansible.ansible_plugin.tasks.ansible_playbook
           inputs:
@@ -65,3 +61,7 @@ node_templates:
       - type: cloudify.relationships.contained_in
         target: host
 
+plugins:
+  ansible:
+    executor: central_deployment_agent
+    install: false
