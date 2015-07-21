@@ -95,11 +95,4 @@ class TestAnsiblePlugin(testtools.TestCase):
 
     def test_install_clean(self):
 
-        def stop_apache(self):
-            self._run_shell('sudo service apache stop')
-
-        def uninstall_apache(self):
-            self._run_shell('sudo apt-get remove -y apache2')
-        self.addCleanup(uninstall_apache)
-        self.addCleanup(stop_apache)
         self._run()
