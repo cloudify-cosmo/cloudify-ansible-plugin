@@ -53,7 +53,7 @@ def get_inventory_path(inventory):
 
 
 def get_agent_user(user=None):
-    
+
     if not user:
         if 'user' not in ctx.instance.runtime_properties:
             user = ctx.bootstrap_context.cloudify_agent.user

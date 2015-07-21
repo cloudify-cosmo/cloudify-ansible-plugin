@@ -15,15 +15,13 @@
 
 
 import os
-import tempfile
 import testtools
 import subprocess
-from Crypto.PublicKey import RSA
 
 from cloudify.workflows import local
 
 
-IGNORED_LOCAL_WORKFLOW_MODULES = (
+IGNORE = (
     'worker_installer.tasks',
     'plugin_installer.tasks'
 )
@@ -36,7 +34,7 @@ BLUEPRINTS = [
 class TestAnsiblePlugin(testtools.TestCase):
 
     def _run_shell(self, cmd):
-        p = subprocess.Popen(cmd , shell=True)
+        p = subprocess.Popen(cmd, shell=True)
         out, err = p.communicate()
         return out
 
@@ -44,7 +42,8 @@ class TestAnsiblePlugin(testtools.TestCase):
 
         return local.init_env(bp_path,
                               name=self._testMethodName,
-                              inputs=inputs)
+                              inputs=inputs,
+                              ignored_modules=IGNORE)
 
     def _exec_env(self, workflow_name, parameters):
 
@@ -63,25 +62,21 @@ class TestAnsiblePlugin(testtools.TestCase):
             user = os.getlogin()
         return user
 
-    def _key(self, key=None):
+    def _key(self, user, key=None):
 
         if not key:
-            rsa_material = RSA.generate(2048)
-            _, key = tempfile.mkstemp()
-            pubkey = rsa_material.publickey()
-            with open(key, 'w') as f:
-                f.write(pubkey.exportKey('OpenSSH'))
+            key = os.path.expanduser('~/.ssh/agent_key.pem')
         return key
 
-    def _run(self, user=self._user(),
-             key=self._key(),
+    def _run(self, user=None, key=None,
              blueprint='local.yaml',
-             playbook='apache.yaml',
              workflow_name='install',
              properties=None):
 
+        user = user if user else self._user()
+        key = key if key else self._key(user)
+
         inputs = {
-            'playbook_file': playbook,
             'agent_user': user,
             'key_file': key,
             'host_ip': '127.0.0.1'
@@ -89,7 +84,7 @@ class TestAnsiblePlugin(testtools.TestCase):
 
         blueprint_path = self._get_blueprint_path(blueprint)
         self.env = self._init_env(blueprint_path, inputs)
-        result = _exec_env(workflow_name, properties)
+        result = self._exec_env(workflow_name, properties)
 
         if not result:
             node_instances = \
@@ -99,10 +94,12 @@ class TestAnsiblePlugin(testtools.TestCase):
         return result
 
     def test_install_clean(self):
+
         def stop_apache(self):
-            _run_shell('sudo service apache stop')
+            self._run_shell('sudo service apache stop')
+
         def uninstall_apache(self):
-            _run_shell('sudo apt-get remove -y apache2')
+            self._run_shell('sudo apt-get remove -y apache2')
         self.addCleanup(uninstall_apache)
         self.addCleanup(stop_apache)
         self._run()
