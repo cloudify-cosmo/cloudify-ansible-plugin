@@ -7,4 +7,4 @@ The Ansible plugin can be used to run Ansible Playbooks against a single node in
 
 ## Usage
 
-See [Ansible Plugin](http://getcloudify.org/guide/plugins-ansible.md)
+See [Ansible Plugin](http://getcloudify.org/guide/plugins-ansible.html)
