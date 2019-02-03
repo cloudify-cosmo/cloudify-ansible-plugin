@@ -1,5 +1,4 @@
 nose
-testtools
-testfixtures
 nose-cov
 flake8
+mock
