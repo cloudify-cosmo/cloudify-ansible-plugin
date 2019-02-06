@@ -260,6 +260,8 @@ class AnsiblePlaybookFromFile(object):
         return _stats
 
     def execute(self):
+        # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
+        # TODO: Also: AnsibleParserError
         self.runner.run()
         self.tqm.send_callback(
             'record_logs',
