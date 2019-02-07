@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import path
-import unittest
+from os import path, environ
+from unittest import skipUnless
 
 from cloudify.test_utils import workflow_test
+
+from cloudify_ansible_sdk.tests import AnsibleTestBase
 
 # This just gives us a path to the setup.py directory.
 _plugin_directory = \
@@ -28,8 +30,12 @@ _blueprint_path = \
    path.join(_plugin_directory, 'examples/blueprint.yaml')
 
 
-class TestPlugin(unittest.TestCase):
+class TestPlugin(AnsibleTestBase):
 
+    @skipUnless(
+        environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
     @workflow_test(_blueprint_path)
     def test_workflow(self, cfy_local):
         # execute install workflow
