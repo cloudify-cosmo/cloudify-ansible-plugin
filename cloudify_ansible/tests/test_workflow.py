@@ -38,7 +38,6 @@ class TestPlugin(AnsibleTestBase):
                'And export TEST_ZPLAYS=true')
     @workflow_test(_blueprint_path)
     def test_workflow(self, cfy_local):
-        # execute install workflow
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',

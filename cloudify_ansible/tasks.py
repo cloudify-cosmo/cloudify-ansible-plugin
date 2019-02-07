@@ -50,6 +50,14 @@ def handle_file_path(file_path, _ctx):
     return file_path
 
 
+def run_playbook_from_file(_playbook_args):
+    try:
+        playbook = AnsiblePlaybookFromFile(**_playbook_args)
+    except CloudifyAnsibleSDKError:
+        raise NonRecoverableError(CloudifyAnsibleSDKError)
+    return playbook.execute()
+
+
 @operation
 def run(site_yaml_path,
         sources=None,
@@ -90,27 +98,19 @@ def run(site_yaml_path,
     # Get the actual file path.
     site_yaml_path = handle_file_path(site_yaml_path, ctx)
     sources = handle_file_path(sources, ctx)
-
     # Prepare kwargs for the AnsiblePlaybookFromFile class.
     playbook_args = {
         'site_yaml_path': site_yaml_path,
         'sources': sources,
     }
-
     # Set the verbosity to 0 by default.
     if 'verbosity' not in kwargs:
         kwargs['verbosity'] = 0
-
     playbook_args.update(**kwargs)
 
     ctx.logger.info('playbook_args: {0}'.format(playbook_args))
 
-    try:
-        playbook = AnsiblePlaybookFromFile(**playbook_args)
-    except CloudifyAnsibleSDKError:
-        raise NonRecoverableError(CloudifyAnsibleSDKError)
-
-    result = playbook.execute()
+    result = run_playbook_from_file(playbook_args)
 
     ctx.instance.runtime_properties['result'] = result.__dict__
     ctx.logger.debug(

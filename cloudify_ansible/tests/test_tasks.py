@@ -83,8 +83,9 @@ class AnsibleTasksTest(AnsibleTestBase):
                 self.hosts_path,
                 inventory_config=['host1', 'host2'],
                 ctx=ctx)
-            self.assertIn('inventory_config must be a dictionary.',
-                          e.message)
+            self.assertIn(
+                'inventory_config must be a dictionary.',
+                e.message)
 
     @unittest.skipUnless(
         environ.get('TEST_ZPLAYS', False),
