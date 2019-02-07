@@ -1,4 +1,2 @@
 nose
-nose-cov
-flake8
 mock

@@ -74,6 +74,8 @@ class AnsiblePlaybookFromFile(object):
         self.modules = modules or []
         self.passwords = passwords or {'conn_pass': None, 'become_pass': None}
         self.private_key_file = private_key_file
+        # TODO: Find a better way to pass the sources and site.yaml.
+        # TODO: For example, using an in memory object.
         self.sources = sources
         self.site_yaml_path = site_yaml_path
         self.verbosity = verbosity
