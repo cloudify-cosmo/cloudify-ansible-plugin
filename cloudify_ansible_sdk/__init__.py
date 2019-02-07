@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
 from copy import deepcopy
 from cStringIO import StringIO
 import sys
@@ -24,51 +23,7 @@ from ansible.inventory.manager import InventoryManager
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.utils.display import Display
 
-Options = namedtuple(
-    'Options',
-    [
-        'ask_pass',
-        'ask_su_pass',
-        'ask_sudo_pass',
-        'ask_vault_pass',
-        'become',
-        'become_ask_pass',
-        'become_method',
-        'become_user',
-        'check',
-        'connection',
-        'diff',
-        'extra_vars',
-        'flush_cache',
-        'force_handlers',
-        'forks',
-        'inventory',
-        'listhosts',
-        'listtags',
-        'listtasks',
-        'module_path',
-        'private_key_file',
-        'remote_user',
-        'sftp_extra_args',
-        'skip_tags',
-        'syntax',
-        'scp_extra_args',
-        'ssh_common_args',
-        'ssh_extra_args',
-        'start_at_task',
-        'step',
-        'su',
-        'subset',
-        'sudo',
-        'sudo_user',
-        'su_user',
-        'tags',
-        'timeout',
-        'vault_ids',
-        'vault_password_files',
-        'verbosity',
-     ]
-)
+from cloudify_ansible_sdk.options import Options
 
 
 class TossAnsibleOutput(list):
@@ -157,94 +112,16 @@ class AnsiblePlaybookFromFile(object):
         variable_manager.set_inventory(self.inventory)
         return variable_manager
 
-    # A lot of this stuff I did not have time to validate.
     def _set_options(self):
-        _kwargs = deepcopy(self.options_config)
-        if not isinstance(_kwargs, dict):
+        options_kwargs = deepcopy(self.options_config)
+        if not isinstance(options_kwargs, dict):
             raise CloudifyAnsibleSDKError(
                 'options_config must be a dictionary.')
-        if 'ask_pass' not in _kwargs:
-            _kwargs['ask_pass'] = False
-        if 'ask_su_pass' not in _kwargs:
-            _kwargs['ask_su_pass'] = False
-        if 'ask_sudo_pass' not in _kwargs:
-            _kwargs['ask_sudo_pass'] = False
-        if 'ask_vault_pass' not in _kwargs:
-            _kwargs['ask_vault_pass'] = False
-        if 'become' not in _kwargs:
-            _kwargs['become'] = False
-        if 'become_ask_pass' not in _kwargs:
-            _kwargs['become_ask_pass'] = False
-        if 'become_method' not in _kwargs:
-            _kwargs['become_method'] = 'sudo'
-        if 'become_user' not in _kwargs:
-            _kwargs['become_user'] = 'root'
-        if 'check' not in _kwargs:
-            _kwargs['check'] = False
-        if 'connection' not in _kwargs:
-            _kwargs['connection'] = 'smart'
-        if 'diff' not in _kwargs:
-            _kwargs['diff'] = False
-        if 'extra_vars' not in _kwargs:
-            _kwargs['extra_vars'] = []
-        if 'flush_cache' not in _kwargs:
-            _kwargs['flush_cache'] = None
-        if 'force_handlers' not in _kwargs:
-            _kwargs['force_handlers'] = False
-        if 'forks' not in _kwargs:
-            _kwargs['forks'] = 10
-        if 'inventory' not in _kwargs:
-            _kwargs['inventory'] = self.inventory
-        if 'listhosts' not in _kwargs:
-            _kwargs['listhosts'] = None
-        if 'listtags' not in _kwargs:
-            _kwargs['listtags'] = None
-        if 'listtasks' not in _kwargs:
-            _kwargs['listtasks'] = None
-        if 'module_path' not in _kwargs:
-            _kwargs['module_path'] = self.modules
-        if 'private_key_file' not in _kwargs:
-            _kwargs['private_key_file'] = self.private_key_file
-        if 'remote_user' not in _kwargs:
-            _kwargs['remote_user'] = None
-        if 'scp_extra_args' not in _kwargs:
-            _kwargs['scp_extra_args'] = ''
-        if 'sftp_extra_args' not in _kwargs:
-            _kwargs['sftp_extra_args'] = ''
-        if 'skip_tags' not in _kwargs:
-            _kwargs['skip_tags'] = []
-        if 'ssh_common_args' not in _kwargs:
-            _kwargs['ssh_common_args'] = ''
-        if 'ssh_extra_args' not in _kwargs:
-            _kwargs['ssh_extra_args'] = ''
-        if 'start_at_task' not in _kwargs:
-            _kwargs['start_at_task'] = None
-        if 'step' not in _kwargs:
-            _kwargs['step'] = None
-        if 'su' not in _kwargs:
-            _kwargs['su'] = False
-        if 'subset' not in _kwargs:
-            _kwargs['subset'] = False
-        if 'sudo' not in _kwargs:
-            _kwargs['sudo'] = False
-        if 'sudo_user' not in _kwargs:
-            _kwargs['sudo_user'] = False
-        if 'su_user' not in _kwargs:
-            _kwargs['su_user'] = False
-        if 'syntax' not in _kwargs:
-            _kwargs['syntax'] = None
-        if 'tags' not in _kwargs:
-            _kwargs['tags'] = ['all']
-        if 'timeout' not in _kwargs:
-            _kwargs['timeout'] = 10
-        if 'vault_ids' not in _kwargs:
-            _kwargs['vault_ids'] = []
-        if 'vault_password_files' not in _kwargs:
-            _kwargs['vault_password_files'] = []
-        if 'verbosity' not in _kwargs:
-            _kwargs['verbosity'] = self.verbosity
+        for k, v in self.options_defaults.items():
+            if not options_kwargs.get(k):
+                options_kwargs[k] = v
         try:
-            return Options(**_kwargs)
+            return Options(**options_kwargs)
         except TypeError as e:
             raise CloudifyAnsibleSDKError(
                 'Invalid options_config: {0}'.format(str(e)))
@@ -277,6 +154,52 @@ class AnsiblePlaybookFromFile(object):
                 'There is an issue with Ansible: {0}'.format(str(e))
             )
         return _stats
+
+    @property
+    def options_defaults(self):
+        # A lot of this stuff I did not have time to validate.
+        return {
+            'ask_pass': False,
+            'ask_su_pass': False,
+            'ask_sudo_pass': False,
+            'ask_vault_pass': False,
+            'become': False,
+            'become_ask_pass': False,
+            'become_method': 'sudo',
+            'become_user': 'root',
+            'check': False,
+            'connection': 'smart',
+            'diff': False,
+            'extra_vars': [],
+            'flush_cache': None,
+            'force_handlers': False,
+            'forks': 10,
+            'inventory': self.inventory,
+            'listhosts': None,
+            'listtags': None,
+            'listtasks': None,
+            'module_path': self.modules,
+            'private_key_file': self.private_key_file,
+            'remote_user': None,
+            'scp_extra_args': '',
+            'sftp_extra_args': '',
+            'skip_tags': [],
+            'ssh_common_args': '',
+            'ssh_extra_args': '',
+            'start_at_task': None,
+            'step': None,
+            'su': False,
+            'su_user': False,
+            'subset': False,
+            'sudo': False,
+            'sudo_user': False,
+            'syntax': None,
+            'tags': ['all'],
+            'timeout': 10,
+            'vault_ids': [],
+            'vault_password_files': [],
+            'verbosity': self.verbosity
+        }
 
     def execute(self):
         # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
