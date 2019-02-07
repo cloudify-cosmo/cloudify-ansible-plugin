@@ -14,6 +14,8 @@
 
 from collections import namedtuple
 from copy import deepcopy
+from cStringIO import StringIO
+import sys
 
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.parsing.dataloader import DataLoader
@@ -67,6 +69,23 @@ Options = namedtuple(
         'verbosity',
      ]
 )
+
+
+class TossAnsibleOutput(list):
+    """Ansible dumps a ton of junk to the screen which is not needed."""
+
+    def __enter__(self):
+        self._stdout = sys.stdout
+        self._stderr = sys.stderr
+        sys.stdout = self._stringio = StringIO()
+        sys.stderr = self._stringio = StringIO()
+        return self
+
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        del self._stringio    # free up some memory
+        sys.stdout = self._stdout
+        sys.stderr = self._stderr
 
 
 class CloudifyAnsibleSDKError(Exception):
@@ -262,7 +281,11 @@ class AnsiblePlaybookFromFile(object):
     def execute(self):
         # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
         # TODO: Also: AnsibleParserError
-        self.runner.run()
+        if self.verbosity < 2:
+            with TossAnsibleOutput() as _:
+                self.runner.run()
+        else:
+            self.runner.run()
         self.tqm.send_callback(
             'record_logs',
             user_id=self.run_data.get('user_id'),

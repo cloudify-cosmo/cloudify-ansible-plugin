@@ -20,40 +20,32 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 
 
-def _execute_playbook(playbook_args):
+@operation
+def run(site_yaml_path,
+        sources=None,
+        ctx=ctx,
+        **kwargs):
+
+    playbook_args = {
+        'site_yaml_path': site_yaml_path,
+        'sources': sources,
+    }
+
+    if 'verbosity' not in kwargs:
+        kwargs['verbosity'] = 0
+
+    playbook_args.update(**kwargs)
+
+    ctx.logger.info('playbook_args: {0}'.format(playbook_args))
+
     try:
-        pb = AnsiblePlaybookFromFile(**playbook_args)
+        playbook = AnsiblePlaybookFromFile(**playbook_args)
     except CloudifyAnsibleSDKError:
         raise NonRecoverableError(CloudifyAnsibleSDKError)
-    return pb.execute()
 
+    result = playbook.execute()
 
-@operation
-def execute(site_yaml_path,
-            fail_on_unreachable=False,
-            fail_on_skipped=None,
-            log_output=True,
-            _ctx=ctx,
-            **kwargs):
-
-    kwargs.update({'site_yaml_path': site_yaml_path})
-
-    if log_output:
-        _ctx.logger.info(
-            'Executing playbook with these args: {0}'.format(kwargs))
-
-    output = _execute_playbook(kwargs)
-
-    if log_output:
-        _ctx.logger.info('Playbook run output: {0}'.format(output))
-
-    errors = []
-
-    if fail_on_unreachable and \
-            (output.get('dark') or output.get('unreachable')):
-        errors.append(output.get('dark') or output.get('unreachable'))
-    if fail_on_skipped and output.get('skipped'):
-        errors.append(output.get('skipped'))
-    if errors:
-        raise NonRecoverableError(
-            'These errors were encountered {errors}'.format(errors=errors))
+    ctx.instance.runtime_properties['result'] = result.__dict__
+    ctx.logger.debug(
+        'Playbook run results: {0}'.format(
+            ctx.instance.runtime_properties['result']))

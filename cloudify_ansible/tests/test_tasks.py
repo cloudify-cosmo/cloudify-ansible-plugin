@@ -12,15 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+import os
 from mock import patch
+import unittest
 
-from cloudify_ansible.tasks import _execute_playbook
 from cloudify.exceptions import NonRecoverableError
+from cloudify.mocks import MockCloudifyContext
+from cloudify_ansible.tasks import run
+
+NODE_PROPS = {
+    'resource_id': None,
+    'use_external_resource': False,
+    'resource_config': {}
+}
+RUNTIME_PROPS = {
+    'external_id': None,
+    'resource_config': {}
+}
+RELS = []
+OP_CTX = {
+    'retry_number': 0,
+    'name': 'cloudify.interfaces.lifecycle.'
+}
+
+ctx = MockCloudifyContext(
+    node_name='mock_node_name',
+    node_id='node_id',
+    deployment_id='mock_deployment_id',
+    properties=NODE_PROPS,
+    runtime_properties=RUNTIME_PROPS,
+    relationships=RELS,
+    operation=OP_CTX
+)
+
+ctx.node.type_hierarchy = ['cloudify.nodes.Root']
 
 
-@patch("cloudify_ansible_sdk.AnsiblePlaybookFromFile")
 class AnsibleTasksTest(unittest.TestCase):
+
+    _CWD = os.path.abspath(os.path.dirname(__file__))
 
     def setUp(self):
         super(AnsibleTasksTest, self).setUp()
@@ -28,20 +58,67 @@ class AnsibleTasksTest(unittest.TestCase):
     def tearDown(self):
         super(AnsibleTasksTest, self).tearDown()
 
-    def test_exception_raised(self, _):
-        test_args = {
-            'site_yaml_path': 'str',
-            'sources': None,
-            'inventory_config': ['host1', 'host2'],
-        }
-        with self.assertRaises(NonRecoverableError) as exc:
-            _execute_playbook(test_args)
-            self.assertIn('inventory_config must be a dictionary', exc)
+    @property
+    def cwd(self):
+        path_components = self._CWD.split('/')[1:-2]
+        _cwd = '/'.join(path_components)
+        _cwd = '/{0}'.format(_cwd)
+        return _cwd
 
-    # @patch('ansible.executor.task_queue_manager.TaskQueueManager.__init__')
-    # def test_task_queue_manager(self, foo):
-    #     foo.return_value = None
-    #     AnsiblePlaybookFromFile(
-    #         self.playbook_path,
-    #         self.hosts_path)
-    #     assert foo.called_once
+    @property
+    def playbook_path(self):
+        return os.path.join(
+            self.cwd,
+            'examples/ansible-examples/lamp_simple/site.yml'
+        )
+
+    @property
+    def hosts_path(self):
+        return os.path.join(
+            self.cwd,
+            'examples/ansible-examples/lamp_simple/hosts'
+        )
+
+    @property
+    def mock_runner_return(self):
+        return {
+            'skipped': {},
+            'ok': {},
+            'changed': {},
+            'custom': {},
+            'dark': {},
+            'processed': {},
+            'failures': {}
+        }
+
+    @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
+    def test_ansible_playbook(self, foo):
+        instance = foo.return_value
+        instance.method.return_value = self.mock_runner_return
+        run(
+            self.playbook_path,
+            self.hosts_path,
+            ctx=ctx)
+
+    @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
+    def test_ansible_playbook_raises(self, foo):
+        instance = foo.return_value
+        instance.method.return_value = self.mock_runner_return
+        with self.assertRaises(NonRecoverableError) as e:
+            run(
+                self.playbook_path,
+                self.hosts_path,
+                inventory_config=['host1', 'host2'],
+                ctx=ctx)
+            self.assertIn('inventory_config must be a dictionary.',
+                          e.message)
+
+    @unittest.skipUnless(
+        os.environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
+    def test_zplays(self):
+        run(
+            self.playbook_path,
+            self.hosts_path,
+            ctx=ctx)

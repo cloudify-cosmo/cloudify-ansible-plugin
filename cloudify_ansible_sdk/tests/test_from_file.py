@@ -196,7 +196,10 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
             self.hosts_path)
         assert foo.called_once
 
-    @unittest.skip('Only run this locally with the provided Vagrantfile.')
+    @unittest.skipUnless(
+        os.environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
     def test_zplays(self):
         AnsiblePlaybookFromFile(
             self.playbook_path,
