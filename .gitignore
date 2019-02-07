@@ -44,3 +44,5 @@ nosetests.xml
 # Cloudify
 .cloudify
 .DS_Store
+.vagrant/
+.coverage*

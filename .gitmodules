@@ -1,0 +1,3 @@
+[submodule "examples/ansible-examples"]
+	path = examples/ansible-examples
+	url = https://github.com/EarthmanT/ansible-examples.git

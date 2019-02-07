@@ -2,6 +2,6 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.0.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/dev.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.0.0'
+    package_version: '2.0.0.dev0'
