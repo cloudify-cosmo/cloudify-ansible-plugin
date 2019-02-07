@@ -13,11 +13,12 @@
 # limitations under the License.
 
 from cloudify_ansible_sdk import (
-    AnsiblePlaybookFromFile, CloudifyAnsibleSDKError)
+    AnsiblePlaybookFromFile,
+    CloudifyAnsibleSDKError
+)
 
 from cloudify import ctx as ctx_from_import
 from cloudify.decorators import operation
-from cloudify.endpoint import ManagerEndpoint
 from cloudify.exceptions import NonRecoverableError
 
 
@@ -35,8 +36,11 @@ def handle_file_path(file_path, _ctx):
     :return: The absolute path on the manager to the file.
     """
 
-    endpoint = getattr(_ctx, '_endpoint')
-    if isinstance(endpoint, ManagerEndpoint):
+    local_profile = getattr(_ctx, '_local', False)
+    if not local_profile:
+        # After upload the blueprint is uncompressed and
+        # all files are stored in:
+        # /opt/manager/resources/blueprints/tenant_id/blueprint_id
         file_path = \
             '/opt/manager/resources/blueprints/' \
             '{tenant}/{blueprint}/{relative_path}'.format(

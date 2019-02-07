@@ -21,7 +21,7 @@ from cloudify.mocks import MockCloudifyContext
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase
 
-from cloudify_ansible.tasks import run
+from cloudify_ansible.tasks import run, handle_file_path
 
 NODE_PROPS = {
     'resource_id': None,
@@ -50,8 +50,19 @@ ctx = MockCloudifyContext(
 
 ctx.node.type_hierarchy = ['cloudify.nodes.Root']
 
+# Fix the mock ctx.
+setattr(ctx, '_local', True)
+
 
 class AnsibleTasksTest(AnsibleTestBase):
+
+    def test_handle_file_path(self):
+        setattr(ctx, '_local', False)
+        self.assertEquals(
+            '/opt/manager/resources/blueprints/None/None/foo',
+            handle_file_path('foo', ctx))
+        # In case this affects other tests.
+        setattr(ctx, '_local', True)
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
     def test_ansible_playbook(self, foo):

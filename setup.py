@@ -25,5 +25,8 @@ setup(
     packages=['cloudify_ansible_sdk'],
     license='LICENSE',
     zip_safe=False,
-    install_requires=["cloudify-common>=4.5.5", "ansible==2.7.6"]
+    install_requires=[
+        "cloudify-common>=4.5.5",
+        "ansible==2.7.6"
+    ]
 )
