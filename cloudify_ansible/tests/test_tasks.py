@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+from os import environ
 from mock import patch
 import unittest
 
 from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
+
+from cloudify_ansible_sdk.tests import AnsibleTestBase
+
 from cloudify_ansible.tasks import run
 
 NODE_PROPS = {
@@ -48,48 +51,7 @@ ctx = MockCloudifyContext(
 ctx.node.type_hierarchy = ['cloudify.nodes.Root']
 
 
-class AnsibleTasksTest(unittest.TestCase):
-
-    _CWD = os.path.abspath(os.path.dirname(__file__))
-
-    def setUp(self):
-        super(AnsibleTasksTest, self).setUp()
-
-    def tearDown(self):
-        super(AnsibleTasksTest, self).tearDown()
-
-    @property
-    def cwd(self):
-        path_components = self._CWD.split('/')[1:-2]
-        _cwd = '/'.join(path_components)
-        _cwd = '/{0}'.format(_cwd)
-        return _cwd
-
-    @property
-    def playbook_path(self):
-        return os.path.join(
-            self.cwd,
-            'examples/ansible-examples/lamp_simple/site.yml'
-        )
-
-    @property
-    def hosts_path(self):
-        return os.path.join(
-            self.cwd,
-            'examples/ansible-examples/lamp_simple/hosts'
-        )
-
-    @property
-    def mock_runner_return(self):
-        return {
-            'skipped': {},
-            'ok': {},
-            'changed': {},
-            'custom': {},
-            'dark': {},
-            'processed': {},
-            'failures': {}
-        }
+class AnsibleTasksTest(AnsibleTestBase):
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
     def test_ansible_playbook(self, foo):
@@ -114,7 +76,7 @@ class AnsibleTasksTest(unittest.TestCase):
                           e.message)
 
     @unittest.skipUnless(
-        os.environ.get('TEST_ZPLAYS', False),
+        environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     def test_zplays(self):

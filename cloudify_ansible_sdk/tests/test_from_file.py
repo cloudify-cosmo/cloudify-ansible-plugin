@@ -14,61 +14,21 @@
 
 from copy import deepcopy
 from mock import patch
-import os
-import unittest
+from os import environ, path
+from unittest import skipUnless
+
+from . import AnsibleTestBase
 
 from ansible.executor.stats import AggregateStats
 from .. import AnsiblePlaybookFromFile, CloudifyAnsibleSDKError
 
 
-class AnsibleSDKHandlerTest(unittest.TestCase):
+class AnsibleSDKTest(AnsibleTestBase):
 
-    _CWD = os.path.abspath(os.path.dirname(__file__))
-
-    def setUp(self):
-        super(AnsibleSDKHandlerTest, self).setUp()
-
-    def tearDown(self):
-        super(AnsibleSDKHandlerTest, self).tearDown()
-
-    @property
-    def cwd(self):
-        path_components = self._CWD.split('/')[1:-2]
-        _cwd = '/'.join(path_components)
-        _cwd = '/{0}'.format(_cwd)
-        return _cwd
-
-    @property
-    def playbook_path(self):
-        return os.path.join(
-            self.cwd,
-            'examples/ansible-examples/lamp_simple/site.yml'
-        )
-
-    @property
-    def hosts_path(self):
-        return os.path.join(
-            self.cwd,
-            'examples/ansible-examples/lamp_simple/hosts'
-        )
-
-    @property
-    def mock_runner_return(self):
-        return {
-            'skipped': {},
-            'ok': {},
-            'changed': {},
-            'custom': {},
-            'dark': {},
-            'processed': {},
-            'failures': {}
-        }
-
-    def test_required_files(self):
-        self.assertTrue(os.path.isfile(self.playbook_path))
-        self.assertTrue(os.path.isfile(self.hosts_path))
-
-    def test_loads_files(self):
+    def test_that_tests_can_run_correctly(self):
+        """Check that these tests can actually run."""
+        self.assertTrue(path.isfile(self.playbook_path))
+        self.assertTrue(path.isfile(self.hosts_path))
         self.assertIn(
             self.hosts_path,
             AnsiblePlaybookFromFile(
@@ -81,6 +41,9 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
                 self.hosts_path).runner._playbooks)
 
     def test_inventory_raises(self):
+        """Check that we raise an error when an
+        invalid inventory config is provided.
+        """
         with self.assertRaises(CloudifyAnsibleSDKError):
             AnsiblePlaybookFromFile(
                 self.playbook_path,
@@ -89,6 +52,9 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
             )
 
     def test_variable_manager_raises(self):
+        """Check that we raise an error when an
+        invalid variable_manager config is provided.
+        """
         with self.assertRaises(CloudifyAnsibleSDKError):
             AnsiblePlaybookFromFile(
                 self.playbook_path,
@@ -98,6 +64,9 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
             )
 
     def test_options_raises(self):
+        """Check that we raise an error when invalid options
+        are provided.
+        """
         with self.assertRaises(CloudifyAnsibleSDKError):
             AnsiblePlaybookFromFile(
                 self.playbook_path,
@@ -116,6 +85,9 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
             )
 
     def test_proxies(self):
+        """Check that our objects from Ansible
+        that we are proxying are accessible.
+        """
         pb = AnsiblePlaybookFromFile(
             self.playbook_path,
             self.hosts_path
@@ -125,6 +97,7 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
     def test_execute(self, foo):
+        """Check that run returns all the expected values."""
         instance = foo.return_value
         instance.method.return_value = self.mock_runner_return
         pb = AnsiblePlaybookFromFile(
@@ -139,6 +112,7 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
     def test_tqm_stats(self, foo):
+        """Check that with broken code run will raise an error."""
         instance = foo.return_value
         instance.method.return_value = self.mock_runner_return
         with self.assertRaises(CloudifyAnsibleSDKError):
@@ -151,6 +125,7 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
 
     @patch('ansible.executor.stats.AggregateStats.summarize')
     def test_host_success(self, foo):
+        """Check that our host success validation works."""
 
         x = deepcopy(self.mock_runner_return)
         mock_host = 'taco'
@@ -170,6 +145,7 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
         self.assertFalse(pb._host_success(mock_host))
 
     def test_validate_host_success(self):
+        """Check that we can loop through our the playbook hosts."""
         mock_host = 'taco'
         mock_dict = {mock_host: 1}
         with patch('cloudify_ansible_sdk.AnsiblePlaybookFromFile.tqm_stats')\
@@ -178,10 +154,13 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
             pb = AnsiblePlaybookFromFile(
                 self.playbook_path,
                 self.hosts_path)
-            pb.validate_host_success()
+            pb._validate_host_success()
 
     @patch('ansible.executor.task_queue_manager.TaskQueueManager.__init__')
     def test_task_queue_manager(self, foo):
+        """Check that we initialize the TaskQueueManager
+        when we initialize our Playbook object.
+        """
         foo.return_value = None
         AnsiblePlaybookFromFile(
             self.playbook_path,
@@ -190,17 +169,21 @@ class AnsibleSDKHandlerTest(unittest.TestCase):
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.__init__')
     def test_playbook_executor(self, foo):
+        """Check that we initialize the PlaybookExecutor
+        when we initialize our Playbook object.
+        """
         foo.return_value = None
         AnsiblePlaybookFromFile(
             self.playbook_path,
             self.hosts_path)
         assert foo.called_once
 
-    @unittest.skipUnless(
-        os.environ.get('TEST_ZPLAYS', False),
+    @skipUnless(
+        environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     def test_zplays(self):
+        """Run an actual Ansible playbook from a file."""
         AnsiblePlaybookFromFile(
             self.playbook_path,
             self.hosts_path).execute()

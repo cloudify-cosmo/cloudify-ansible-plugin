@@ -27,7 +27,9 @@ from cloudify_ansible_sdk.options import Options
 
 
 class TossAnsibleOutput(list):
-    """Ansible dumps a ton of junk to the screen which is not needed."""
+    """Ansible dumps a ton of junk to the screen
+    that we do not want to see.
+    """
 
     def __enter__(self):
         self._stdout = sys.stdout
@@ -44,11 +46,15 @@ class TossAnsibleOutput(list):
 
 
 class CloudifyAnsibleSDKError(Exception):
-    """Generic Error for handling issues preparing the Ansible Playbook."""
+    """Generic Error for handling issues preparing
+    the Ansible Playbook.
+    """
+
     pass
 
 
 class AnsiblePlaybookFromFile(object):
+    """ Object for communication to Ansible Library."""
 
     def __init__(self,
                  site_yaml_path,
@@ -88,6 +94,7 @@ class AnsiblePlaybookFromFile(object):
         self.runner = self._set_runner()
 
     def _set_inventory(self):
+        """Assign the inventory property."""
         _kwargs = deepcopy(self.inventory_config)
         if not isinstance(_kwargs, dict):
             raise CloudifyAnsibleSDKError(
@@ -99,6 +106,7 @@ class AnsiblePlaybookFromFile(object):
         return InventoryManager(**_kwargs)
 
     def _set_variable_manager(self):
+        """Assign the variable_manager property."""
         _kwargs = deepcopy(self.variable_manager_config)
         if not isinstance(_kwargs, dict):
             raise CloudifyAnsibleSDKError(
@@ -113,6 +121,7 @@ class AnsiblePlaybookFromFile(object):
         return variable_manager
 
     def _set_options(self):
+        """Assign the options variable."""
         options_kwargs = deepcopy(self.options_config)
         if not isinstance(options_kwargs, dict):
             raise CloudifyAnsibleSDKError(
@@ -147,6 +156,9 @@ class AnsiblePlaybookFromFile(object):
 
     @property
     def tqm_stats(self):
+        """TaskQueueManager creates a private _stats property.
+        We want to access it locally.
+        """
         try:
             _stats = getattr(self.tqm, '_stats')
         except AttributeError as e:
@@ -157,7 +169,8 @@ class AnsiblePlaybookFromFile(object):
 
     @property
     def options_defaults(self):
-        # A lot of this stuff I did not have time to validate.
+        # This stuff is allegedly required.
+        # However, I did not have time to validate it all.
         return {
             'ask_pass': False,
             'ask_su_pass': False,
@@ -201,6 +214,22 @@ class AnsiblePlaybookFromFile(object):
             'verbosity': self.verbosity
         }
 
+    def _host_success(self, host):
+        """Check if a hosts is failed or unreachable."""
+        host_summary = self.tqm_stats.summarize(host)
+        dark_hosts = host_summary.get('unreachable') > 0
+        failed_hosts = host_summary.get('failures') > 0
+        if dark_hosts or failed_hosts:
+            return False
+        return True
+
+    def _validate_host_success(self):
+        """After execute, we need to review each host's failed tasks."""
+        host_success = []
+        for host in sorted(self.tqm_stats.processed.keys()):
+            host_success.append(self._host_success(host))
+        return host_success
+
     def execute(self):
         # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
         # TODO: Also: AnsibleParserError
@@ -212,20 +241,6 @@ class AnsiblePlaybookFromFile(object):
         self.tqm.send_callback(
             'record_logs',
             user_id=self.run_data.get('user_id'),
-            success=all(self.validate_host_success())
+            success=all(self._validate_host_success())
         )
         return self.tqm_stats
-
-    def _host_success(self, host):
-        host_summary = self.tqm_stats.summarize(host)
-        dark_hosts = host_summary.get('unreachable') > 0
-        failed_hosts = host_summary.get('failures') > 0
-        if dark_hosts or failed_hosts:
-            return False
-        return True
-
-    def validate_host_success(self):
-        host_success = []
-        for host in sorted(self.tqm_stats.processed.keys()):
-            host_success.append(self._host_success(host))
-        return host_success
