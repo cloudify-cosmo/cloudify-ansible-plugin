@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import environ
+from os import environ, curdir
 from mock import patch
 import unittest
 
 from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
 
-from cloudify_ansible_sdk.tests import AnsibleTestBase
+from cloudify_ansible_sdk.tests import AnsibleTestBase, source_dict
 
-from cloudify_ansible.tasks import run, handle_file_path
+from cloudify_ansible.tasks import run
+from cloudify_ansible.utils import handle_file_path
 
 NODE_PROPS = {
     'resource_id': None,
@@ -58,11 +59,14 @@ class AnsibleTasksTest(AnsibleTestBase):
 
     def test_handle_file_path(self):
         setattr(ctx, '_local', False)
-        self.assertEquals(
-            '/opt/manager/resources/blueprints/None/None/foo',
-            handle_file_path('foo', ctx))
-        # In case this affects other tests.
+        with self.assertRaises(NonRecoverableError):
+            self.assertEquals(
+                '/opt/manager/resources/blueprints/None/None/foo',
+                handle_file_path('foo', ctx))
         setattr(ctx, '_local', True)
+        self.assertEquals(
+            curdir,
+            handle_file_path(curdir, ctx))
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
     def test_ansible_playbook(self, foo):
@@ -86,6 +90,15 @@ class AnsibleTasksTest(AnsibleTestBase):
             self.assertIn(
                 'inventory_config must be a dictionary.',
                 e.message)
+
+    @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
+    def test_ansible_playbook_with_dict_sources(self, foo):
+        instance = foo.return_value
+        instance.method.return_value = self.mock_runner_return
+        run(
+            self.playbook_path,
+            source_dict,
+            ctx=ctx)
 
     @unittest.skipUnless(
         environ.get('TEST_ZPLAYS', False),
