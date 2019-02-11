@@ -18,6 +18,12 @@ inputs:
     type: string
     default: 11.0.0.8
 
+  web_private_key:
+    type: string
+
+  db_private_key:
+    type: string
+
 node_templates:
 
   ansible_playbook:
@@ -34,17 +40,17 @@ node_templates:
                   web:
                     ansible_host: { get_property: [ webserver_vm, ip ] }
                     ansible_user: vagrant
-                    ansible_ssh_private_key_file: .vagrant/machines/web/virtualbox/private_key
+                    ansible_ssh_private_key_file: { get_input: web_private_key }
                     ansible_become: True
-                    ansible_ssh_common_args': -o StrictHostKeyChecking=no
+                    ansible_ssh_common_args: -o StrictHostKeyChecking=no
               dbservers:
                 hosts:
                   db:
                     ansible_host: { get_property: [ dbserver_vm, ip ] }
                     ansible_user: vagrant
-                    ansible_ssh_private_key_file: .vagrant/machines/db/virtualbox/private_key
+                    ansible_ssh_private_key_file: { get_input: db_private_key }
                     ansible_become: True
-                    ansible_ssh_common_args': -o StrictHostKeyChecking=no
+                    ansible_ssh_common_args: -o StrictHostKeyChecking=no
     relationships:
       - type: cloudify.relationships.depends_on
         target: webserver_vm

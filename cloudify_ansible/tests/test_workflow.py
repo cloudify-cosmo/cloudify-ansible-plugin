@@ -32,6 +32,17 @@ _blueprint_path = \
 _compute_blueprint_path = \
    path.join(_plugin_directory, 'examples/compute-blueprint.yaml')
 
+web_private_key_path = \
+    '.vagrant/machines/{0}/virtualbox/private_key'.format('web')
+db_private_key_path = \
+    '.vagrant/machines/{0}/virtualbox/private_key'.format('db')
+
+with open(web_private_key_path, 'r') as infile:
+    web_private_key = infile.read()
+
+with open(db_private_key_path, 'r') as infile:
+    db_private_key = infile.read()
+
 
 class TestPlugin(AnsibleTestBase):
 
@@ -65,7 +76,11 @@ class TestPlugin(AnsibleTestBase):
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(_compute_blueprint_path)
+    @workflow_test(
+        _compute_blueprint_path,
+        inputs={
+            'web_private_key': web_private_key,
+            'db_private_key': db_private_key})
     def test_compute_blueprint(self, cfy_local):
         cfy_local.execute('install', task_retries=0)
         self.assertIn(

@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import environ, curdir
+from os import environ, curdir, path
 from mock import patch
+import shutil
+from tempfile import mkdtemp
 import unittest
 
 from cloudify.exceptions import NonRecoverableError
@@ -22,7 +24,7 @@ from cloudify.mocks import MockCloudifyContext
 from cloudify_ansible_sdk.tests import AnsibleTestBase, source_dict
 
 from cloudify_ansible.tasks import run
-from cloudify_ansible.utils import handle_file_path
+from cloudify_ansible.utils import handle_file_path, handle_key_data
 
 NODE_PROPS = {
     'resource_id': None,
@@ -56,6 +58,24 @@ setattr(ctx, '_local', True)
 
 
 class AnsibleTasksTest(AnsibleTestBase):
+
+    def test_handle_key_data(self):
+
+        def _finditem(obj, key):
+            # Stolen https://stackoverflow.com/questions/14962485/
+            # finding-a-key-recursively-in-a-dictionary
+            if key in obj:
+                return obj[key]
+            for k, v in obj.items():
+                if isinstance(v, dict):
+                    return _finditem(v, key)  # added return statement
+
+        deleteme = mkdtemp()
+        output = _finditem(
+            handle_key_data(source_dict, deleteme),
+            'ansible_ssh_private_key_file')
+        self.assertTrue(deleteme, path.dirname(output))
+        shutil.rmtree(deleteme)
 
     def test_handle_file_path(self):
         setattr(ctx, '_local', False)

@@ -15,12 +15,38 @@
 import os
 import shutil
 from tempfile import mkdtemp
+from uuid import uuid1
 import yaml
 
 from cloudify.exceptions import NonRecoverableError
 
 BP_INCLUDES_PATH = '/opt/manager/resources/blueprints/' \
                    '{tenant}/{blueprint}/{relative_path}'
+
+
+def handle_key_data(_data, workspace_dir):
+    """Take Key Data from ansible_ssh_private_key_file and
+    replace with a temp file.
+
+    :param _data: The hosts dict (from YAML).
+    :param workspace_dir: The temp dir where we are putting everything.
+    :return: The hosts dict with a path to a temp file.
+    """
+
+    def recurse_dictionary(existing_dict, key='ansible_ssh_private_key_file'):
+        if key not in existing_dict:
+            for k, v in existing_dict.items():
+                if isinstance(v, dict):
+                    existing_dict[k] = recurse_dictionary(v)
+        elif key in existing_dict:
+            private_key_file = os.path.join(workspace_dir, str(uuid1()))
+            with open(private_key_file, 'w') as outfile:
+                outfile.write(existing_dict[key])
+            os.chmod(private_key_file, 0o600)
+            existing_dict[key] = private_key_file
+        return existing_dict
+
+    return recurse_dictionary(_data)
 
 
 def handle_file_path(file_path, _ctx):
@@ -86,6 +112,8 @@ def handle_sources(data, site_yaml_abspath, _ctx):
 
     hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), 'hosts')
     if isinstance(data, dict):
+        data = handle_key_data(
+            data, _ctx.instance.runtime_properties['workspace'])
         if os.path.exists(hosts_abspath):
             _ctx.logger.error(
                 'Hosts data was provided but {0} already exists. '
