@@ -37,11 +37,15 @@ web_private_key_path = \
 db_private_key_path = \
     '.vagrant/machines/{0}/virtualbox/private_key'.format('db')
 
-with open(web_private_key_path, 'r') as infile:
-    web_private_key = infile.read()
+if environ.get('TEST_ZPLAYS', False):
+    with open(web_private_key_path, 'r') as infile:
+        web_private_key = infile.read()
 
-with open(db_private_key_path, 'r') as infile:
-    db_private_key = infile.read()
+    with open(db_private_key_path, 'r') as infile:
+        db_private_key = infile.read()
+else:
+    web_private_key = None
+    db_private_key = None
 
 
 class TestPlugin(AnsibleTestBase):

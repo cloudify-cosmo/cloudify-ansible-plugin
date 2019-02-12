@@ -40,7 +40,7 @@ node_templates:
                   web:
                     ansible_host: { get_property: [ webserver_vm, ip ] }
                     ansible_user: vagrant
-                    ansible_ssh_private_key_file: { get_input: web_private_key }
+                    ansible_ssh_private_key_file: { get_property: [ webserver_vm, agent_config, key ] }
                     ansible_become: True
                     ansible_ssh_common_args: -o StrictHostKeyChecking=no
               dbservers:
@@ -48,7 +48,7 @@ node_templates:
                   db:
                     ansible_host: { get_property: [ dbserver_vm, ip ] }
                     ansible_user: vagrant
-                    ansible_ssh_private_key_file: { get_input: db_private_key }
+                    ansible_ssh_private_key_file: { get_property: [ dbserver_vm, agent_config, key ] }
                     ansible_become: True
                     ansible_ssh_common_args: -o StrictHostKeyChecking=no
     relationships:
@@ -63,6 +63,7 @@ node_templates:
       ip: { get_input: webserver_vm_ip }
       agent_config:
         install_method: none
+        key: { get_input: web_private_key }
 
   dbserver_vm:
     type: cloudify.nodes.Compute
@@ -70,3 +71,4 @@ node_templates:
       ip: { get_input: dbserver_vm_ip }
       agent_config:
         install_method: none
+        key: { get_input: db_private_key }
