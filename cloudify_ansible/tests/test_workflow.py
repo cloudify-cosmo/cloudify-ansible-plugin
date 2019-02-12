@@ -17,7 +17,7 @@ from unittest import skipUnless
 
 from cloudify.test_utils import workflow_test
 
-from cloudify_ansible_sdk.tests import AnsibleTestBase
+from cloudify_ansible_sdk.tests import AnsibleTestBase, source_dict
 
 # This just gives us a path to the setup.py directory.
 _plugin_directory = \
@@ -29,6 +29,24 @@ _plugin_directory = \
 _blueprint_path = \
    path.join(_plugin_directory, 'examples/blueprint.yaml')
 
+_compute_blueprint_path = \
+   path.join(_plugin_directory, 'examples/compute-blueprint.yaml')
+
+web_private_key_path = \
+    '.vagrant/machines/{0}/virtualbox/private_key'.format('web')
+db_private_key_path = \
+    '.vagrant/machines/{0}/virtualbox/private_key'.format('db')
+
+if environ.get('TEST_ZPLAYS', False):
+    with open(web_private_key_path, 'r') as infile:
+        web_private_key = infile.read()
+
+    with open(db_private_key_path, 'r') as infile:
+        db_private_key = infile.read()
+else:
+    web_private_key = None
+    db_private_key = None
+
 
 class TestPlugin(AnsibleTestBase):
 
@@ -37,9 +55,39 @@ class TestPlugin(AnsibleTestBase):
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     @workflow_test(_blueprint_path)
-    def test_workflow(self, cfy_local):
+    def test_blueprint_defaults(self, cfy_local):
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 )[0].runtime_properties.keys())
+
+    @skipUnless(
+        environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
+    @workflow_test(
+        _blueprint_path,
+        inputs={'hosts_relative_path': source_dict})
+    def test_workflow_input_override(self, cfy_local):
+        cfy_local.execute('install', task_retries=0)
+        self.assertIn(
+            'result',
+            cfy_local.storage.get_node_instances(
+                )[0].runtime_properties.keys())
+
+    @skipUnless(
+        environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
+    @workflow_test(
+        _compute_blueprint_path,
+        inputs={
+            'web_private_key': web_private_key,
+            'db_private_key': db_private_key})
+    def test_compute_blueprint(self, cfy_local):
+        cfy_local.execute('install', task_retries=0)
+        self.assertIn(
+            'result',
+            cfy_local.storage.get_node_instances(
+                'ansible_playbook')[0].runtime_properties.keys())
