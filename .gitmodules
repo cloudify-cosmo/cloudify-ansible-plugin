@@ -1,3 +1,6 @@
 [submodule "examples/ansible-examples"]
 	path = examples/ansible-examples
 	url = https://github.com/EarthmanT/ansible-examples.git
+[submodule "examples/clearwater-roles"]
+	path = examples/clearwater-roles
+	url = https://github.com/EarthmanT/clearwater-roles.git
