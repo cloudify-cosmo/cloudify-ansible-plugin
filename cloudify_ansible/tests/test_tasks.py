@@ -20,16 +20,23 @@ import unittest
 
 from cloudify.exceptions import NonRecoverableError
 from cloudify.mocks import MockCloudifyContext
+from cloudify.state import current_ctx
 
-from cloudify_ansible_sdk.tests import AnsibleTestBase, source_dict
+from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 
-from cloudify_ansible.tasks import run
+from cloudify_ansible.tasks import run, ansible_requires_host
 from cloudify_ansible.utils import handle_file_path, handle_key_data
 
 NODE_PROPS = {
     'resource_id': None,
     'use_external_resource': False,
     'resource_config': {}
+}
+COMPUTE_NODE_PROPS = {
+    'resource_id': None,
+    'use_external_resource': False,
+    'resource_config': {},
+    'agent_config': {}
 }
 RUNTIME_PROPS = {
     'external_id': None,
@@ -50,14 +57,30 @@ ctx = MockCloudifyContext(
     relationships=RELS,
     operation=OP_CTX
 )
-
 ctx.node.type_hierarchy = ['cloudify.nodes.Root']
+compute_ctx = MockCloudifyContext(
+    node_name='mock_compute_node_name',
+    node_id='compute_node_id',
+    deployment_id='mock_deployment_id',
+    properties=COMPUTE_NODE_PROPS,
+    runtime_properties=RUNTIME_PROPS,
+    relationships=RELS,
+    operation=OP_CTX
+)
+compute_ctx.node.type_hierarchy = \
+    ['cloudify.nodes.Root', 'cloudify.nodes.Compute']
+relationship_ctx = MockCloudifyContext(
+    deployment_id='mock_deployment_id',
+    properties=NODE_PROPS,
+    source=ctx,
+    target=compute_ctx,
+    runtime_properties=RUNTIME_PROPS)
 
 # Fix the mock ctx.
 setattr(ctx, '_local', True)
 
 
-class AnsibleTasksTest(AnsibleTestBase):
+class TestPluginTasks(AnsibleTestBase):
 
     def test_handle_key_data(self):
 
@@ -72,7 +95,7 @@ class AnsibleTasksTest(AnsibleTestBase):
 
         deleteme = mkdtemp()
         output = _finditem(
-            handle_key_data(source_dict, deleteme),
+            handle_key_data(mock_sources_dict, deleteme),
             'ansible_ssh_private_key_file')
         self.assertTrue(deleteme, path.dirname(output))
         shutil.rmtree(deleteme)
@@ -117,7 +140,7 @@ class AnsibleTasksTest(AnsibleTestBase):
         instance.method.return_value = self.mock_runner_return
         run(
             self.playbook_path,
-            source_dict,
+            mock_sources_dict,
             ctx=ctx)
 
     @unittest.skipUnless(
@@ -129,3 +152,7 @@ class AnsibleTasksTest(AnsibleTestBase):
             self.playbook_path,
             self.hosts_path,
             ctx=ctx)
+
+    def test_ansible_requires_host(self):
+        current_ctx.set(relationship_ctx)
+        ansible_requires_host(relationship_ctx)

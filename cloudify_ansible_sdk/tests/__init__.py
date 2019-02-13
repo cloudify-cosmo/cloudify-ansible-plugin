@@ -16,7 +16,7 @@ from os import path
 import unittest
 
 key_file = '.vagrant/machines/{0}/virtualbox/private_key'
-source_dict = {
+mock_sources_dict = {
     'webservers': {
         'hosts': {
             'web': {
@@ -35,7 +35,7 @@ source_dict = {
                 'ansible_ssh_private_key_file': key_file.format('db'),
                 'ansible_become': True,
                 'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
-            }
+            },
         }
     }
 }

@@ -13,11 +13,12 @@
 # limitations under the License.
 
 from os import path, environ
+import subprocess
 from unittest import skipUnless
 
 from cloudify.test_utils import workflow_test
 
-from cloudify_ansible_sdk.tests import AnsibleTestBase, source_dict
+from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 
 # This just gives us a path to the setup.py directory.
 _plugin_directory = \
@@ -27,10 +28,17 @@ _plugin_directory = \
         )
     )
 _blueprint_path = \
-   path.join(_plugin_directory, 'examples/blueprint.yaml')
+   path.join(_plugin_directory, 'examples/hosts-input-blueprint.yaml')
 
 _compute_blueprint_path = \
    path.join(_plugin_directory, 'examples/compute-blueprint.yaml')
+
+_relationships_blueprint = \
+    path.join(_plugin_directory, 'examples/relationships-blueprint.yaml')
+
+_another_relationships_blueprint = \
+    path.join(_plugin_directory,
+              'examples/another-relationships-blueprint.yaml')
 
 web_private_key_path = \
     '.vagrant/machines/{0}/virtualbox/private_key'.format('web')
@@ -48,7 +56,14 @@ else:
     db_private_key = None
 
 
-class TestPlugin(AnsibleTestBase):
+class TestPluginWorkflows(AnsibleTestBase):
+
+    @staticmethod
+    def reset_vagrant_environment():
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
+        subprocess.call("vagrant up",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -56,6 +71,7 @@ class TestPlugin(AnsibleTestBase):
                'And export TEST_ZPLAYS=true')
     @workflow_test(_blueprint_path)
     def test_blueprint_defaults(self, cfy_local):
+        self.reset_vagrant_environment()
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
@@ -68,8 +84,9 @@ class TestPlugin(AnsibleTestBase):
                'And export TEST_ZPLAYS=true')
     @workflow_test(
         _blueprint_path,
-        inputs={'hosts_relative_path': source_dict})
+        inputs={'hosts_relative_path': mock_sources_dict})
     def test_workflow_input_override(self, cfy_local):
+        self.reset_vagrant_environment()
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
@@ -86,6 +103,41 @@ class TestPlugin(AnsibleTestBase):
             'web_private_key': web_private_key,
             'db_private_key': db_private_key})
     def test_compute_blueprint(self, cfy_local):
+        cfy_local.execute('install', task_retries=0)
+        self.reset_vagrant_environment()
+        self.assertIn(
+            'result',
+            cfy_local.storage.get_node_instances(
+                'ansible_playbook')[0].runtime_properties.keys())
+
+    @skipUnless(
+        environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
+    @workflow_test(
+        _relationships_blueprint,
+        inputs={
+            'web_private_key': web_private_key,
+            'db_private_key': db_private_key})
+    def test_relationships_blueprint(self, cfy_local):
+        self.reset_vagrant_environment()
+        cfy_local.execute('install', task_retries=0)
+        self.assertIn(
+            'result',
+            cfy_local.storage.get_node_instances(
+                'ansible_playbook')[0].runtime_properties.keys())
+
+    @skipUnless(
+        environ.get('TEST_ZPLAYS', False),
+        reason='This test requires you to run "vagrant up". '
+               'And export TEST_ZPLAYS=true')
+    @workflow_test(
+        _another_relationships_blueprint,
+        inputs={
+            'web_private_key': web_private_key,
+            'db_private_key': db_private_key})
+    def test_another_relationships_blueprint(self, cfy_local):
+        self.reset_vagrant_environment()
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',

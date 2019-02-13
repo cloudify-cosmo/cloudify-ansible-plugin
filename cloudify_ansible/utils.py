@@ -19,9 +19,16 @@ from uuid import uuid1
 import yaml
 
 from cloudify.exceptions import NonRecoverableError
+try:
+    from cloudify.constants import RELATIONSHIP_INSTANCE
+except ImportError:
+    RELATIONSHIP_INSTANCE = 'relationship-instance'
 
-BP_INCLUDES_PATH = '/opt/manager/resources/blueprints/' \
-                   '{tenant}/{blueprint}/{relative_path}'
+from cloudify_ansible.constants import (
+    BP_INCLUDES_PATH,
+    WORKSPACE,
+    # SOURCES
+)
 
 
 def handle_key_data(_data, workspace_dir):
@@ -88,7 +95,7 @@ def handle_site_yaml(site_yaml_path, _ctx):
     site_yaml_real_dir = os.path.dirname(site_yaml_real_path)
     site_yaml_real_name = os.path.basename(site_yaml_real_path)
     site_yaml_new_dir = os.path.join(
-        _ctx.instance.runtime_properties['workspace'], 'playbook')
+        _ctx.instance.runtime_properties[WORKSPACE], 'playbook')
     shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
     # TODO: Before merge change this to debug.
@@ -113,7 +120,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
     hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), 'hosts')
     if isinstance(data, dict):
         data = handle_key_data(
-            data, _ctx.instance.runtime_properties['workspace'])
+            data, _ctx.instance.runtime_properties[WORKSPACE])
         if os.path.exists(hosts_abspath):
             _ctx.logger.error(
                 'Hosts data was provided but {0} already exists. '
@@ -135,7 +142,7 @@ def create_playbook_workspace(ctx):
     :return:
     """
 
-    ctx.instance.runtime_properties['workspace'] = mkdtemp()
+    ctx.instance.runtime_properties[WORKSPACE] = mkdtemp()
 
 
 def delete_playbook_workspace(ctx):
@@ -145,6 +152,75 @@ def delete_playbook_workspace(ctx):
     :return:
     """
 
-    directory = ctx.instance.runtime_properties.get('workspace')
+    directory = ctx.instance.runtime_properties.get(WORKSPACE)
     if directory and os.path.exists(directory):
         shutil.rmtree(directory)
+
+
+def get_source_config_from_ctx(_ctx,
+                               group_name=None,
+                               hostname=None,
+                               host_config=None):
+
+    """Generate a source config from CTX.
+
+    :param _ctx: Either a NodeInstance or a RelationshipInstance ctx.
+    :param group_name: User's override value, like 'webservers'.
+    :param hostname: User's override value, like 'web'.
+    :param host_config: User's override value. Like:
+       {
+           'ansible_host': '127.0.0.1',
+           'ansible_user': 'ubuntu',
+       }
+    :return:
+    """
+
+    if _ctx.type == RELATIONSHIP_INSTANCE:
+        host_config = host_config or \
+                      get_host_config_from_compute_node(_ctx.target)
+        group_name, hostname = \
+            get_group_name_and_hostname(_ctx.target, group_name, hostname)
+    else:
+        host_config = host_config or \
+                      get_host_config_from_compute_node(_ctx)
+        group_name, hostname = \
+            get_group_name_and_hostname(_ctx, group_name, hostname)
+    return {
+        group_name: {
+            'hosts': {
+                hostname: host_config
+            }
+        }
+    }
+
+
+def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
+    """We allow a user to extend the `cloudify.nodes.Compute` node type
+    and use that as a host group name in Ansible.
+
+    :param _ctx: Either a NodeInstance or a RelationshipInstance ctx.
+    :param group_name: User's override value.
+    :param hostname: User's override value.
+    :return:
+    """
+
+    if not group_name and not hostname and \
+            'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy:
+        raise NonRecoverableError(
+            'No group_name and no hostname was provided '
+            'and no Compute node was provided to generate them from.')
+    group_name = group_name or _ctx.node.type
+    hostname = hostname or _ctx.instance.id
+    return group_name, hostname
+
+
+def get_host_config_from_compute_node(_ctx):
+    return {
+        'ansible_host': _ctx.instance.runtime_properties.get(
+            'ip', _ctx.node.properties.get('ip')),
+        'ansible_user': _ctx.node.properties['agent_config'].get('user'),
+        'ansible_ssh_private_key_file':
+            _ctx.node.properties['agent_config'].get('key'),
+        'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
+        'ansible_become': True
+    }

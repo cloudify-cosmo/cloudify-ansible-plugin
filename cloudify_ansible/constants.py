@@ -14,5 +14,11 @@
 
 BP_INCLUDES_PATH = '/opt/manager/resources/blueprints/' \
                    '{tenant}/{blueprint}/{relative_path}'
+HOSTS = 'hosts'
 WORKSPACE = 'workspace'
-HOSTS_DATA = 'hosts_data'
+SOURCES = 'sources'
+IP = 'ansible_host'
+USER = 'ansible_user'
+KEY = 'ansible_ssh_private_key_file'
+BECOME = 'ansible_become'
+SSH_COMMON = 'ansible_ssh_common_args'
