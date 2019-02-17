@@ -4,3 +4,6 @@
 [submodule "examples/clearwater-roles"]
 	path = examples/clearwater-roles
 	url = https://github.com/EarthmanT/clearwater-roles.git
+[submodule "examples/openvpn"]
+	path = examples/openvpn
+	url = https://github.com/EarthmanT/pi_openvpn.git
