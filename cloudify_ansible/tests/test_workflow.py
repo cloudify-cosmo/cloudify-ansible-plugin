@@ -20,6 +20,15 @@ from cloudify.test_utils import workflow_test
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 
+
+def load_new_vagrant_env(boxes):
+    for box in boxes:
+        subprocess.call("vagrant destroy -f {0}".format(box),
+                        cwd=_plugin_directory, shell=True)
+        subprocess.call("vagrant up {0}".format(box),
+                        cwd=_plugin_directory, shell=True)
+
+
 # This just gives us a path to the setup.py directory.
 _plugin_directory = \
     '/{0}'.format(
@@ -40,43 +49,48 @@ _another_relationships_blueprint = \
     path.join(_plugin_directory,
               'examples/another-relationships-blueprint.yaml')
 
+_openvpn_blueprint = \
+   path.join(_plugin_directory, 'examples/openvpn-blueprint.yaml')
+
 web_private_key_path = \
     '.vagrant/machines/{0}/virtualbox/private_key'.format('web')
 db_private_key_path = \
     '.vagrant/machines/{0}/virtualbox/private_key'.format('db')
+openvpn_private_key_path = \
+    '.vagrant/machines/{0}/virtualbox/private_key'.format('vpn')
+
+subprocess.call("vagrant destroy -f",
+                cwd=_plugin_directory, shell=True)
+subprocess.call("vagrant up",
+                cwd=_plugin_directory, shell=True)
 
 if environ.get('TEST_ZPLAYS', False):
     with open(web_private_key_path, 'r') as infile:
         web_private_key = infile.read()
-
     with open(db_private_key_path, 'r') as infile:
         db_private_key = infile.read()
+    with open(openvpn_private_key_path, 'r') as infile:
+        openvpn_private_key = infile.read()
 else:
     web_private_key = None
     db_private_key = None
+    openvpn_private_key = None
 
 
 class TestPluginWorkflows(AnsibleTestBase):
-
-    @staticmethod
-    def reset_vagrant_environment():
-        subprocess.call("vagrant destroy -f",
-                        cwd=_plugin_directory, shell=True)
-        subprocess.call("vagrant up",
-                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     @workflow_test(_blueprint_path)
-    def test_blueprint_defaults(self, cfy_local):
-        self.reset_vagrant_environment()
+    def test1_blueprint_defaults(self, cfy_local):
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 )[0].runtime_properties.keys())
+        load_new_vagrant_env(['db', 'web'])
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -85,13 +99,14 @@ class TestPluginWorkflows(AnsibleTestBase):
     @workflow_test(
         _blueprint_path,
         inputs={'hosts_relative_path': mock_sources_dict})
-    def test_workflow_input_override(self, cfy_local):
-        self.reset_vagrant_environment()
+    def test2_workflow_input_override(self, cfy_local):
+        load_new_vagrant_env(['db', 'web'])
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 )[0].runtime_properties.keys())
+        load_new_vagrant_env(['db', 'web'])
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -102,13 +117,14 @@ class TestPluginWorkflows(AnsibleTestBase):
         inputs={
             'web_private_key': web_private_key,
             'db_private_key': db_private_key})
-    def test_compute_blueprint(self, cfy_local):
+    def test3_compute_blueprint(self, cfy_local):
+        load_new_vagrant_env(['db', 'web'])
         cfy_local.execute('install', task_retries=0)
-        self.reset_vagrant_environment()
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
+        load_new_vagrant_env(['db', 'web'])
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -119,13 +135,14 @@ class TestPluginWorkflows(AnsibleTestBase):
         inputs={
             'web_private_key': web_private_key,
             'db_private_key': db_private_key})
-    def test_relationships_blueprint(self, cfy_local):
-        self.reset_vagrant_environment()
+    def test4_relationships_blueprint(self, cfy_local):
+        load_new_vagrant_env(['db', 'web'])
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
+        load_new_vagrant_env(['db', 'web'])
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -136,10 +153,27 @@ class TestPluginWorkflows(AnsibleTestBase):
         inputs={
             'web_private_key': web_private_key,
             'db_private_key': db_private_key})
-    def test_another_relationships_blueprint(self, cfy_local):
-        self.reset_vagrant_environment()
+    def test5_another_relationships_blueprint(self, cfy_local):
+        load_new_vagrant_env(['db', 'web'])
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
+        load_new_vagrant_env(['db', 'web'])
+
+    # TODO: Fix the Ansible Playbook for this test.
+    # @skipUnless(
+    #     environ.get('TEST_ZPLAYS', False),
+    #     reason='This test requires you to run "vagrant up". '
+    #            'And export TEST_ZPLAYS=true')
+    # @workflow_test(
+    #     _openvpn_blueprint,
+    #     inputs={
+    #         'openvpn_private_key': openvpn_private_key})
+    # def test6_openvpn_blueprint(self, cfy_local):
+    #     cfy_local.execute('install', task_retries=0)
+    #     self.assertIn(
+    #         'result',
+    #         cfy_local.storage.get_node_instances(
+    #             'openvpn')[0].runtime_properties.keys())

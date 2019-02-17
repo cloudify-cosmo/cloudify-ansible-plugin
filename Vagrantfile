@@ -11,4 +11,9 @@ Vagrant.configure("2") do |config|
     db.vm.network :private_network, ip: "11.0.0.8"
     db.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/me.pub"
   end
+  config.vm.define "vpn" do |vpn|
+    vpn.vm.box = "ubuntu/trusty64"
+    vpn.vm.network :private_network, ip: "11.0.0.9"
+    vpn.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/me.pub"
+  end
 end

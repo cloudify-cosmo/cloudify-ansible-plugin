@@ -21,7 +21,6 @@ from cloudify_ansible.utils import (
     handle_sources,
     get_source_config_from_ctx
 )
-from cloudify_ansible import constants
 
 
 def ansible_relationship_source(func):
@@ -38,7 +37,7 @@ def ansible_relationship_source(func):
 def ansible_playbook_node(func):
 
     def wrapper(site_yaml_path,
-                sources,
+                sources=None,
                 ctx=ctx_from_import,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
@@ -54,7 +53,7 @@ def ansible_playbook_node(func):
 
         sources = \
             sources or \
-            ctx.instance.runtime_properties.get(constants.SOURCES, {})
+            get_source_config_from_ctx(ctx)
 
         create_playbook_workspace(ctx)
         site_yaml_path = handle_site_yaml(site_yaml_path, ctx)
