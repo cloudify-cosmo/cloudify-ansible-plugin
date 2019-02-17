@@ -51,6 +51,8 @@ _clearwater_blueprint = \
 
 
 def load_new_vagrant_env(boxes=None):
+    if not environ.get('TEST_ZPLAYS', False):
+        return
     boxes = boxes or []
     if not boxes:
         subprocess.call("vagrant destroy -f",
