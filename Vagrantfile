@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
     db.vm.network :private_network, ip: "11.0.0.8"
   end
   config.vm.define "vpn" do |vpn|
-    vpn.vm.box = "ubuntu/trusty64"
+    vpn.vm.box = "bento/ubuntu-16.04"
     vpn.vm.network :private_network, ip: "11.0.0.9"
   end
   config.vm.define "ellis" do |ellis|

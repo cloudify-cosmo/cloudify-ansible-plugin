@@ -70,6 +70,10 @@ def handle_file_path(file_path, _ctx):
     :return: The absolute path on the manager to the file.
     """
 
+    if not isinstance(file_path, basestring):
+        raise NonRecoverableError(
+            'The variable file_path {0} is a {1},'
+            'expected a string.'.format(file_path, type(file_path)))
     if not getattr(_ctx, '_local', False):
         file_path = \
             BP_INCLUDES_PATH.format(
@@ -98,9 +102,8 @@ def handle_site_yaml(site_yaml_path, _ctx):
         _ctx.instance.runtime_properties[WORKSPACE], 'playbook')
     shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
-    # TODO: Before merge change this to debug.
     with open(site_yaml_final_path, 'r') as infile:
-        _ctx.logger.info('Contents site.yaml:\n {0}'.format(infile.read()))
+        _ctx.logger.debug('Contents site.yaml:\n {0}'.format(infile.read()))
     return site_yaml_final_path
 
 
@@ -129,9 +132,8 @@ def handle_sources(data, site_yaml_abspath, _ctx):
             _ctx.logger.info(
                 'Writing this data to temp file: {0}'.format(data))
             yaml.dump(data, outfile, default_flow_style=False)
-    # TODO: Before merge change this to debug.
     with open(hosts_abspath, 'r') as infile:
-        _ctx.logger.info('Contents hosts:\n {0}'.format(infile.read()))
+        _ctx.logger.debug('Contents hosts:\n {0}'.format(infile.read()))
     return hosts_abspath
 
 
@@ -177,12 +179,16 @@ def get_source_config_from_ctx(_ctx,
 
     if _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \
-                      get_host_config_from_compute_node(_ctx.target)
+            get_host_config_from_compute_node(_ctx.target)
         group_name, hostname = \
             get_group_name_and_hostname(_ctx.target, group_name, hostname)
     else:
+
+        if 'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
+                _ctx.instance.runtime_properties.get('sources', {}):
+            return _ctx.instance.runtime_properties['sources']
         host_config = host_config or \
-                      get_host_config_from_compute_node(_ctx)
+            get_host_config_from_compute_node(_ctx)
         group_name, hostname = \
             get_group_name_and_hostname(_ctx, group_name, hostname)
     return {
@@ -207,8 +213,10 @@ def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
     if not group_name and not hostname and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy:
         raise NonRecoverableError(
-            'No group_name and no hostname was provided '
-            'and no Compute node was provided to generate them from.')
+            'No sources or group_name, or hostname was provided, '
+            'and furthermore no compute node was provided '
+            'to generate them from.'
+        )
     group_name = group_name or _ctx.node.type
     hostname = hostname or _ctx.instance.id
     return group_name, hostname
@@ -218,9 +226,10 @@ def get_host_config_from_compute_node(_ctx):
     return {
         'ansible_host': _ctx.instance.runtime_properties.get(
             'ip', _ctx.node.properties.get('ip')),
-        'ansible_user': _ctx.node.properties['agent_config'].get('user'),
+        'ansible_user': _ctx.node.properties.get(
+            'agent_config', {}).get('user'),
         'ansible_ssh_private_key_file':
-            _ctx.node.properties['agent_config'].get('key'),
+            _ctx.node.properties.get('agent_config', {}).get('key'),
         'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
         'ansible_become': True
     }

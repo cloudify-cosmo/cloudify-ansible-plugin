@@ -16,10 +16,18 @@ from os import path, environ
 import subprocess
 from unittest import skipUnless
 
-from cloudify.test_utils import workflow_test
+from cloudify.workflows import local
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 
+
+IGNORED_LOCAL_WORKFLOW_MODULES = (
+    'worker_installer.tasks',
+    'plugin_installer.tasks',
+    'cloudify_agent.operations',
+    'cloudify_agent.installer.operations',
+)
+PRIVATE_KEY_DIR = '.vagrant/machines/{0}/virtualbox/private_key'
 
 # This just gives us a path to the setup.py directory.
 _plugin_directory = \
@@ -51,76 +59,15 @@ _clearwater_blueprint = \
 
 
 def load_new_vagrant_env(boxes=None):
-    if not environ.get('TEST_ZPLAYS', False):
-        return
     boxes = boxes or []
     if not boxes:
-        subprocess.call("vagrant destroy -f",
-                        cwd=_plugin_directory, shell=True)
         subprocess.call("vagrant up",
-                        cwd=_plugin_directory, shell=True)
+                        cwd=_plugin_directory,
+                        shell=True)
     for box in boxes:
-        subprocess.call("vagrant destroy -f {0}".format(box),
-                        cwd=_plugin_directory, shell=True)
         subprocess.call("vagrant up {0}".format(box),
-                        cwd=_plugin_directory, shell=True)
-
-
-load_new_vagrant_env()
-
-web_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('web')
-db_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('db')
-openvpn_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('vpn')
-ellis_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('ellis')
-bono_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('bono')
-sprout_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('sprout')
-homer_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('homer')
-homestead_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('homestead')
-ralf_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('ralf')
-bind_private_key_path = \
-    '.vagrant/machines/{0}/virtualbox/private_key'.format('bind')
-
-if environ.get('TEST_ZPLAYS', False):
-    with open(web_private_key_path, 'r') as infile:
-        web_private_key = infile.read()
-    with open(db_private_key_path, 'r') as infile:
-        db_private_key = infile.read()
-    with open(openvpn_private_key_path, 'r') as infile:
-        openvpn_private_key = infile.read()
-    with open(ellis_private_key_path, 'r') as infile:
-        ellis_private_key = infile.read()
-    with open(bono_private_key_path, 'r') as infile:
-        bono_private_key = infile.read()
-    with open(sprout_private_key_path, 'r') as infile:
-        sprout_private_key = infile.read()
-    with open(homer_private_key_path, 'r') as infile:
-        homer_private_key = infile.read()
-    with open(homestead_private_key_path, 'r') as infile:
-        homestead_private_key = infile.read()
-    with open(ralf_private_key_path, 'r') as infile:
-        ralf_private_key = infile.read()
-    with open(bind_private_key_path, 'r') as infile:
-        bind_private_key = infile.read()
-else:
-    web_private_key = None
-    db_private_key = None
-    openvpn_private_key = None
-    ellis_private_key = None
-    bono_private_key = None
-    sprout_private_key = None
-    homer_private_key = None
-    homestead_private_key = None
-    ralf_private_key = None
-    bind_private_key = None
+                        cwd=_plugin_directory,
+                        shell=True)
 
 
 class TestPluginWorkflows(AnsibleTestBase):
@@ -129,117 +76,177 @@ class TestPluginWorkflows(AnsibleTestBase):
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(_blueprint_path)
-    def test1_blueprint_defaults(self, cfy_local):
+    def test1_blueprint_defaults(self):
+        load_new_vagrant_env(['web', 'db'])
+        cfy_local = local.init_env(
+            _blueprint_path,
+            'test1_blueprint_defaults',
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 )[0].runtime_properties.keys())
-        load_new_vagrant_env(['db', 'web'])
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(
-        _blueprint_path,
-        inputs={'hosts_relative_path': mock_sources_dict})
-    def test2_workflow_input_override(self, cfy_local):
-        load_new_vagrant_env(['db', 'web'])
+    def test2_workflow_input_override(self):
+        load_new_vagrant_env(['web', 'db'])
+        cfy_local = local.init_env(
+            _blueprint_path,
+            'test2_workflow_input_override',
+            inputs={'hosts_relative_path': mock_sources_dict},
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 )[0].runtime_properties.keys())
-        load_new_vagrant_env(['db', 'web'])
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(
-        _compute_blueprint_path,
-        inputs={
-            'web_private_key': web_private_key,
-            'db_private_key': db_private_key})
-    def test3_compute_blueprint(self, cfy_local):
-        load_new_vagrant_env(['db', 'web'])
+    def test3_compute_blueprint(self):
+        load_new_vagrant_env(['web', 'db'])
+        with open(PRIVATE_KEY_DIR.format('web'), 'r') as infile:
+            web_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('db'), 'r') as infile:
+            db_private_key = infile.read()
+        cfy_local = local.init_env(
+            _compute_blueprint_path,
+            'test3_compute_blueprint',
+            inputs={
+                'web_private_key': web_private_key,
+                'db_private_key': db_private_key
+            },
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
-        load_new_vagrant_env(['db', 'web'])
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(
-        _relationships_blueprint,
-        inputs={
-            'web_private_key': web_private_key,
-            'db_private_key': db_private_key})
-    def test4_relationships_blueprint(self, cfy_local):
-        load_new_vagrant_env(['db', 'web'])
+    def test4_relationships_blueprint(self):
+        load_new_vagrant_env(['web', 'db'])
+        with open(PRIVATE_KEY_DIR.format('web'), 'r') as infile:
+            web_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('db'), 'r') as infile:
+            db_private_key = infile.read()
+        cfy_local = local.init_env(
+            _relationships_blueprint,
+            'test1_blueprint_defaults',
+            inputs={
+                'web_private_key': web_private_key,
+                'db_private_key': db_private_key
+            },
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
-        load_new_vagrant_env(['db', 'web'])
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(
-        _another_relationships_blueprint,
-        inputs={
-            'web_private_key': web_private_key,
-            'db_private_key': db_private_key})
-    def test5_another_relationships_blueprint(self, cfy_local):
-        load_new_vagrant_env(['db', 'web'])
+    def test5_another_relationships_blueprint(self):
+        load_new_vagrant_env(['web', 'db'])
+        with open(PRIVATE_KEY_DIR.format('web'), 'r') as infile:
+            web_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('db'), 'r') as infile:
+            db_private_key = infile.read()
+        cfy_local = local.init_env(
+            _another_relationships_blueprint,
+            'test5_another_relationships_blueprint',
+            inputs={
+                'web_private_key': web_private_key,
+                'db_private_key': db_private_key
+            },
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
-        load_new_vagrant_env(['db', 'web'])
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_OPENVPN', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_OPENVPN=true')
-    @workflow_test(
-        _openvpn_blueprint,
-        inputs={
-            'openvpn_private_key': openvpn_private_key})
-    def test6_openvpn_blueprint(self, cfy_local):
+    def test6_openvpn_blueprint(self):
+        load_new_vagrant_env(['vpn'])
+        with open(PRIVATE_KEY_DIR.format('vpn'), 'r') as infile:
+            vpn_private_key = infile.read()
+        cfy_local = local.init_env(
+            _openvpn_blueprint,
+            'test6_openvpn_blueprint',
+            inputs={'openvpn_private_key': vpn_private_key},
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
             cfy_local.storage.get_node_instances(
                 'openvpn')[0].runtime_properties.keys())
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
-    @workflow_test(
-        _clearwater_blueprint,
-        inputs={
-            'ellis_private_key': ellis_private_key,
-            'bono_private_key': bono_private_key,
-            'sprout_private_key': sprout_private_key,
-            'homer_private_key': homer_private_key,
-            'homestead_private_key': homestead_private_key,
-            'ralf_private_key': ralf_private_key,
-            'bind_private_key': bind_private_key,
-        })
-    def test6_clearwater_blueprint(self, cfy_local):
-        load_new_vagrant_env(['db', 'web'])
+    def test6_clearwater_blueprint(self):
+        load_new_vagrant_env(['ellis',
+                              'bono',
+                              'sprout',
+                              'homer',
+                              'homestead',
+                              'ralf',
+                              'bind'])
+        with open(PRIVATE_KEY_DIR.format('ellis'), 'r') as infile:
+            ellis_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('bono'), 'r') as infile:
+            bono_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('sprout'), 'r') as infile:
+            sprout_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('homer'), 'r') as infile:
+            homer_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('homestead'), 'r') as infile:
+            homestead_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('ralf'), 'r') as infile:
+            ralf_private_key = infile.read()
+        with open(PRIVATE_KEY_DIR.format('bind'), 'r') as infile:
+            bind_private_key = infile.read()
+        cfy_local = local.init_env(
+            _clearwater_blueprint,
+            'test6_clearwater_blueprint',
+            inputs={
+                'ellis_private_key': ellis_private_key,
+                'bono_private_key': bono_private_key,
+                'sprout_private_key': sprout_private_key,
+                'homer_private_key': homer_private_key,
+                'homestead_private_key': homestead_private_key,
+                'ralf_private_key': ralf_private_key,
+                'bind_private_key': bind_private_key,
+            },
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
         self.assertIn(
             'result',
@@ -269,3 +276,5 @@ class TestPluginWorkflows(AnsibleTestBase):
             'result',
             cfy_local.storage.get_node_instances(
                 'bind')[0].runtime_properties.keys())
+        subprocess.call("vagrant destroy -f",
+                        cwd=_plugin_directory, shell=True)

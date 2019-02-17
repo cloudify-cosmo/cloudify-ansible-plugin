@@ -67,13 +67,6 @@ node_types:
 
   testbed:
     derived_from: cloudify.nodes.Compute
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        start:
-          implementation: ansible.cloudify_ansible.tasks.run
-          inputs:
-            site_yaml_path:
-              default: { get_input: site_yaml_relative_path }
 
   ellis:
     derived_from: testbed
@@ -139,6 +132,30 @@ node_types:
           user: { get_input: username }
 
 node_templates:
+
+  clearwater:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path: { get_input: site_yaml_relative_path }
+    relationships:
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: ellis
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: bono
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: sprout
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: homer
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: homestead
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: ralf
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: bind
 
   ellis:
     type: ellis

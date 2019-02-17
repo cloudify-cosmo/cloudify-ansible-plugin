@@ -41,9 +41,14 @@ nosetests.xml
 
 .noseids
 
+# Crapple
+.DS_Store
+
 # Cloudify
 .cloudify
-.DS_Store
-.vagrant/
 .coverage*
+
+# Vagrant
 Library/
+*.log
+.vagrant/
