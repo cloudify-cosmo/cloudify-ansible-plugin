@@ -1,0 +1,176 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin.yaml
+
+inputs:
+
+  site_yaml_relative_path:
+    type: string
+    default: examples/clearwater-roles/site.yml
+
+  username:
+    type: string
+    default: vagrant
+
+  ellis_server_ip:
+    type: string
+    default: 11.0.0.10
+
+  ellis_private_key:
+    type: string
+
+  bono_server_ip:
+    type: string
+    default: 11.0.0.11
+
+  bono_private_key:
+    type: string
+
+  sprout_server_ip:
+    type: string
+    default: 11.0.0.12
+
+  sprout_private_key:
+    type: string
+
+  homer_server_ip:
+    type: string
+    default: 11.0.0.13
+
+  homer_private_key:
+    type: string
+
+  homestead_server_ip:
+    type: string
+    default: 11.0.0.14
+
+  homestead_private_key:
+    type: string
+
+  ralf_server_ip:
+    type: string
+    default: 11.0.0.15
+
+  ralf_private_key:
+    type: string
+
+  bind_server_ip:
+    type: string
+    default: 11.0.0.16
+
+  bind_private_key:
+    type: string
+
+node_types:
+
+  testbed:
+    derived_from: cloudify.nodes.Compute
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path:
+              default: { get_input: site_yaml_relative_path }
+
+  ellis:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: ellis_private_key }
+          user: { get_input: username }
+
+  bono:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: ellis_private_key }
+          user: { get_input: username }
+
+  sprout:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: sprout_private_key }
+          user: { get_input: username }
+
+  homer:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: homer_private_key }
+          user: { get_input: username }
+
+  homestead:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: homestead_private_key }
+          user: { get_input: username }
+
+  ralf:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: ralf_private_key }
+          user: { get_input: username }
+
+  bind:
+    derived_from: testbed
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: bind_private_key }
+          user: { get_input: username }
+
+node_templates:
+
+  ellis:
+    type: ellis
+    properties:
+      ip: { get_input: ellis_server_ip }
+
+  bono:
+    type: bono
+    properties:
+      ip: { get_input: bono_server_ip }
+
+  sprout:
+    type: sprout
+    properties:
+      ip: { get_input: sprout_server_ip }
+
+  homer:
+    type: homer
+    properties:
+      ip: { get_input: homer_server_ip }
+
+  homestead:
+    type: homestead
+    properties:
+      ip: { get_input: homestead_server_ip }
+
+  ralf:
+    type: ralf
+    properties:
+      ip: { get_input: ralf_server_ip }
+
+  bind:
+    type: bind
+    properties:
+      ip: { get_input: bind_server_ip }
