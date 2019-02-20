@@ -248,33 +248,12 @@ class TestPluginWorkflows(AnsibleTestBase):
             },
             ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
         cfy_local.execute('install', task_retries=0)
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'ellis')[0].runtime_properties.keys())
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'bono')[0].runtime_properties.keys())
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'sprout')[0].runtime_properties.keys())
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'homer')[0].runtime_properties.keys())
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'homestead')[0].runtime_properties.keys())
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'ralf')[0].runtime_properties.keys())
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                'bind')[0].runtime_properties.keys())
+        instances = \
+            ['ellis', 'bono', 'sprout', 'homer', 'homestead', 'ralf', 'bind']
+        for item in instances:
+            self.assertIn(
+                'result',
+                cfy_local.storage.get_node_instances(
+                    item)[0].runtime_properties.keys())
         subprocess.call("vagrant destroy -f",
                         cwd=_plugin_directory, shell=True)

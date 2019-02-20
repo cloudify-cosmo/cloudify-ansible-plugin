@@ -27,7 +27,7 @@ except ImportError:
 from cloudify_ansible.constants import (
     BP_INCLUDES_PATH,
     WORKSPACE,
-    # SOURCES
+    SOURCES
 )
 
 
@@ -185,8 +185,8 @@ def get_source_config_from_ctx(_ctx,
     else:
 
         if 'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
-                _ctx.instance.runtime_properties.get('sources', {}):
-            return _ctx.instance.runtime_properties['sources']
+                _ctx.instance.runtime_properties.get(SOURCES, {}):
+            return _ctx.instance.runtime_properties[SOURCES]
         host_config = host_config or \
             get_host_config_from_compute_node(_ctx)
         group_name, hostname = \

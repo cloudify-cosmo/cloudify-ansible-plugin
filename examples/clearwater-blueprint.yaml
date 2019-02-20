@@ -83,7 +83,7 @@ node_types:
       agent_config:
         default:
           install_method: none
-          key: { get_input: ellis_private_key }
+          key: { get_input: bono_private_key }
           user: { get_input: username }
 
   sprout:
