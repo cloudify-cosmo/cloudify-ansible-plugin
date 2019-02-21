@@ -18,13 +18,42 @@ from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
     handle_site_yaml,
-    handle_sources
+    handle_sources,
+    get_source_config_from_ctx
 )
 
 
-def playbook_and_sources(func):
+def ansible_relationship_source(func):
+    def wrapper(group_name=None,
+                hostname=None,
+                host_config=None,
+                ctx=ctx_from_import):
+        source_dict = get_source_config_from_ctx(
+            ctx, group_name, hostname, host_config)
+        func(source_dict, ctx)
+    return wrapper
 
-    def wrapper(site_yaml_path, sources, ctx=ctx_from_import, **kwargs):
+
+def ansible_playbook_node(func):
+
+    def wrapper(site_yaml_path,
+                sources=None,
+                ctx=ctx_from_import,
+                **kwargs):
+        """Prepare the arguments to send to AnsiblePlaybookFromFile.
+
+        :param site_yaml_path:
+            The absolute or relative (blueprint) path to the site.yaml.
+        :param sources: Either a path (with the site.yaml).
+            Or a YAML dictionary (from the blueprint itself).
+        :param ctx: The cloudify context.
+        :param kwargs:
+        :return:
+        """
+
+        sources = \
+            sources or \
+            get_source_config_from_ctx(ctx)
 
         create_playbook_workspace(ctx)
         site_yaml_path = handle_site_yaml(site_yaml_path, ctx)

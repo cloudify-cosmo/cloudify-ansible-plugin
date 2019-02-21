@@ -26,7 +26,7 @@ from ansible.utils.display import Display
 from cloudify_ansible_sdk.options import Options
 
 
-class TossAnsibleOutput(list):
+class RedirectAnsibleOutput(list):
     """Ansible dumps a ton of junk to the screen
     that we do not want to see.
     """
@@ -236,7 +236,7 @@ class AnsiblePlaybookFromFile(object):
         # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
         # TODO: Also: AnsibleParserError
         if self.verbosity < 2:
-            with TossAnsibleOutput() as _:
+            with RedirectAnsibleOutput() as _:
                 self.runner.run()
         else:
             self.runner.run()

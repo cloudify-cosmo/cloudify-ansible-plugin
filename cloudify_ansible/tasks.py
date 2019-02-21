@@ -17,14 +17,19 @@ from cloudify.exceptions import NonRecoverableError
 
 from cloudify_ansible_sdk import (
     AnsiblePlaybookFromFile,
-    CloudifyAnsibleSDKError
+    CloudifyAnsibleSDKError,
+    sources
 )
 
-from cloudify_ansible import playbook_and_sources
+from cloudify_ansible import (
+    constants,
+    ansible_playbook_node,
+    ansible_relationship_source
+)
 
 
 @operation
-@playbook_and_sources
+@ansible_playbook_node
 def run(playbook_args, _ctx, **_):
     _ctx.logger.info('playbook_args: {0}'.format(playbook_args))
     try:
@@ -33,3 +38,16 @@ def run(playbook_args, _ctx, **_):
         _ctx.instance.runtime_properties['result'] = result.__dict__
     except CloudifyAnsibleSDKError:
         raise NonRecoverableError(CloudifyAnsibleSDKError)
+
+
+@operation
+@ansible_relationship_source
+def ansible_requires_host(new_sources_dict, _ctx, **_):
+    current_sources_dict = \
+        _ctx.source.instance.runtime_properties.get(
+            constants.SOURCES, {})
+    current_sources = sources.AnsibleSource(current_sources_dict)
+    new_sources = sources.AnsibleSource(new_sources_dict)
+    current_sources.merge_source(new_sources)
+    _ctx.source.instance.runtime_properties[constants.SOURCES] = \
+        current_sources.config
