@@ -1,11 +1,16 @@
-##################################################################################
-# Cloudify Ansible built in types and plugins definitions.
-##################################################################################
-    # DSL version, should appear in the main blueprint.yaml
-# and may appear in other imports. In such case, the versions must match
-tosca_definitions_version: cloudify_dsl_1_0
-
 plugins:
+
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/earthmant/cloudify-ansible-plugin/archive/master.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/dev.zip
+    package_name: cloudify-ansible-plugin
+    package_version: '2.0.0.dev0'
+
+relationships:
+
+  cloudify.ansible.relationships.connected_to_host:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: ansible.cloudify_ansible.tasks.ansible_requires_host

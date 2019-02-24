@@ -1,0 +1,76 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin.yaml
+
+inputs:
+
+  site_yaml_relative_path:
+    type: string
+    default: examples/ansible-examples/lamp_simple/site.yml
+
+  webserver_vm_ip:
+    type: string
+    default: 11.0.0.7
+
+  dbserver_vm_ip:
+    type: string
+    default: 11.0.0.8
+
+  web_private_key:
+    type: string
+
+  db_private_key:
+    type: string
+
+  username:
+    type: string
+    default: vagrant
+
+node_types:
+
+  webservers:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: web_private_key }
+          user: { get_input: username }
+
+  dbservers:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: db_private_key }
+          user: { get_input: username }
+
+node_templates:
+
+  ansible_playbook:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path: { get_input: site_yaml_relative_path }
+            sources: { get_attribute: [ SELF, sources ] }
+    relationships:
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: web
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: db
+
+  web:
+    type: webservers
+    properties:
+      ip: { get_input: webserver_vm_ip }
+
+  db:
+    type: dbservers
+    properties:
+      ip: { get_input: dbserver_vm_ip }
