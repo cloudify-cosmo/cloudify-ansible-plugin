@@ -18,7 +18,7 @@ from unittest import skipUnless
 
 from cloudify.workflows import local
 
-from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
+from cloudify_ansible_sdk.tests import AnsibleTestBase
 
 
 IGNORED_LOCAL_WORKFLOW_MODULES = (
@@ -37,9 +37,6 @@ _plugin_directory = \
         )
     )
 
-_blueprint_path = \
-   path.join(_plugin_directory,
-             'examples/hosts-input-blueprint.yaml')
 _compute_blueprint_path = \
    path.join(
        _plugin_directory,
@@ -72,42 +69,12 @@ def load_new_vagrant_env(boxes=None):
 
 class TestPluginWorkflows(AnsibleTestBase):
 
-    @skipUnless(
-        environ.get('TEST_ZPLAYS', False),
-        reason='This test requires you to run "vagrant up". '
-               'And export TEST_ZPLAYS=true')
-    def test1_blueprint_defaults(self):
-        load_new_vagrant_env(['web', 'db'])
-        cfy_local = local.init_env(
-            _blueprint_path,
-            'test1_blueprint_defaults',
-            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
-        cfy_local.execute('install', task_retries=0)
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                )[0].runtime_properties.keys())
-        subprocess.call("vagrant destroy -f",
-                        cwd=_plugin_directory, shell=True)
-
-    @skipUnless(
-        environ.get('TEST_ZPLAYS', False),
-        reason='This test requires you to run "vagrant up". '
-               'And export TEST_ZPLAYS=true')
-    def test2_workflow_input_override(self):
-        load_new_vagrant_env(['web', 'db'])
-        cfy_local = local.init_env(
-            _blueprint_path,
-            'test2_workflow_input_override',
-            inputs={'hosts_relative_path': mock_sources_dict},
-            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
-        cfy_local.execute('install', task_retries=0)
-        self.assertIn(
-            'result',
-            cfy_local.storage.get_node_instances(
-                )[0].runtime_properties.keys())
-        subprocess.call("vagrant destroy -f",
-                        cwd=_plugin_directory, shell=True)
+    def setUp(self):
+        self.addCleanup(
+            subprocess.call,
+            "vagrant destroy -f",
+            cwd=_plugin_directory,
+            shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -132,8 +99,6 @@ class TestPluginWorkflows(AnsibleTestBase):
             'result',
             cfy_local.storage.get_node_instances(
                 'ansible_playbook')[0].runtime_properties.keys())
-        subprocess.call("vagrant destroy -f",
-                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
@@ -205,8 +170,6 @@ class TestPluginWorkflows(AnsibleTestBase):
             'result',
             cfy_local.storage.get_node_instances(
                 'openvpn')[0].runtime_properties.keys())
-        subprocess.call("vagrant destroy -f",
-                        cwd=_plugin_directory, shell=True)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),

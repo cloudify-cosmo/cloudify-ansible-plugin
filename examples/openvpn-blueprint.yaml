@@ -38,6 +38,17 @@ node_types:
           inputs:
             site_yaml_path:
               default: { get_input: site_yaml_relative_path }
+            options_config:
+              default:
+                extra_vars:
+                  openvpn_dh: { get_input: openvpn_private_key }
+                  openvpn_server: my.example.org
+                  openvpn_clients:
+                    - client1
+                    - client2
+                  private_subnets:
+                    - 192.168.10.0 255.255.255.0
+
 
 node_templates:
 
