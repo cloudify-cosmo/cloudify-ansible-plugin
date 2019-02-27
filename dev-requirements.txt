@@ -1,2 +1,2 @@
-https://github.com/cloudify-cosmo/cloudify-common/archive/4.5.5.zip
+cloudify==4.5.5
 ansible==2.7.6
