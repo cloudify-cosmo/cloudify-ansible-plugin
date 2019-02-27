@@ -45,8 +45,18 @@ nosetests.xml
 .DS_Store
 
 # Cloudify
-.cloudify
-.coverage*
+inputs.yaml
+local-storage/
+.cloudify/
+
+# IDE settings
+.idea
+.DS_Store
+.cache/
+
+plugin_docs
+workspace
+*.wgn
 
 # Vagrant
 Library/
