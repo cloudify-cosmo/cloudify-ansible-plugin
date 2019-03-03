@@ -1,0 +1,169 @@
+
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+  This blueprint provides the basic architecture for an Openstack blueprint.
+
+dsl_definitions:
+
+  openstack_config: &openstack_config
+    username: { get_input: keystone_username }
+    password: { get_input: keystone_password }
+    tenant_name: { get_input: keystone_tenant_name }
+    auth_url: { get_input: keystone_url }
+    region: { get_input: region }
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin:cloudify-openstack-plugin
+  - plugin:cloudify-ansible-plugin
+
+inputs:
+
+  keystone_username:
+    default: { get_secret: openstack_username }
+
+  keystone_password:
+    default: { get_secret: openstack_password }
+
+  keystone_tenant_name:
+    default: { get_secret: openstack_tenant_name }
+
+  keystone_url:
+    default: { get_secret: openstack_auth_url }
+
+  region:
+    default: RegionOne
+
+  centos_core_image:
+    default: { get_secret: centos_core_image }
+
+  large_image_flavor:
+    default: { get_secret: large_image_flavor }
+
+  agent_key_private:
+    default: { get_secret: agent_key_private }
+
+  username:
+    type: string
+    default: centos
+
+  external_network_name:
+    default: GATEWAY_NET
+
+  public_subnet_cidr:
+    default: 192.168.120.0/24
+
+  site_yaml_relative_path:
+    type: string
+    default: examples/openvpn/openvpn.yml
+
+  key_name:
+    type: string
+
+node_types:
+
+  openvpn:
+    derived_from: cloudify.openstack.nodes.Server
+    properties:
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: agent_key_private }
+          user: { get_input: username }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path:
+              default: { get_input: site_yaml_relative_path }
+            options_config:
+              default:
+                extra_vars:
+                  openvpn_dh: { get_secret: agent_key_private }
+                  openvpn_server: my.example.org
+                  openvpn_clients:
+                    - client1
+                    - client2
+                  private_subnets:
+                    - 192.168.10.0 255.255.255.0
+
+node_templates:
+
+  openvpn:
+    type: openvpn
+    properties:
+      openstack_config: *openstack_config
+      server:
+        image: { get_input: centos_core_image }
+        flavor: { get_input: large_image_flavor }
+        key_name: { get_input: key_name }
+        availability_zone: nova
+    relationships:
+      - target: public_subnet_nic
+        type: cloudify.openstack.server_connected_to_port
+
+  public_subnet_nic:
+    type: cloudify.openstack.nodes.Port
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: public_network
+      - type: cloudify.relationships.depends_on
+        target: public_subnet
+      - type: cloudify.openstack.port_connected_to_security_group
+        target: server_groups_example_security_group
+      - type: cloudify.openstack.port_connected_to_floating_ip
+        target: public_ip
+
+  server_groups_example_security_group:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      openstack_config: *openstack_config
+      security_group:
+        name: server_groups_example_security_group
+      rules:
+      - remote_ip_prefix: 0.0.0.0/0
+        port: 22
+
+  public_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+    properties:
+      openstack_config: *openstack_config
+      floatingip:
+        floating_network_name: { get_property: [ external_network, resource_id ] }
+
+  public_subnet:
+    type: cloudify.openstack.nodes.Subnet
+    properties:
+      openstack_config: *openstack_config
+      subnet:
+        ip_version: 4
+        cidr: { get_input: public_subnet_cidr }
+    relationships:
+      - target: public_network
+        type: cloudify.relationships.contained_in
+      - target: router
+        type: cloudify.openstack.subnet_connected_to_router
+
+  public_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+
+  router:
+    type: cloudify.openstack.nodes.Router
+    properties:
+      openstack_config: *openstack_config
+    relationships:
+      - target: external_network
+        type: cloudify.relationships.connected_to
+
+  external_network:
+    type: cloudify.openstack.nodes.Network
+    properties:
+      openstack_config: *openstack_config
+      use_external_resource: true
+      resource_id: { get_input: external_network_name }

@@ -22,7 +22,7 @@ setup(
     author='Cloudify Platform LTD',
     author_email='hello@cloudify.co',
     description='Manage Ansible nodes by Cloudify.',
-    packages=['cloudify_ansible_sdk'],
+    packages=['cloudify_ansible', 'cloudify_ansible_sdk'],
     license='LICENSE',
     zip_safe=False,
     install_requires=[
