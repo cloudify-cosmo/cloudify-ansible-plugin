@@ -241,6 +241,8 @@ def handle_result(result, _ctx, ignore_failures=False, ignore_dark=False):
     failures = result.get('failures')
     dark = result.get('dark')
     if failures and not ignore_failures:
-        raise NonRecoverableError('These Ansible nodes failed: {0}'.format(failures))
+        raise NonRecoverableError(
+            'These Ansible nodes failed: {0}'.format(failures))
     elif dark and not ignore_dark:
-        raise OperationRetry('These Ansible nodes were dark: {0}'.format(dark))
+        raise OperationRetry(
+            'These Ansible nodes were dark: {0}'.format(dark))
