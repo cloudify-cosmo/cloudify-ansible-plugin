@@ -24,7 +24,8 @@ from cloudify_ansible_sdk import (
 from cloudify_ansible import (
     constants,
     ansible_playbook_node,
-    ansible_relationship_source
+    ansible_relationship_source,
+    utils
 )
 
 
@@ -33,11 +34,16 @@ from cloudify_ansible import (
 def run(playbook_args, _ctx, **_):
     _ctx.logger.info('playbook_args: {0}'.format(playbook_args))
     try:
-        result = AnsiblePlaybookFromFile(**playbook_args).execute()
-        _ctx.logger.debug('result: {0}'.format(result.__dict__))
-        _ctx.instance.runtime_properties['result'] = result.__dict__
+        playbook = AnsiblePlaybookFromFile(**playbook_args)
     except CloudifyAnsibleSDKError:
         raise NonRecoverableError(CloudifyAnsibleSDKError)
+    result = playbook.execute()
+    utils.handle_result(
+        result.__dict__,
+        _ctx,
+        _.get('ignore_failures'),
+        _.get('ignore_dark')
+    )
 
 
 @operation

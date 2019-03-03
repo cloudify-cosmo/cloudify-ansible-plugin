@@ -61,16 +61,35 @@ inputs:
   key_name:
     type: string
 
-node_templates:
+node_types:
 
   openvpn:
+    derived_from: cloudify.openstack.nodes.Server
+    properties:
+      openstack_config:
+        default: *openstack_config
+      agent_config:
+        default:
+          install_method: none
+          key: { get_input: agent_key_private }
+          user: { get_input: username }
+      server:
+        default:
+          image: { get_input: centos_core_image }
+          flavor: { get_input: large_image_flavor }
+          key_name: { get_input: key_name }
+
+node_templates:
+
+  playbook:
     type: cloudify.nodes.Root
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
+        start:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
             site_yaml_path: { get_input: site_yaml_relative_path }
+            sources: { get_attribute: [ SELF, sources ] }
             options_config:
               extra_vars:
                 openvpn_dh: { get_secret: agent_key_private }
@@ -80,23 +99,26 @@ node_templates:
                   - client2
                 private_subnets:
                   - 192.168.10.0 255.255.255.0
+#              become: true
+#              ssh_common_args: '-o StrictHostKeyChecking=no'
     relationships:
       - type: cloudify.ansible.relationships.connected_to_host
-        target: server
+        target: openvpn
+        source_interfaces:
+          cloudify.interfaces.relationship_lifecycle:
+            preconfigure:
+              inputs:
+                group_name: openvpn
+                hostname: openvpn
+                host_config:
+                  ansible_host: { get_attribute: [ public_ip, floating_ip_address ] }
+                  ansible_user: { get_property: [ openvpn, agent_config, user ] }
+                  ansible_ssh_private_key_file: { get_property: [ openvpn, agent_config, key ] }
+                  ansible_become: true
+                  ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 
-  server:
-    type: cloudify.openstack.nodes.Server
-    properties:
-      openstack_config: *openstack_config
-      agent_config:
-        install_method: none
-        key: { get_input: agent_key_private }
-        user: { get_input: username }
-      server:
-        image: { get_input: centos_core_image }
-        flavor: { get_input: large_image_flavor }
-        key_name: { get_input: key_name }
-        availability_zone: nova
+  openvpn:
+    type: openvpn
     relationships:
       - target: public_subnet_nic
         type: cloudify.openstack.server_connected_to_port

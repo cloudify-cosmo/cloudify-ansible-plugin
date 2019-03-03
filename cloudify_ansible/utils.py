@@ -18,7 +18,7 @@ from tempfile import mkdtemp
 from uuid import uuid1
 import yaml
 
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, OperationRetry
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE
 except ImportError:
@@ -233,3 +233,14 @@ def get_host_config_from_compute_node(_ctx):
         'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
         'ansible_become': True
     }
+
+
+def handle_result(result, _ctx, ignore_failures=False, ignore_dark=False):
+    _ctx.logger.debug('result: {0}'.format(result))
+    _ctx.instance.runtime_properties['result'] = result
+    failures = result.get('failures')
+    dark = result.get('dark')
+    if failures and not ignore_failures:
+        raise NonRecoverableError('These Ansible nodes failed: {0}'.format(failures))
+    elif dark and not ignore_dark:
+        raise OperationRetry('These Ansible nodes were dark: {0}'.format(dark))
