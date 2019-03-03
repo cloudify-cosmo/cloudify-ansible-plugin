@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os import environ
+
 from cloudify import ctx as ctx_from_import
 
 from cloudify_ansible.utils import (
@@ -62,8 +64,10 @@ def ansible_playbook_node(func):
             'sources': handle_sources(sources, site_yaml_path, ctx),
             'verbosity': 2
         }
+        environ['ANSIBLE_HOST_KEY_CHECKING'] = "False"
         playbook_args.update(**kwargs)
         func(playbook_args, ctx)
         delete_playbook_workspace(ctx)
+        del environ['ANSIBLE_HOST_KEY_CHECKING']
 
     return wrapper

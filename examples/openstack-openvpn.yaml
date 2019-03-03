@@ -35,8 +35,8 @@ inputs:
   region:
     default: RegionOne
 
-  centos_core_image:
-    default: { get_secret: centos_core_image }
+  ubuntu_xenial_image:
+    default: { get_secret: ubuntu_xenial_image }
 
   large_image_flavor:
     default: { get_secret: large_image_flavor }
@@ -46,7 +46,7 @@ inputs:
 
   username:
     type: string
-    default: centos
+    default: ubuntu
 
   external_network_name:
     default: GATEWAY_NET
@@ -75,7 +75,7 @@ node_types:
           user: { get_input: username }
       server:
         default:
-          image: { get_input: centos_core_image }
+          image: { get_input: ubuntu_xenial_image }
           flavor: { get_input: large_image_flavor }
           key_name: { get_input: key_name }
 
@@ -89,7 +89,7 @@ node_templates:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
             site_yaml_path: { get_input: site_yaml_relative_path }
-            sources: { get_attribute: [ SELF, sources ] }
+            verbosity: 4
             options_config:
               extra_vars:
                 openvpn_dh: { get_secret: agent_key_private }
@@ -99,8 +99,6 @@ node_templates:
                   - client2
                 private_subnets:
                   - 192.168.10.0 255.255.255.0
-#              become: true
-#              ssh_common_args: '-o StrictHostKeyChecking=no'
     relationships:
       - type: cloudify.ansible.relationships.connected_to_host
         target: openvpn
@@ -116,6 +114,7 @@ node_templates:
                   ansible_ssh_private_key_file: { get_property: [ openvpn, agent_config, key ] }
                   ansible_become: true
                   ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+                  ansible_become_flags: '-s /bin/bash'
 
   openvpn:
     type: openvpn
