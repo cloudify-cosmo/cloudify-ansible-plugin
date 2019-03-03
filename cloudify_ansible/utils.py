@@ -131,7 +131,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
         with open(hosts_abspath, 'w') as outfile:
             _ctx.logger.info(
                 'Writing this data to temp file: {0}'.format(data))
-            yaml.dump(data, outfile, default_flow_style=False)
+            yaml.safe_dump(data, outfile, default_flow_style=False)
     with open(hosts_abspath, 'r') as infile:
         _ctx.logger.debug('Contents hosts:\n {0}'.format(infile.read()))
     return hosts_abspath

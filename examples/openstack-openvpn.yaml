@@ -56,45 +56,42 @@ inputs:
 
   site_yaml_relative_path:
     type: string
-    default: examples/openvpn/openvpn.yml
+    default: openvpn/openvpn.yml
 
   key_name:
     type: string
 
-node_types:
-
-  openvpn:
-    derived_from: cloudify.openstack.nodes.Server
-    properties:
-      agent_config:
-        default:
-          install_method: none
-          key: { get_input: agent_key_private }
-          user: { get_input: username }
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        start:
-          implementation: ansible.cloudify_ansible.tasks.run
-          inputs:
-            site_yaml_path:
-              default: { get_input: site_yaml_relative_path }
-            options_config:
-              default:
-                extra_vars:
-                  openvpn_dh: { get_secret: agent_key_private }
-                  openvpn_server: my.example.org
-                  openvpn_clients:
-                    - client1
-                    - client2
-                  private_subnets:
-                    - 192.168.10.0 255.255.255.0
-
 node_templates:
 
   openvpn:
-    type: openvpn
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path: { get_input: site_yaml_relative_path }
+            options_config:
+              extra_vars:
+                openvpn_dh: { get_secret: agent_key_private }
+                openvpn_server: my.example.org
+                openvpn_clients:
+                  - client1
+                  - client2
+                private_subnets:
+                  - 192.168.10.0 255.255.255.0
+    relationships:
+      - type: cloudify.ansible.relationships.connected_to_host
+        target: server
+
+  server:
+    type: cloudify.openstack.nodes.Server
     properties:
       openstack_config: *openstack_config
+      agent_config:
+        install_method: none
+        key: { get_input: agent_key_private }
+        user: { get_input: username }
       server:
         image: { get_input: centos_core_image }
         flavor: { get_input: large_image_flavor }
