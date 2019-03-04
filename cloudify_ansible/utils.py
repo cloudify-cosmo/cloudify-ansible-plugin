@@ -18,7 +18,7 @@ from tempfile import mkdtemp
 from uuid import uuid1
 import yaml
 
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, OperationRetry
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE
 except ImportError:
@@ -191,6 +191,12 @@ def get_source_config_from_ctx(_ctx,
             get_host_config_from_compute_node(_ctx)
         group_name, hostname = \
             get_group_name_and_hostname(_ctx, group_name, hostname)
+    if '-o StrictHostKeyChecking=no' not in \
+            host_config.get('ansible_ssh_common_args', ''):
+        _ctx.logger.warn(
+            'This value {0} is not included in Ansible Configuration. '
+            'This is required for automating host key approval.'.format(
+                {'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'}))
     return {
         group_name: {
             'hosts': {
@@ -233,3 +239,26 @@ def get_host_config_from_compute_node(_ctx):
         'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
         'ansible_become': True
     }
+
+
+def handle_result(result, _ctx, ignore_failures=False, ignore_dark=False):
+    _ctx.logger.debug('result: {0}'.format(result))
+    _ctx.instance.runtime_properties['result'] = result
+    failures = result.get('failures')
+    dark = result.get('dark')
+    if failures and not ignore_failures:
+        raise NonRecoverableError(
+            'These Ansible nodes failed: {0}'.format(failures))
+    elif dark and not ignore_dark:
+        raise OperationRetry(
+            'These Ansible nodes were dark: {0}'.format(dark))
+
+
+def assign_environ(_vars):
+    for key, value in _vars.items():
+        os.environ[key] = value
+
+
+def unassign_environ(_vars):
+    for key in _vars.keys():
+        del os.environ[key]

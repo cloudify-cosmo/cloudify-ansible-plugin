@@ -66,7 +66,8 @@ class AnsiblePlaybookFromFile(object):
                  modules=None,
                  private_key_file=None,
                  run_data=None,
-                 verbosity=2):
+                 verbosity=2,
+                 logger=None):
 
         self.display = Display(verbosity=verbosity)
 
@@ -94,6 +95,7 @@ class AnsiblePlaybookFromFile(object):
 
         self.tqm = self._set_task_manager()
         self.runner = self._set_runner()
+        self.logger = logger
 
     def _set_inventory(self):
         """Assign the inventory property."""
@@ -238,6 +240,10 @@ class AnsiblePlaybookFromFile(object):
         if self.verbosity < 2:
             with RedirectAnsibleOutput() as _:
                 self.runner.run()
+        elif self.logger:
+            sys.stdout = self.logger.debug
+            sys.stderr = self.logger.error
+            self.runner.run()
         else:
             self.runner.run()
         self.tqm.send_callback(
