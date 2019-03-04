@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import environ
-
 from cloudify import ctx as ctx_from_import
 
 from cloudify_ansible.utils import (
@@ -41,6 +39,7 @@ def ansible_playbook_node(func):
     def wrapper(site_yaml_path,
                 sources=None,
                 ctx=ctx_from_import,
+                ansible_env_vars=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -49,10 +48,14 @@ def ansible_playbook_node(func):
         :param sources: Either a path (with the site.yaml).
             Or a YAML dictionary (from the blueprint itself).
         :param ctx: The cloudify context.
+        :param ansible_env_vars:
+          A dictionary of environment variables to set.
         :param kwargs:
         :return:
         """
 
+        ansible_env_vars = \
+            ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
         sources = \
             sources or \
             get_source_config_from_ctx(ctx)
@@ -64,10 +67,8 @@ def ansible_playbook_node(func):
             'sources': handle_sources(sources, site_yaml_path, ctx),
             'verbosity': 2
         }
-        environ['ANSIBLE_HOST_KEY_CHECKING'] = "False"
         playbook_args.update(**kwargs)
-        func(playbook_args, ctx)
+        func(playbook_args, ansible_env_vars, ctx)
         delete_playbook_workspace(ctx)
-        del environ['ANSIBLE_HOST_KEY_CHECKING']
 
     return wrapper

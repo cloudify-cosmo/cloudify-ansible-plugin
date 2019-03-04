@@ -31,13 +31,18 @@ from cloudify_ansible import (
 
 @operation
 @ansible_playbook_node
-def run(playbook_args, _ctx, **_):
+def run(playbook_args, ansible_env_vars, _ctx, **_):
     _ctx.logger.info('playbook_args: {0}'.format(playbook_args))
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
     except CloudifyAnsibleSDKError:
         raise NonRecoverableError(CloudifyAnsibleSDKError)
+    # Because Ansible is written as a command-line tool,
+    # there are some options that only perform well as
+    # environment variables.
+    utils.assign_environ(ansible_env_vars)
     result = playbook.execute()
+    utils.unassign_environ(ansible_env_vars)
     utils.handle_result(
         result.__dict__,
         _ctx,
