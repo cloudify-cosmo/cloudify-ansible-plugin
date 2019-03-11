@@ -1,2 +1,4 @@
 cloudify==4.5.5
 ansible==2.7.6
+hvac # needed for kubespray
+netaddr # needed for kubespray

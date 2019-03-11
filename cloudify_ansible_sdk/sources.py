@@ -18,28 +18,52 @@ class AnsibleSource(object):
     def __init__(self, source_dict):
 
         source_dict = source_dict or {}
-        self.groups = {}
+        self.children = {}
+        self.hosts = {}
 
-        for group_name, group_config in source_dict.items():
-            self.insert_group(group_name, group_config)
+        if 'all' in source_dict:
+            self.do_insert_children(source_dict['all'].get('children', {}))
+            self.do_insert_hosts(source_dict.get('hosts', {}))
+        else:
+            for name, config in source_dict.items():
+                self.insert_children(name, config)
 
-    def insert_group(self, name, config=None):
+    def do_insert_children(self, group_dict):
+        for name, config in group_dict.items():
+            self.insert_children(name, config)
+
+    def do_insert_hosts(self, hosts_dict):
+        for name, config in hosts_dict.items():
+            self.insert_hosts(name, config)
+
+    def insert_children(self, name, config=None):
         config = config or {}
-        self.groups[name] = AnsibleHostGroup(name, **config)
+        self.children[name] = AnsibleHostGroup(name, **config)
+
+    def insert_hosts(self, name, config=None):
+        config = config or {}
+        self.hosts[name] = AnsibleHost(name, **config)
 
     def merge_source(self, ansible_source):
-        for group_name, group in ansible_source.groups.items():
-            if group_name in self.groups:
-                local_group = self.groups.get(group_name)
+        for group_name, group in ansible_source.children.items():
+            if group_name in self.children:
+                local_group = self.children.get(group_name)
                 for hostname, host in local_group.hosts.items():
                     group.insert_host(hostname, host.config)
-            self.insert_group(group_name, group.config)
+            self.insert_children(group_name, group.config)
 
     @property
     def config(self):
-        new_dict = {}
-        for group_name, group in self.groups.items():
-            new_dict[group_name] = group.config
+        new_dict = {
+            'all': {
+                'hosts': {},
+                'children': {},
+            },
+        }
+        for group_name, group in self.children.items():
+            new_dict['all']['children'].update({group_name: group.config})
+        for host_name, host in self.hosts.items():
+            new_dict['all']['hosts'].update({host_name: host.config})
         return new_dict
 
 
@@ -72,10 +96,14 @@ class AnsibleHost(object):
 
         parameters = parameters or {}
 
+        if isinstance(hostname, basestring):
+            hostname = hostname.replace('-', '_')
+            hostname = hostname.lower()
+
         self.name = hostname
 
-        self.ansible_host = parameters['ansible_host']
-        self.ansible_user = parameters['ansible_user']
+        self.ansible_host = parameters.get('ansible_host')
+        self.ansible_user = parameters.get('ansible_user')
         self.ansible_ssh_private_key_file = parameters.get(
             'ansible_ssh_private_key_file')
 
@@ -83,16 +111,16 @@ class AnsibleHost(object):
         self.ansible_ssh_common_args = parameters.get(
             'ansible_ssh_common_args')
 
-        self.config = {
-            'ansible_host': self.ansible_host,
-            'ansible_user': self.ansible_user,
-            'ansible_ssh_private_key_file':
-                self.ansible_ssh_private_key_file,
-        }
-
+        self.config = {}
+        if self.ansible_host:
+            self.config['ansible_host'] = self.ansible_host
+        if self.ansible_user:
+            self.config['ansible_user'] = self.ansible_user
+        if self.ansible_user:
+            self.config['ansible_ssh_private_key_file'] = \
+                self.ansible_ssh_private_key_file
         if self.ansible_become:
             self.config['ansible_become'] = self.ansible_become
-
         if self.ansible_ssh_common_args:
             self.config['ansible_ssh_common_args'] = \
                 self.ansible_ssh_common_args

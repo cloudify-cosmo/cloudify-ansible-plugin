@@ -25,20 +25,22 @@ pp = pprint.PrettyPrinter(indent=4)
 class TestHosts(AnsibleTestBase):
 
     def test_ansible_host(self):
-        web_config = mock_sources_dict['webservers']['hosts']['web']
+        children = mock_sources_dict['all']['children']
+        web_config = children['webservers']['hosts']['web']
         self.assertEquals(
             AnsibleHost('web', web_config).config,
-            mock_sources_dict['webservers']['hosts']['web']
+            children['webservers']['hosts']['web']
         )
-        db_config = mock_sources_dict['dbservers']['hosts']['db']
+        db_config = children['dbservers']['hosts']['db']
         self.assertNotEquals(
             AnsibleHost('web', db_config).config,
-            mock_sources_dict['webservers']['hosts']['web']
+            children['webservers']['hosts']['web']
         )
 
     def test_ansible_host_group(self):
         dbservers = AnsibleHostGroup('dbservers')
-        db_host = mock_sources_dict['dbservers']['hosts']['db']
+        children = mock_sources_dict['all']['children']
+        db_host = children['dbservers']['hosts']['db']
         dbservers.insert_host('db', db_host)
         self.assertEquals(dbservers.name, 'dbservers')
         for key, value in dbservers.config['hosts']['db'].items():
@@ -48,21 +50,29 @@ class TestHosts(AnsibleTestBase):
         ansible_source = AnsibleSource(mock_sources_dict)
         self.assertEqual(ansible_source.config, mock_sources_dict)
         new_group = {
-            'lbs': {
-                'hosts': {
-                    'lb': {
-                        'ansible_host': 'foo',
-                        'ansible_ssh_private_key_file': 'foo',
-                        'ansible_user': 'foo',
+            'all': {
+                'hosts': {},
+                'children': {
+                    'lbs': {
+                        'hosts': {
+                            'lb': {
+                                'ansible_host': 'foo',
+                                'ansible_ssh_private_key_file': 'foo',
+                                'ansible_user': 'foo',
+                            }
+                        }
                     }
                 }
             }
         }
-        ansible_source.insert_group('lbs', new_group['lbs'])
+        ansible_source.insert_children(
+            'lbs', new_group['all']['children']['lbs'])
         old_mock_sources_dict = deepcopy(mock_sources_dict)
-        old_mock_sources_dict.update(new_group)
-        self.assertEqual(old_mock_sources_dict, ansible_source.config)
-        mock_sources_dict['dbservers']['hosts'] = {
+        old_mock_sources_dict['all']['children'].update(
+            new_group['all']['children'])
+        self.maxDiff = None
+        self.assertDictEqual(old_mock_sources_dict, ansible_source.config)
+        mock_sources_dict['all']['children']['dbservers']['hosts'] = {
             'db1': {
                 'ansible_host': 'bar',
                 'ansible_ssh_private_key_file': 'bar',
@@ -77,6 +87,8 @@ class TestHosts(AnsibleTestBase):
         new_ansible_source = AnsibleSource(mock_sources_dict)
         ansible_source.merge_source(new_ansible_source)
         self.assertIn('db1',
-                      ansible_source.config['dbservers']['hosts'].keys())
+                      ansible_source.config
+                      ['all']['children']['dbservers']['hosts'].keys())
         self.assertIn('db2',
-                      ansible_source.config['dbservers']['hosts'].keys())
+                      ansible_source.config
+                      ['all']['children']['dbservers']['hosts'].keys())

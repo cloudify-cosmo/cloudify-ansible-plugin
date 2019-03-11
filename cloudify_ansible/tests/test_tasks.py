@@ -155,4 +155,4 @@ class TestPluginTasks(AnsibleTestBase):
 
     def test_ansible_requires_host(self):
         current_ctx.set(relationship_ctx)
-        ansible_requires_host(relationship_ctx)
+        ansible_requires_host(ctx=relationship_ctx)
