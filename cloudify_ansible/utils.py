@@ -30,6 +30,7 @@ from cloudify_ansible.constants import (
     WORKSPACE,
     SOURCES
 )
+from cloudify_ansible_sdk.sources import AnsibleSource
 
 
 def handle_key_data(_data, workspace_dir):
@@ -188,7 +189,7 @@ def get_source_config_from_ctx(_ctx,
     if _ctx.type != RELATIONSHIP_INSTANCE and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
             _ctx.instance.runtime_properties.get(SOURCES, {}):
-        return _ctx.instance.runtime_properties[SOURCES]
+        return AnsibleSource(_ctx.instance.runtime_properties[SOURCES]).config
     elif _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \
             get_host_config_from_compute_node(_ctx.target)
@@ -220,7 +221,7 @@ def get_source_config_from_ctx(_ctx,
     }
     for additional_group in additional_node_groups:
         sources[additional_group] = {'hosts': {hostname: None}}
-    return sources
+    return AnsibleSource(sources).config
 
 
 def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
