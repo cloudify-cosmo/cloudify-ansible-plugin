@@ -97,7 +97,7 @@ class AnsibleHost(object):
         parameters = parameters or {}
 
         if isinstance(hostname, basestring):
-            hostname = hostname.replace('-', '_')
+            hostname = hostname.replace('_', '-')
             hostname = hostname.lower()
 
         self.name = hostname
