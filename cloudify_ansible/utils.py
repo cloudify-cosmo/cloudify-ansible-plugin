@@ -18,6 +18,7 @@ from tempfile import mkdtemp
 from uuid import uuid1
 import yaml
 
+from cloudify.manager import get_rest_client
 from cloudify.exceptions import NonRecoverableError, OperationRetry
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE
@@ -46,13 +47,18 @@ def handle_key_data(_data, workspace_dir):
                 if isinstance(v, dict):
                     existing_dict[k] = recurse_dictionary(v)
         elif key in existing_dict:
-            private_key_file = os.path.join(workspace_dir, str(uuid1()))
-            with open(private_key_file, 'w') as outfile:
-                outfile.write(existing_dict[key])
-            os.chmod(private_key_file, 0o600)
-            existing_dict[key] = private_key_file
+            # If is_file_path is True, this has already been done.
+            try:
+                is_file_path = os.path.exists(existing_dict[key])
+            except TypeError:
+                is_file_path = False
+            if not is_file_path:
+                private_key_file = os.path.join(workspace_dir, str(uuid1()))
+                with open(private_key_file, 'w') as outfile:
+                    outfile.write(existing_dict[key])
+                os.chmod(private_key_file, 0o600)
+                existing_dict[key] = private_key_file
         return existing_dict
-
     return recurse_dictionary(_data)
 
 
@@ -162,7 +168,8 @@ def delete_playbook_workspace(ctx):
 def get_source_config_from_ctx(_ctx,
                                group_name=None,
                                hostname=None,
-                               host_config=None):
+                               host_config=None,
+                               sources=None):
 
     """Generate a source config from CTX.
 
@@ -177,33 +184,43 @@ def get_source_config_from_ctx(_ctx,
     :return:
     """
 
-    if _ctx.type == RELATIONSHIP_INSTANCE:
+    sources = sources or {}
+    if _ctx.type != RELATIONSHIP_INSTANCE and \
+            'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
+            _ctx.instance.runtime_properties.get(SOURCES, {}):
+        return _ctx.instance.runtime_properties[SOURCES]
+    elif _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \
             get_host_config_from_compute_node(_ctx.target)
         group_name, hostname = \
-            get_group_name_and_hostname(_ctx.target, group_name, hostname)
+            get_group_name_and_hostname(
+                _ctx.target, group_name, hostname)
+        additional_node_groups = get_additional_node_groups(
+            _ctx.target.node.name, _ctx.deployment.id)
     else:
-
-        if 'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
-                _ctx.instance.runtime_properties.get(SOURCES, {}):
-            return _ctx.instance.runtime_properties[SOURCES]
         host_config = host_config or \
             get_host_config_from_compute_node(_ctx)
         group_name, hostname = \
-            get_group_name_and_hostname(_ctx, group_name, hostname)
+            get_group_name_and_hostname(
+                _ctx, group_name, hostname)
+        additional_node_groups = get_additional_node_groups(
+            _ctx.node.name, _ctx.deployment.id)
     if '-o StrictHostKeyChecking=no' not in \
             host_config.get('ansible_ssh_common_args', ''):
         _ctx.logger.warn(
             'This value {0} is not included in Ansible Configuration. '
             'This is required for automating host key approval.'.format(
                 {'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'}))
-    return {
-        group_name: {
-            'hosts': {
-                hostname: host_config
-            }
-        }
+    hosts = {
+        hostname: host_config
+
     }
+    sources[group_name] = {
+        'hosts': hosts
+    }
+    for additional_group in additional_node_groups:
+        sources[additional_group] = {'hosts': {hostname: None}}
+    return sources
 
 
 def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
@@ -262,3 +279,17 @@ def assign_environ(_vars):
 def unassign_environ(_vars):
     for key in _vars.keys():
         del os.environ[key]
+
+
+def get_additional_node_groups(node_name, deployment_id):
+    """This enables users to reuse hosts in multiple groups."""
+    groups = []
+    try:
+        client = get_rest_client()
+    except KeyError:
+        return groups
+    deployment = client.deployments.get(deployment_id)
+    for group_name, group in deployment.get('groups', {}).items():
+        if node_name in group.get('members', []) and group_name:
+            groups.append(group_name)
+    return groups

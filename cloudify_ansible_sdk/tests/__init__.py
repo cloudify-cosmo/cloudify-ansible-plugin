@@ -17,25 +17,32 @@ import unittest
 
 key_file = '.vagrant/machines/{0}/virtualbox/private_key'
 mock_sources_dict = {
-    'webservers': {
-        'hosts': {
-            'web': {
-                'ansible_host': '11.0.0.7',
-                'ansible_user': 'vagrant',
-                'ansible_ssh_private_key_file': key_file.format('web'),
-                'ansible_become': True,
-                'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
+    'all': {
+        'hosts': {},
+        'children': {
+            'webservers': {
+                'hosts': {
+                    'web': {
+                        'ansible_host': '11.0.0.7',
+                        'ansible_user': 'vagrant',
+                        'ansible_ssh_private_key_file': key_file.format('web'),
+                        'ansible_become': True,
+                        'ansible_ssh_common_args':
+                            '-o StrictHostKeyChecking=no'
+                    }
+                }
+            }, 'dbservers': {
+                'hosts': {
+                    'db': {
+                        'ansible_host': '11.0.0.8',
+                        'ansible_user': 'vagrant',
+                        'ansible_ssh_private_key_file': key_file.format('db'),
+                        'ansible_become': True,
+                        'ansible_ssh_common_args':
+                            '-o StrictHostKeyChecking=no'
+                    },
+                }
             }
-        }
-    }, 'dbservers': {
-        'hosts': {
-            'db': {
-                'ansible_host': '11.0.0.8',
-                'ansible_user': 'vagrant',
-                'ansible_ssh_private_key_file': key_file.format('db'),
-                'ansible_become': True,
-                'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'
-            },
         }
     }
 }
