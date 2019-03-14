@@ -116,7 +116,7 @@ class AnsibleHost(object):
             self.config['ansible_host'] = self.ansible_host
         if self.ansible_user:
             self.config['ansible_user'] = self.ansible_user
-        if self.ansible_user:
+        if self.ansible_ssh_private_key_file:
             self.config['ansible_ssh_private_key_file'] = \
                 self.ansible_ssh_private_key_file
         if self.ansible_become:
