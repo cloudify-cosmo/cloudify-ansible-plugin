@@ -94,8 +94,9 @@ class TestPluginTasks(AnsibleTestBase):
                     return _finditem(v, key)  # added return statement
 
         deleteme = mkdtemp()
+        key_data = handle_key_data(mock_sources_dict, deleteme)
         output = _finditem(
-            handle_key_data(mock_sources_dict, deleteme),
+            key_data['all']['children'],
             'ansible_ssh_private_key_file')
         self.assertTrue(deleteme, path.dirname(output))
         shutil.rmtree(deleteme)
