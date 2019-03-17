@@ -12,6 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from cloudify_ansible_sdk import CloudifyAnsibleSDKError
+
+
+def legalize_hostnames(hostname):
+    if not isinstance(hostname, basestring):
+        raise CloudifyAnsibleSDKError(
+            'Hostname {0} is not a string'.format(hostname))
+    hostname = hostname.replace('_', '-')
+    return hostname.lower()
+
 
 class AnsibleSource(object):
 
@@ -41,6 +51,7 @@ class AnsibleSource(object):
         self.children[name] = AnsibleHostGroup(name, **config)
 
     def insert_hosts(self, name, config=None):
+        name = legalize_hostnames(name)
         config = config or {}
         self.hosts[name] = AnsibleHost(name, **config)
 
@@ -62,8 +73,9 @@ class AnsibleSource(object):
         }
         for group_name, group in self.children.items():
             new_dict['all']['children'].update({group_name: group.config})
-        for host_name, host in self.hosts.items():
-            new_dict['all']['hosts'].update({host_name: host.config})
+        for hostname, host in self.hosts.items():
+            hostname = legalize_hostnames(hostname)
+            new_dict['all']['hosts'].update({hostname: host.config})
         return new_dict
 
 
@@ -80,12 +92,14 @@ class AnsibleHostGroup(object):
             self.insert_host(hostname, host_config)
 
     def insert_host(self, hostname, config):
+        hostname = legalize_hostnames(hostname)
         self.hosts[hostname] = AnsibleHost(hostname, config)
 
     @property
     def config(self):
         new_dict = {}
         for hostname, host in self.hosts.items():
+            hostname = legalize_hostnames(hostname)
             new_dict.update({hostname: host.config})
         return {'hosts': new_dict}
 
@@ -96,11 +110,7 @@ class AnsibleHost(object):
 
         parameters = parameters or {}
 
-        if isinstance(hostname, basestring):
-            hostname = hostname.replace('_', '-')
-            hostname = hostname.lower()
-
-        self.name = hostname
+        self.name = legalize_hostnames(hostname)
 
         self.ansible_host = parameters.get('ansible_host')
         self.ansible_user = parameters.get('ansible_user')
