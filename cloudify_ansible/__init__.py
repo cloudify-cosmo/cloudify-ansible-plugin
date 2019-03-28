@@ -65,7 +65,8 @@ def ansible_playbook_node(func):
         playbook_args = {
             'site_yaml_path': site_yaml_path,
             'sources': handle_sources(sources, site_yaml_path, ctx),
-            'verbosity': 2
+            'verbosity': 2,
+            'logger': ctx.logger
         }
         playbook_args.update(**kwargs)
         func(playbook_args, ansible_env_vars, ctx)
