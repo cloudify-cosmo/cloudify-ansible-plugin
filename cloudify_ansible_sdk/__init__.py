@@ -14,6 +14,7 @@
 
 from copy import deepcopy
 from cStringIO import StringIO
+import logging
 import sys
 
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -24,6 +25,26 @@ from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.utils.display import Display
 
 from cloudify_ansible_sdk.options import Options
+
+
+class StreamToLogger(object):
+    """
+    Fake file-like stream object that redirects writes to a logger instance.
+      From here: https://stackoverflow.com/
+      questions/11124093/redirect-python-print-output-to-logger/11124247.
+    """
+    def __init__(self, logger, log_level=logging.INFO):
+        self.logger = logger
+        self.log_level = log_level
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.log_level, line.rstrip())
+
+    def flush(self):
+        for handler in self.logger.handlers:
+            handler.flush()
 
 
 class RedirectAnsibleOutput(list):
@@ -241,8 +262,8 @@ class AnsiblePlaybookFromFile(object):
             with RedirectAnsibleOutput() as _:
                 self.runner.run()
         elif self.logger:
-            sys.stdout = self.logger.debug
-            sys.stderr = self.logger.error
+            sys.stdout = StreamToLogger(self.logger, logging.INFO)
+            sys.stderr = StreamToLogger(self.logger, logging.ERROR)
             self.runner.run()
         else:
             self.runner.run()
