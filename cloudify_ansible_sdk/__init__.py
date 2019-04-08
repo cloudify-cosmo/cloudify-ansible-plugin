@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from copy import deepcopy
-from cStringIO import StringIO
 import logging
 import sys
 
@@ -27,6 +26,13 @@ from ansible.utils.display import Display
 from cloudify_ansible_sdk.options import Options
 
 
+def get_fileno():
+    try:
+        return sys.stdout.fileno
+    except AttributeError:
+        return
+
+
 class StreamToLogger(object):
     """
     Fake file-like stream object that redirects writes to a logger instance.
@@ -37,33 +43,14 @@ class StreamToLogger(object):
         self.logger = logger
         self.log_level = log_level
         self.linebuf = ''
+        self.fileno = get_fileno()
 
     def write(self, buf):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
 
     def flush(self):
-        for handler in self.logger.handlers:
-            handler.flush()
-
-
-class RedirectAnsibleOutput(list):
-    """Ansible dumps a ton of junk to the screen
-    that we do not want to see.
-    """
-
-    def __enter__(self):
-        self._stdout = sys.stdout
-        self._stderr = sys.stderr
-        sys.stdout = self._stringio = StringIO()
-        sys.stderr = self._stringio = StringIO()
-        return self
-
-    def __exit__(self, *args):
-        self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio    # free up some memory
-        sys.stdout = self._stdout
-        sys.stderr = self._stderr
+        pass
 
 
 class CloudifyAnsibleSDKError(Exception):
@@ -211,7 +198,7 @@ class AnsiblePlaybookFromFile(object):
             'extra_vars': [],
             'flush_cache': None,
             'force_handlers': False,
-            'forks': 10,
+            'forks': 100,
             'inventory': self.inventory,
             'listhosts': None,
             'listtags': None,
@@ -258,10 +245,7 @@ class AnsiblePlaybookFromFile(object):
     def execute(self):
         # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
         # TODO: Also: AnsibleParserError
-        if self.verbosity < 2:
-            with RedirectAnsibleOutput() as _:
-                self.runner.run()
-        elif self.logger:
+        if self.logger:
             sys.stdout = StreamToLogger(self.logger, logging.INFO)
             sys.stderr = StreamToLogger(self.logger, logging.ERROR)
             self.runner.run()
