@@ -5,3 +5,6 @@
   - Where retried hosts keys are overwritten with the path of the previous key.
   - Add more requirements
   - Support more groups from deployment groups
+2.0.3:
+  - Update Ansible Version
+  - Fix error when stdout is required in logging.
