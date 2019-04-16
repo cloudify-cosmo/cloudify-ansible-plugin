@@ -16,6 +16,7 @@ from copy import deepcopy
 import logging
 import sys
 
+from ansible.errors import AnsibleParserError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import VariableManager
@@ -242,15 +243,19 @@ class AnsiblePlaybookFromFile(object):
             host_success.append(self._host_success(host))
         return host_success
 
+    def _execute(self):
+        try:
+            self.runner.run()
+        except AnsibleParserError as e:
+            raise CloudifyAnsibleSDKError(e)
+
     def execute(self):
         # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
         # TODO: Also: AnsibleParserError
         if self.logger:
             sys.stdout = StreamToLogger(self.logger, logging.INFO)
             sys.stderr = StreamToLogger(self.logger, logging.ERROR)
-            self.runner.run()
-        else:
-            self.runner.run()
+        self._execute()
         self.tqm.send_callback(
             'record_logs',
             user_id=self.run_data.get('user_id'),
