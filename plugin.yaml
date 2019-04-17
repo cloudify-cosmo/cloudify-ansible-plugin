@@ -6,6 +6,36 @@ plugins:
     package_name: cloudify-ansible-plugin
     package_version: '2.0.4'
 
+node_types:
+
+  cloudify.nodes.ansible.Executor:
+    derived_from: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            site_yaml_path:
+              type: string
+              description: >
+                Site yaml relative path
+            sources:
+              type: string
+              default: ""
+              description: >
+                Either a path (with the site.yaml).
+                Or a YAML dictionary (from the blueprint itself).
+            ansible_env_vars:
+              default:
+                ANSIBLE_HOST_KEY_CHECKING: "False"
+              description: >
+                A dictionary of environment variables to set.
+            debug_level:
+              type: integer
+              default: 2
+              description: >
+                Debug level
+
 relationships:
 
   cloudify.ansible.relationships.connected_to_host:
