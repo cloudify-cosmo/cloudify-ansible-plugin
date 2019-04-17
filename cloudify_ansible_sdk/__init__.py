@@ -230,8 +230,9 @@ class AnsiblePlaybookFromFile(object):
     def _host_success(self, host):
         """Check if a hosts is failed or unreachable."""
         host_summary = self.tqm_stats.summarize(host)
-        dark_hosts = host_summary.get('unreachable') > 0
-        failed_hosts = host_summary.get('failures') > 0
+        # convert dict with hosts to boolean
+        dark_hosts = bool(host_summary.get('unreachable', {}))
+        failed_hosts = bool(host_summary.get('failures', {}))
         if dark_hosts or failed_hosts:
             return False
         return True
