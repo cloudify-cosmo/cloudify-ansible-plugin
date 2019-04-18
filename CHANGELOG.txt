@@ -10,3 +10,4 @@
   - Fix error when stdout is required in logging.
 2.0.4:
   - Catch and raise Ansible parser errors during execute.
+  - Add SSH StrictHostKeyChecking by default.
