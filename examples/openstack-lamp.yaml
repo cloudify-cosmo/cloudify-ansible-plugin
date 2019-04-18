@@ -89,14 +89,10 @@ node_templates:
 
   playbook:
     type: cloudify.nodes.ansible.Executor
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        start:
-          implementation: ansible.cloudify_ansible.tasks.run
-          inputs:
-            site_yaml_path: { get_input: site_yaml_relative_path }
-            # dump more information about ssh connection
-            debug_level: 5
+    properties:
+      site_yaml_path: { get_input: site_yaml_relative_path }
+      # dump more information about ssh connection
+      debug_level: 5
     relationships:
       - type: cloudify.ansible.relationships.connected_to_host
         target: web
