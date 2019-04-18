@@ -119,7 +119,7 @@ class AnsibleHost(object):
 
         self.ansible_become = parameters.get('ansible_become')
         self.ansible_ssh_common_args = parameters.get(
-            'ansible_ssh_common_args')
+            'ansible_ssh_common_args', '-o StrictHostKeyChecking=no')
 
         self.config = {}
         if self.ansible_host:

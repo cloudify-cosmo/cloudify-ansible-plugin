@@ -129,13 +129,14 @@ class AnsibleSDKTest(AnsibleTestBase):
 
         x = deepcopy(self.mock_runner_return)
         mock_host = 'taco'
-        mock_dict = {mock_host: 1}
+        foo.return_value = x
 
         pb = AnsiblePlaybookFromFile(
             self.playbook_path,
             self.hosts_path)
         self.assertTrue(pb._host_success(mock_host))
 
+        mock_dict = {mock_host: 1}
         x['failures'] = mock_dict
         foo.return_value = x
 

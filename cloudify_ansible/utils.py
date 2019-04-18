@@ -214,7 +214,6 @@ def get_source_config_from_ctx(_ctx,
                 {'ansible_ssh_common_args': '-o StrictHostKeyChecking=no'}))
     hosts = {
         hostname: host_config
-
     }
     sources[group_name] = {
         'hosts': hosts
