@@ -79,43 +79,80 @@ jobs:
           paths:
             - build/*
 
-#  cloudify-manager:
-#    docker:
-#      - image: amd64/centos:centos7.3.1611
-#    steps:
-#      - checkout
-#      - attach_workspace:
-#          at: workspace
-#      - run:
-#          name: Install dependencies
-#          command: yum -y install python-devel gcc openssl git libxslt-devel libxml2-devel openldap-devel libffi-devel openssl-devel libvirt-devel
-#      - run:
-#          name: Download pip
-#          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-#      - run:
-#          name: Install pip
-#          command: python get-pip.py
-#      - run:
-#          name: Upgrade pip
-#          command: pip install --upgrade pip==9.0.1
-#      - run:
-#          name: Install virtualenv
-#          command: pip install virtualenv
-#      - run:
-#          name: Init virtualenv
-#          command: virtualenv env
-#      - run:
-#          name: install cloudify
-#          command: pip install cloudify==4.5
-#      - run:
-#          name: install openstack plugin from branch
-#          command: pip install -e .
-#      - run:
-#          name: install test requirements
-#          command: pip install awscli nose testtools https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.2.zip
-#      - run:
-#          name: execute test
-#          command: nosetests -s tests/test_manager.py
+  cloudify-manager:
+    machine:
+      enabled: true
+      python:
+        version: pypy-2.2.1
+    environment:
+      CLOUDIFY_SSL_TRUST_ALL: true
+    steps:
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: install cloudify
+          command: pip install -U cloudify==4.3.2
+      - run:
+          name: install test requirements
+          command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
+      - run:
+          name: download manager docker image
+          command: wget http://repository.cloudifysource.org/cloudify/4.5.5/ga-release/cloudify-docker-manager-4.5.5ga.tar
+      - run:
+          name: load docker image
+          command: docker load -i cloudify-docker-manager-4.5.5ga.tar
+      - run:
+          name: retain space by dumping the tar
+          command: rm cloudify-docker-manager-4.5.5ga.tar
+      - run:
+          name: start docker container
+          command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host docker-cfy-manager:latest
+      - run:
+          name: init CLI profile
+          command: |
+            counter=0
+            until [ $counter -ge 10 ]
+            do
+                cfy profiles use localhost -u admin -p admin -t default_tenant && break
+                counter=$[$counter+1]
+                sleep 2
+            done
+      - run:
+          name: install plugins bundle
+          command: cfy plugins bundle-upload
+      - run:
+          name: wagon upload
+          command: cfy plugins upload workspace/build/cloudify_ansible_plugin-*-py27-none-linux_x86_64-centos-Core.wgn -y plugin.yaml || true
+      - run:
+          name: fix blueprints little bit
+          command: sed "s/\- plugin.yaml/\- plugin:cloudify-ansible-plugin/g" -i examples/*.yaml
+      - run:
+          name: check another-relationships-blueprint
+          command: cfy blueprints upload examples/another-relationships-blueprint.yaml -b another-relationships-blueprint
+      - run:
+          name: check clearwater-blueprint
+          command: cfy blueprints upload examples/clearwater-blueprint.yaml -b clearwater-blueprint
+      - run:
+          name: check compute-blueprint
+          command: cfy blueprints upload examples/compute-blueprint.yaml -b compute-blueprint
+      - run:
+          name: check hosts-input-blueprint
+          command: cfy blueprints upload examples/hosts-input-blueprint.yaml -b hosts-input-blueprint
+      - run:
+          name: check openstack-lamp
+          command: cfy blueprints upload examples/openstack-lamp.yaml -b openstack-lamp
+      - run:
+          name: check openvpn-blueprint
+          command: cfy blueprints upload examples/openvpn-blueprint.yaml -b openvpn-blueprint
+      - run:
+          name: check relationships-blueprint
+          command: cfy blueprints upload examples/relationships-blueprint.yaml -b relationships-blueprint
 
 workflows:
   version: 2
@@ -126,9 +163,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
-#      - cloudify-manager:
-#          requires:
-#            - wagon
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
+      - cloudify-manager:
+          requires:
+            - unittests
+            - wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/

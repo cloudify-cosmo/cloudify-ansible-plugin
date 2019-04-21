@@ -40,6 +40,7 @@ def ansible_playbook_node(func):
                 sources=None,
                 ctx=ctx_from_import,
                 ansible_env_vars=None,
+                debug_level=2,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -65,7 +66,7 @@ def ansible_playbook_node(func):
         playbook_args = {
             'site_yaml_path': site_yaml_path,
             'sources': handle_sources(sources, site_yaml_path, ctx),
-            'verbosity': 2,
+            'verbosity': debug_level,
             'logger': ctx.logger
         }
         playbook_args.update(**kwargs)
