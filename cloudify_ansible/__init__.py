@@ -36,11 +36,12 @@ def ansible_relationship_source(func):
 
 def ansible_playbook_node(func):
 
-    def wrapper(site_yaml_path,
+    def wrapper(playbook_path=None,
                 sources=None,
                 ctx=ctx_from_import,
                 ansible_env_vars=None,
                 debug_level=2,
+                site_yaml_path=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -55,6 +56,7 @@ def ansible_playbook_node(func):
         :return:
         """
 
+        playbook_path = playbook_path or site_yaml_path
         ansible_env_vars = \
             ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
         sources = \
@@ -62,10 +64,10 @@ def ansible_playbook_node(func):
             get_source_config_from_ctx(ctx)
 
         create_playbook_workspace(ctx)
-        site_yaml_path = handle_site_yaml(site_yaml_path, ctx)
+        playbook_path = handle_site_yaml(playbook_path, ctx)
         playbook_args = {
-            'site_yaml_path': site_yaml_path,
-            'sources': handle_sources(sources, site_yaml_path, ctx),
+            'playbook_path': playbook_path,
+            'sources': handle_sources(sources, playbook_path, ctx),
             'verbosity': debug_level,
             'logger': ctx.logger
         }
