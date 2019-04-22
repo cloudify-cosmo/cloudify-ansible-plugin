@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from copy import deepcopy
+import json
 import logging
+import os
+import subprocess
 import sys
+from tempfile import mkdtemp, NamedTemporaryFile
 
-from ansible.errors import AnsibleParserError
-from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.parsing.dataloader import DataLoader
-from ansible.vars.manager import VariableManager
-from ansible.inventory.manager import InventoryManager
-from ansible.executor.playbook_executor import PlaybookExecutor
-from ansible.utils.display import Display
 
-from cloudify_ansible_sdk.options import Options
+DEPRECATED_KEYS = [
+    'site_yaml_path',
+    'inventory_config',
+    'variable_manager_config',
+    'passwords',
+    'modules',
+    'private_key_file']
 
 
 def get_fileno():
@@ -66,200 +68,94 @@ class AnsiblePlaybookFromFile(object):
     """ Object for communication to Ansible Library."""
 
     def __init__(self,
-                 site_yaml_path,
+                 playbook_path=None,
                  sources='localhost,',
-                 inventory_config=None,
-                 variable_manager_config=None,
                  options_config=None,
-                 passwords=None,
-                 modules=None,
-                 private_key_file=None,
                  run_data=None,
                  verbosity=2,
-                 logger=None):
+                 logger=None,
+                 site_yaml_path=None,
+                 environment_variables=None,
+                 **kwargs):
 
-        self.display = Display(verbosity=verbosity)
-
-        self.loader = DataLoader()
-        self.modules = modules or []
-        self.passwords = passwords or {'conn_pass': None, 'become_pass': None}
-        self.private_key_file = private_key_file
-        # TODO: Find a better way to pass the sources and site.yaml.
-        # TODO: For example, using an in memory object.
+        self.playbook = site_yaml_path or playbook_path
         self.sources = sources
-        self.site_yaml_path = site_yaml_path
-        self.verbosity = verbosity
-
-        # Configurations
-        self.inventory_config = inventory_config or {}
-        self.variable_manager_config = variable_manager_config or {}
         self.options_config = options_config or {}
-
         self.run_data = run_data or {}
-
-        self.inventory = self._set_inventory()
-        self.variable_manager = self._set_variable_manager()
-        self.options = self._set_options()
-        self.display.verbosity = self.options.verbosity
-
-        self.tqm = self._set_task_manager()
-        self.runner = self._set_runner()
+        self.environment_variables = environment_variables or {}
+        self._verbosity = verbosity
         self.logger = logger
 
-    def _set_inventory(self):
-        """Assign the inventory property."""
-        _kwargs = deepcopy(self.inventory_config)
-        if not isinstance(_kwargs, dict):
-            raise CloudifyAnsibleSDKError(
-                'inventory_config must be a dictionary.')
-        if 'loader' not in _kwargs:
-            _kwargs.update({'loader': self.loader})
-        if 'sources' not in _kwargs:
-            _kwargs.update({'sources': self.sources})
-        return InventoryManager(**_kwargs)
-
-    def _set_variable_manager(self):
-        """Assign the variable_manager property."""
-        _kwargs = deepcopy(self.variable_manager_config)
-        if not isinstance(_kwargs, dict):
-            raise CloudifyAnsibleSDKError(
-                'variable_manager_config must be a dictionary.')
-        if 'loader' not in _kwargs:
-            _kwargs.update({'loader': self.loader})
-        if 'inventory' not in _kwargs:
-            _kwargs.update({'inventory': self.inventory})
-        variable_manager = VariableManager(**_kwargs)
-        variable_manager.extra_vars = self.run_data
-        variable_manager.set_inventory(self.inventory)
-        return variable_manager
-
-    def _set_options(self):
-        """Assign the options variable."""
-        options_kwargs = deepcopy(self.options_config)
-        if not isinstance(options_kwargs, dict):
-            raise CloudifyAnsibleSDKError(
-                'options_config must be a dictionary.')
-        for k, v in self.options_defaults.items():
-            if not options_kwargs.get(k):
-                options_kwargs[k] = v
-        try:
-            return Options(**options_kwargs)
-        except TypeError as e:
-            raise CloudifyAnsibleSDKError(
-                'Invalid options_config: {0}'.format(str(e)))
-
-    def _set_task_manager(self):
-        return TaskQueueManager(
-            inventory=self.inventory,
-            variable_manager=self.variable_manager,
-            loader=self.loader,
-            options=self.options,
-            passwords=self.passwords)
-
-    def _set_runner(self):
-        runner = PlaybookExecutor(
-            playbooks=[self.site_yaml_path],
-            inventory=self.inventory,
-            variable_manager=self.variable_manager,
-            loader=self.loader,
-            options=self.options,
-            passwords=self.passwords)
-        setattr(runner, '_tqm', self.tqm)
-        return runner
+        for deprecated_key in DEPRECATED_KEYS:
+            if deprecated_key in kwargs:
+                self.logger.error(
+                    'This key been deprecated: {0} {1}'.format(
+                        deprecated_key, kwargs[deprecated_key]))
 
     @property
-    def tqm_stats(self):
-        """TaskQueueManager creates a private _stats property.
-        We want to access it locally.
-        """
-        try:
-            _stats = getattr(self.tqm, '_stats')
-        except AttributeError as e:
-            raise CloudifyAnsibleSDKError(
-                'There is an issue with Ansible: {0}'.format(str(e))
-            )
-        return _stats
+    def env(self):
+        _env = os.environ.copy()
+        for key, value in self.environment_variables.items():
+            _env[key] = value
+        return _env
 
     @property
-    def options_defaults(self):
-        # This stuff is allegedly required.
-        # However, I did not have time to validate it all.
-        return {
-            'ask_pass': False,
-            'ask_su_pass': False,
-            'ask_sudo_pass': False,
-            'ask_vault_pass': False,
-            'become': False,
-            'become_ask_pass': False,
-            'become_method': 'sudo',
-            'become_user': 'root',
-            'check': False,
-            'connection': 'smart',
-            'diff': False,
-            'extra_vars': [],
-            'flush_cache': None,
-            'force_handlers': False,
-            'forks': 100,
-            'inventory': self.inventory,
-            'listhosts': None,
-            'listtags': None,
-            'listtasks': None,
-            'module_path': self.modules,
-            'private_key_file': self.private_key_file,
-            'remote_user': None,
-            'scp_extra_args': '',
-            'sftp_extra_args': '',
-            'skip_tags': [],
-            'ssh_common_args': '',
-            'ssh_extra_args': '',
-            'start_at_task': None,
-            'step': None,
-            'su': False,
-            'su_user': False,
-            'subset': False,
-            'sudo': False,
-            'sudo_user': False,
-            'syntax': None,
-            'tags': ['all'],
-            'timeout': 10,
-            'vault_ids': [],
-            'vault_password_files': [],
-            'verbosity': self.verbosity
-        }
+    def verbosity(self):
+        verbosity = '-v'
+        for i in range(1, self._verbosity):
+            verbosity += 'v'
+        return verbosity
 
-    def _host_success(self, host):
-        """Check if a hosts is failed or unreachable."""
-        host_summary = self.tqm_stats.summarize(host)
-        # convert dict with hosts to boolean
-        dark_hosts = bool(host_summary.get('unreachable', {}))
-        failed_hosts = bool(host_summary.get('failures', {}))
-        if dark_hosts or failed_hosts:
-            return False
-        return True
+    @property
+    def options(self):
+        options_list = []
+        if 'extra_vars' not in self.options_config:
+            self.options_config['extra_vars'] = {}
+        self.options_config['extra_vars'].update(self.run_data)
+        for key, value in self.options_config.items():
+            if key == 'extra_vars':
+                f = NamedTemporaryFile(delete=False)
+                with open(f.name, 'w') as outfile:
+                    json.dump(value, outfile)
+                value = '@{filepath}'.format(filepath=f.name)
+            elif key == 'verbosity':
+                self.logger.error('No such option verbosity')
+                del key
+                continue
+            key = key.replace("_", "-")
+            options_list.append('--{key}={value}'.format(key=key, value=value))
+        return ' '.join(options_list)
 
-    def _validate_host_success(self):
-        """After execute, we need to review each host's failed tasks."""
-        host_success = []
-        for host in sorted(self.tqm_stats.processed.keys()):
-            host_success.append(self._host_success(host))
-        return host_success
+    @property
+    def command(self):
+        return 'ansible-playbook {verbosity} ' \
+               '-i {sources} ' \
+               '{options} ' \
+               '{playbook}'.format(verbosity=self.verbosity,
+                                   sources=self.sources,
+                                   options=self.options,
+                                   playbook=self.playbook)
 
     def _execute(self):
-        try:
-            self.runner.run()
-        except AnsibleParserError as e:
-            raise CloudifyAnsibleSDKError(e)
+        popen_args = {
+            'args': self.command,
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.STDOUT,
+            'universal_newlines': True,
+            'shell': True,
+            'cwd': mkdtemp(),
+            'env': self.env
+        }
+        self.logger.info('popen_args: {0}'.format(popen_args))
+        proc = subprocess.Popen(**popen_args)
+        for line in proc.stdout:
+            self.logger.info(line)
+        return_code = proc.wait()
+        if return_code != 5:
+            return return_code
+        raise CloudifyAnsibleSDKError(return_code)
 
     def execute(self):
-        # TODO: Catch this error: ansible.errors.AnsibleFileNotFound
-        # TODO: Also: AnsibleParserError
-        if self.logger:
-            sys.stdout = StreamToLogger(self.logger, logging.INFO)
-            sys.stderr = StreamToLogger(self.logger, logging.ERROR)
+        sys.stdout = StreamToLogger(self.logger, logging.INFO)
+        sys.stderr = StreamToLogger(self.logger, logging.ERROR)
         self._execute()
-        self.tqm.send_callback(
-            'record_logs',
-            user_id=self.run_data.get('user_id'),
-            success=all(self._validate_host_success())
-        )
-        return self.tqm_stats

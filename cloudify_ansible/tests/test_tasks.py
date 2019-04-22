@@ -122,20 +122,6 @@ class TestPluginTasks(AnsibleTestBase):
             ctx=ctx)
 
     @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
-    def test_ansible_playbook_raises(self, foo):
-        instance = foo.return_value
-        instance.method.return_value = self.mock_runner_return
-        with self.assertRaises(NonRecoverableError) as e:
-            run(
-                self.playbook_path,
-                self.hosts_path,
-                inventory_config=['host1', 'host2'],
-                ctx=ctx)
-            self.assertIn(
-                'inventory_config must be a dictionary.',
-                e.message)
-
-    @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
     def test_ansible_playbook_with_dict_sources(self, foo):
         instance = foo.return_value
         instance.method.return_value = self.mock_runner_return

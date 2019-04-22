@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, OperationRetry
 
 from cloudify_ansible_sdk import (
     AnsiblePlaybookFromFile,
@@ -37,18 +37,10 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         playbook = AnsiblePlaybookFromFile(**playbook_args)
     except CloudifyAnsibleSDKError:
         raise NonRecoverableError(CloudifyAnsibleSDKError)
-    # Because Ansible is written as a command-line tool,
-    # there are some options that only perform well as
-    # environment variables.
     utils.assign_environ(ansible_env_vars)
     result = playbook.execute()
-    utils.unassign_environ(ansible_env_vars)
-    utils.handle_result(
-        result.__dict__,
-        _ctx,
-        _.get('ignore_failures'),
-        _.get('ignore_dark')
-    )
+    if result == 4:
+        raise OperationRetry('Hosts are unreachable.')
 
 
 @operation
