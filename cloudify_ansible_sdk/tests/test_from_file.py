@@ -19,7 +19,7 @@ from unittest import skipUnless
 
 from . import AnsibleTestBase
 
-from .. import AnsiblePlaybookFromFile
+from .. import AnsiblePlaybookFromFile, CloudifyAnsibleSDKError
 
 
 class AnsibleSDKTest(AnsibleTestBase):
@@ -108,8 +108,21 @@ class AnsibleSDKTest(AnsibleTestBase):
             logger=getLogger('testLogger')
         )
         with patch('subprocess.Popen') as mopen:
-            process_mock = Mock()
             attrs = {'wait.return_value': 0, 'stdout': []}
-            process_mock.configure_mock(**attrs)
+            popen_mock = Mock()
+            popen_mock.configure_mock(**attrs)
+            mopen.return_value = popen_mock
             p.execute()
             self.assertTrue(mopen.called)
+            attrs = {'wait.return_value': 4, 'stdout': []}
+            popen_mock = Mock()
+            popen_mock.configure_mock(**attrs)
+            mopen.return_value = popen_mock
+            p.execute()
+            self.assertTrue(mopen.called)
+        with patch('subprocess.Popen') as mopen:
+            process_mock = Mock()
+            attrs = {'wait.return_value': 1, 'stdout': []}
+            process_mock.configure_mock(**attrs)
+            mopen.return_value = process_mock
+            self.assertRaises(CloudifyAnsibleSDKError, p.execute)
