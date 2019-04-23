@@ -28,6 +28,8 @@ DEPRECATED_KEYS = [
     'modules',
     'private_key_file']
 
+NO_FAILURE = [0, 4]
+
 
 def get_fileno():
     try:
@@ -151,9 +153,9 @@ class AnsiblePlaybookFromFile(object):
         for line in proc.stdout:
             self.logger.info(line)
         return_code = proc.wait()
-        if return_code != 5:
+        if return_code in NO_FAILURE:
             return return_code
-        raise CloudifyAnsibleSDKError(return_code)
+        raise CloudifyAnsibleSDKError('Fatal error. Check info logs.')
 
     def execute(self):
         sys.stdout = StreamToLogger(self.logger, logging.INFO)
