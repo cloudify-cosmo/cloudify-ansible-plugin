@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import environ, curdir, path
+from os import environ, curdir, path, remove
 from mock import patch
 import shutil
-from tempfile import mkdtemp
+from tempfile import mkdtemp, NamedTemporaryFile
 import unittest
 
 from cloudify.exceptions import NonRecoverableError
@@ -25,7 +25,8 @@ from cloudify.state import current_ctx
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 
 from cloudify_ansible.tasks import run, ansible_requires_host
-from cloudify_ansible.utils import handle_file_path, handle_key_data
+from cloudify_ansible.utils import (
+    handle_file_path, handle_key_data, handle_source_from_string)
 
 NODE_PROPS = {
     'resource_id': None,
@@ -78,6 +79,19 @@ relationship_ctx = MockCloudifyContext(
 
 # Fix the mock ctx.
 setattr(ctx, '_local', True)
+
+FAKE_INVENTORY = \
+    """mail.example.com
+
+[webservers]
+foo.example.com
+bar.example.com
+
+[dbservers]
+one.example.com
+two.example.com
+three.example.com
+"""
 
 
 class TestPluginTasks(AnsibleTestBase):
@@ -143,3 +157,19 @@ class TestPluginTasks(AnsibleTestBase):
     def test_ansible_requires_host(self):
         current_ctx.set(relationship_ctx)
         ansible_requires_host(ctx=relationship_ctx)
+
+    def test_handle_source_from_string(self):
+        f1 = NamedTemporaryFile(delete=False)
+        self.addCleanup(remove, f1.name)
+        result = handle_source_from_string(FAKE_INVENTORY, ctx, f1.name)
+        self.assertTrue(path.exists(result))
+        self.assertTrue(FAKE_INVENTORY in open(result).read())
+        f2 = NamedTemporaryFile(delete=False)
+        self.addCleanup(remove, f2.name)
+        result = handle_source_from_string(f2.name, ctx, f1.name)
+        self.assertTrue(path.exists(result))
+        self.assertRaises(RuntimeError,
+                          handle_source_from_string,
+                          'bad/file/path',
+                          ctx,
+                          f1.name)

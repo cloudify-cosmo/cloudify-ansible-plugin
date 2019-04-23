@@ -15,3 +15,6 @@
   - New method is transparent usage of ansible-playbook binary. The version used is that which exists in the PATH variable, which is taken from the Wagon.
   - replace site_yaml_path with playbook_path.
   - Deprecated these keys: ['site_yaml_path', 'inventory_config', 'variable_manager_config', 'passwords', 'modules', 'private_key_file'].
+  - Handle Ansible-Playbook Error codes.
+2.1.1:
+  - Fix bug preventing passing path or content of Ansible Inventory file.
