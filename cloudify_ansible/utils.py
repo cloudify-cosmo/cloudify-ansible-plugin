@@ -139,9 +139,32 @@ def handle_sources(data, site_yaml_abspath, _ctx):
             _ctx.logger.info(
                 'Writing this data to temp file: {0}'.format(data))
             yaml.safe_dump(data, outfile, default_flow_style=False)
+    elif isinstance(data, basestring):
+        hosts_abspath = handle_source_from_string(data, _ctx, hosts_abspath)
     with open(hosts_abspath, 'r') as infile:
         _ctx.logger.debug('Contents hosts:\n {0}'.format(infile.read()))
     return hosts_abspath
+
+
+def handle_source_from_string(filepath, _ctx, new_inventory_path):
+    if '\n' not in filepath:
+        # We are assuming that there is no file path with \n in it.
+        # We are also assuming that there are multiple lines in an
+        # inventory file :(
+        try:
+            open(filepath, 'r')
+            # The file already exists on the system.
+            return filepath
+        except IOError:
+            # The file doesn't exist on the system, so we need to download it.
+            _ctx.download_resource(filepath, new_inventory_path)
+    else:
+        with open(new_inventory_path, 'w') as outfile:
+            _ctx.logger.info(
+                'Writing this data to temp file: {0}'.format(
+                    new_inventory_path))
+            outfile.write(filepath)
+    return new_inventory_path
 
 
 def create_playbook_workspace(ctx):
