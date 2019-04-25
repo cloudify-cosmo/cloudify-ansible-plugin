@@ -125,7 +125,12 @@ class AnsiblePlaybookFromFile(object):
                 del key
                 continue
             key = key.replace("_", "-")
-            options_list.append('--{key}={value}'.format(key=key, value=value))
+            if isinstance(value, dict):
+                value = json.dumps(value)
+            else:
+                value = repr(value)
+            options_list.append(
+                '--{key}={value}'.format(key=key, value=value))
         return ' '.join(options_list)
 
     @property

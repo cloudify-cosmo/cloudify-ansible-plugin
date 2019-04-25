@@ -80,7 +80,7 @@ class AnsibleSDKTest(AnsibleTestBase):
             options_config={'foo': 'bar'},
             logger=getLogger('testLogger')
         )
-        self.assertIn('--foo=bar', p.options)
+        self.assertIn('--foo=\'bar\'', p.options)
         if 'extra-vars' in p.options:
             self.assertIn('@', p.options)
 
