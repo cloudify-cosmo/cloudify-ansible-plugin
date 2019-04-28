@@ -28,25 +28,34 @@ from cloudify_ansible import (
     utils
 )
 
-UNREACHABLE_ERROR = 4
+
+UNREACHABLE_CODES = [None, 2, 4]
+SUCCESS_CODES = [0]
 
 
 @operation
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
 
-    _ctx.logger.info('playbook_args: {0}'.format(playbook_args))
+    _ctx.logger.debug('playbook_args: {0}'.format(playbook_args))
 
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
-        result = playbook.execute()
+        output, error, return_code = playbook.execute()
     except CloudifyAnsibleSDKError:
         raise NonRecoverableError(CloudifyAnsibleSDKError)
 
-    if result == UNREACHABLE_ERROR:
+    _ctx.logger.debug('Output: {0}'.format(output))
+    _ctx.logger.debug('Error: {0}'.format(error))
+    _ctx.logger.debug('Return Code: {0}'.format(return_code))
+
+    if return_code in UNREACHABLE_CODES:
         raise OperationRetry(
             'One or more hosts are unreachable.')
+    if return_code not in SUCCESS_CODES:
+        raise NonRecoverableError(
+            'One or more hosts failed.')
 
 
 @operation

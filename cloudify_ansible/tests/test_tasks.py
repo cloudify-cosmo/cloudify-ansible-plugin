@@ -16,13 +16,15 @@ from os import environ, curdir, path, remove
 from mock import patch
 import shutil
 from tempfile import mkdtemp, NamedTemporaryFile
-import unittest
+from unittest import skipUnless
 
-from cloudify.exceptions import NonRecoverableError
+
+from cloudify.exceptions import NonRecoverableError, OperationRetry
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
+import cloudify_ansible_sdk
 
 from cloudify_ansible.tasks import run, ansible_requires_host
 from cloudify_ansible.utils import (
@@ -126,25 +128,42 @@ class TestPluginTasks(AnsibleTestBase):
             curdir,
             handle_file_path(curdir, ctx))
 
-    @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook(self, foo):
-        instance = foo.return_value
-        instance.method.return_value = self.mock_runner_return
+        foo.return_value = ('output', 'error', 0)
         run(
             self.playbook_path,
             self.hosts_path,
             ctx=ctx)
 
-    @patch('ansible.executor.playbook_executor.PlaybookExecutor.run')
-    def test_ansible_playbook_with_dict_sources(self, foo):
-        instance = foo.return_value
-        instance.method.return_value = self.mock_runner_return
-        run(
-            self.playbook_path,
-            mock_sources_dict,
-            ctx=ctx)
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    def test_ansible_playbook_failed(self, foo):
+        foo.return_value = ('output', 'error', 'return_code')
+        with self.assertRaises(NonRecoverableError):
+            run(
+                self.playbook_path,
+                self.hosts_path,
+                ctx=ctx)
 
-    @unittest.skipUnless(
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    def test_ansible_playbook_retry(self, foo):
+        foo.return_value = ('output', 'error', 2)
+        with self.assertRaises(OperationRetry):
+            run(
+                self.playbook_path,
+                self.hosts_path,
+                ctx=ctx)
+
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    def test_ansible_playbook_with_dict_sources(self, foo):
+        foo.return_value = ('output', 'error', 'return_code')
+        with self.assertRaises(NonRecoverableError):
+            run(
+                self.playbook_path,
+                mock_sources_dict,
+                ctx=ctx)
+
+    @skipUnless(
         environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
