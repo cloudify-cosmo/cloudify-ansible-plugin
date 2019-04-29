@@ -70,7 +70,7 @@ def ansible_playbook_node(func):
             'playbook_path': playbook_path,
             'sources': handle_sources(sources, playbook_path, ctx),
             'verbosity': debug_level,
-            'additional_args': additional_args,
+            'additional_args': additional_args or '',
             'logger': ctx.logger
         }
         playbook_args.update(**kwargs)

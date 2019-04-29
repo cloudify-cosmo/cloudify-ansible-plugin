@@ -85,7 +85,7 @@ class AnsiblePlaybookFromFile(object):
         self.options_config = options_config or {}
         self.run_data = run_data or {}
         self.environment_variables = environment_variables or {}
-        self.additional_args = additional_args
+        self.additional_args = additional_args or ''
         self._verbosity = verbosity
         self.logger = logger
 
