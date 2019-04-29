@@ -99,7 +99,7 @@ class AnsibleSDKTest(AnsibleTestBase):
         self.assertIn('ansible-examples/lamp_simple/hosts',
                       p.command.split(' ')[3])
         self.assertIn('ansible-examples/lamp_simple/site.yml',
-                      p.command.split(' ')[5])
+                      p.command.split(' ')[6])
 
     def test_execute(self):
         p = AnsiblePlaybookFromFile(

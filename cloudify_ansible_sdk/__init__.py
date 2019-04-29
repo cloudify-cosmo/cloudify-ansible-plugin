@@ -77,6 +77,7 @@ class AnsiblePlaybookFromFile(object):
                  logger=None,
                  site_yaml_path=None,
                  environment_variables=None,
+                 additional_args=None,
                  **kwargs):
 
         self.playbook = site_yaml_path or playbook_path
@@ -84,6 +85,7 @@ class AnsiblePlaybookFromFile(object):
         self.options_config = options_config or {}
         self.run_data = run_data or {}
         self.environment_variables = environment_variables or {}
+        self.additional_args = additional_args
         self._verbosity = verbosity
         self.logger = logger
 
@@ -139,9 +141,11 @@ class AnsiblePlaybookFromFile(object):
         return 'ansible-playbook {verbosity} ' \
                '-i {sources} ' \
                '{options} ' \
+               '{additional_args} ' \
                '{playbook}'.format(verbosity=self.verbosity,
                                    sources=self.sources,
                                    options=self.options,
+                                   additional_args=self.additional_args,
                                    playbook=self.playbook)
 
     def _execute(self):

@@ -18,3 +18,5 @@
   - Handle Ansible-Playbook Error codes.
 2.1.1:
   - Fix bug preventing passing path or content of Ansible Inventory file.
+2.2.0:
+  - Ansible Playbook Additional Args
