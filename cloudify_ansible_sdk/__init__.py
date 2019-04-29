@@ -126,7 +126,9 @@ class AnsiblePlaybookFromFile(object):
                 del key
                 continue
             key = key.replace("_", "-")
-            if isinstance(value, dict):
+            if isinstance(value, basestring):
+                value = value.encode('utf-8')
+            elif isinstance(value, dict):
                 value = json.dumps(value)
             elif isinstance(value, list) and key not in LIST_TYPES:
                 value = [i.encode('utf-8') for i in value]
