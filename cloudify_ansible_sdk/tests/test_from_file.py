@@ -19,7 +19,7 @@ from unittest import skipUnless
 
 from . import AnsibleTestBase
 
-from .. import AnsiblePlaybookFromFile, CloudifyAnsibleSDKError
+from .. import AnsiblePlaybookFromFile
 
 
 class AnsibleSDKTest(AnsibleTestBase):
@@ -107,14 +107,24 @@ class AnsibleSDKTest(AnsibleTestBase):
             self.hosts_path,
             logger=getLogger('testLogger')
         )
+        comm_mock = Mock()
+        comm_mock.return_value = (0, 1)
         with patch('subprocess.Popen') as mopen:
-            attrs = {'wait.return_value': 0, 'stdout': []}
+            attrs = {
+                'wait.return_value': 0,
+                'stdout': [],
+                'communicate.return_value': ('output', 'error')
+            }
             popen_mock = Mock()
             popen_mock.configure_mock(**attrs)
             mopen.return_value = popen_mock
             p.execute()
             self.assertTrue(mopen.called)
-            attrs = {'wait.return_value': 4, 'stdout': []}
+            attrs = {
+                'wait.return_value': 4,
+                'stdout': [],
+                'communicate.return_value': ('output', 'error')
+            }
             popen_mock = Mock()
             popen_mock.configure_mock(**attrs)
             mopen.return_value = popen_mock
@@ -122,7 +132,17 @@ class AnsibleSDKTest(AnsibleTestBase):
             self.assertTrue(mopen.called)
         with patch('subprocess.Popen') as mopen:
             process_mock = Mock()
-            attrs = {'wait.return_value': 1, 'stdout': []}
+            return_value_mock = Mock()
+            return_value_attrs = {'return_code': 0}
+            return_value_mock.configure_mock(**return_value_attrs)
+            attrs = {
+                'wait.return_value': return_value_mock,
+                'stdout': [],
+                'communicate.return_value': ('output', 'error')
+            }
             process_mock.configure_mock(**attrs)
             mopen.return_value = process_mock
-            self.assertRaises(CloudifyAnsibleSDKError, p.execute)
+            output = p.execute()
+            mopen.assert_called()
+            self.assertIn('output', output)
+            self.assertIn('error', output)

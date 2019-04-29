@@ -27,8 +27,7 @@ DEPRECATED_KEYS = [
     'passwords',
     'modules',
     'private_key_file']
-
-NO_FAILURE = [0, 4]
+LIST_TYPES = ['skip-tags', 'tags']
 
 
 def get_fileno():
@@ -127,10 +126,12 @@ class AnsiblePlaybookFromFile(object):
             key = key.replace("_", "-")
             if isinstance(value, dict):
                 value = json.dumps(value)
-            else:
-                value = repr(value)
+            elif isinstance(value, list) and key not in LIST_TYPES:
+                value = [i.encode('utf-8') for i in value]
+            elif isinstance(value, list):
+                value = ",".join(value).encode('utf-8')
             options_list.append(
-                '--{key}={value}'.format(key=key, value=value))
+                '--{key}={value}'.format(key=key, value=repr(value)))
         return ' '.join(options_list)
 
     @property
@@ -157,12 +158,10 @@ class AnsiblePlaybookFromFile(object):
         proc = subprocess.Popen(**popen_args)
         for line in proc.stdout:
             self.logger.info(line)
-        return_code = proc.wait()
-        if return_code in NO_FAILURE:
-            return return_code
-        raise CloudifyAnsibleSDKError('Fatal error. Check info logs.')
+        (output, error) = proc.communicate()
+        return output, error, proc.returncode
 
     def execute(self):
         sys.stdout = StreamToLogger(self.logger, logging.INFO)
         sys.stderr = StreamToLogger(self.logger, logging.ERROR)
-        self._execute()
+        return self._execute()
