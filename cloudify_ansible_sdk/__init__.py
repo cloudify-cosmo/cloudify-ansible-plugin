@@ -168,6 +168,12 @@ class AnsiblePlaybookFromFile(object):
         return output, error, proc.returncode
 
     def execute(self):
-        sys.stdout = StreamToLogger(self.logger, logging.INFO)
-        sys.stderr = StreamToLogger(self.logger, logging.ERROR)
-        return self._execute()
+        _stdout = sys.stdout
+        _stderr = sys.stderr
+        try:
+            sys.stdout = StreamToLogger(self.logger, logging.INFO)
+            sys.stderr = StreamToLogger(self.logger, logging.ERROR)
+            return self._execute()
+        finally:
+            sys.stdout = _stdout
+            sys.stderr = _stderr

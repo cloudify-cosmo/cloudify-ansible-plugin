@@ -19,6 +19,7 @@ from cloudify_ansible.utils import (
     delete_playbook_workspace,
     handle_site_yaml,
     handle_sources,
+    get_source_config_from_source,
     get_source_config_from_ctx
 )
 
@@ -43,6 +44,8 @@ def ansible_playbook_node(func):
                 debug_level=2,
                 additional_args=None,
                 site_yaml_path=None,
+                save_playbook=False,
+                remerge_sources=False,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -53,6 +56,13 @@ def ansible_playbook_node(func):
         :param ctx: The cloudify context.
         :param ansible_env_vars:
           A dictionary of environment variables to set.
+        :param debug_level: Debug level
+        :param additional_args: Additional args that you want to use, for
+          example, '-c local'.
+        :param site_yaml_path: A path to your `site.yaml` or `main.yaml` in
+          your Ansible Playbook.
+        :param save_playbook: don't remove playbook after action
+        :param remerge_sources: update sources on target node
         :param kwargs:
         :return:
         """
@@ -60,21 +70,26 @@ def ansible_playbook_node(func):
         playbook_path = playbook_path or site_yaml_path
         ansible_env_vars = \
             ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
-        sources = \
-            sources or \
-            get_source_config_from_ctx(ctx)
+        if not sources:
+            if remerge_sources:
+                sources = get_source_config_from_source(ctx, kwargs)
+            else:
+                sources = get_source_config_from_ctx(ctx)
 
-        create_playbook_workspace(ctx)
-        playbook_path = handle_site_yaml(playbook_path, ctx)
-        playbook_args = {
-            'playbook_path': playbook_path,
-            'sources': handle_sources(sources, playbook_path, ctx),
-            'verbosity': debug_level,
-            'additional_args': additional_args or '',
-            'logger': ctx.logger
-        }
-        playbook_args.update(**kwargs)
-        func(playbook_args, ansible_env_vars, ctx)
-        delete_playbook_workspace(ctx)
+        try:
+            create_playbook_workspace(ctx)
+            playbook_path = handle_site_yaml(playbook_path, ctx)
+            playbook_args = {
+                'playbook_path': playbook_path,
+                'sources': handle_sources(sources, playbook_path, ctx),
+                'verbosity': debug_level,
+                'additional_args': additional_args or '',
+                'logger': ctx.logger
+            }
+            playbook_args.update(**kwargs)
+            func(playbook_args, ansible_env_vars, ctx)
+        finally:
+            if not save_playbook:
+                delete_playbook_workspace(ctx)
 
     return wrapper

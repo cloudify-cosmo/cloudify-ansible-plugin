@@ -21,8 +21,9 @@ import yaml
 from cloudify.manager import get_rest_client
 from cloudify.exceptions import NonRecoverableError, OperationRetry
 try:
-    from cloudify.constants import RELATIONSHIP_INSTANCE
+    from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
 except ImportError:
+    NODE_INSTANCE = 'node-instance'
     RELATIONSHIP_INSTANCE = 'relationship-instance'
 
 from cloudify_ansible.constants import (
@@ -93,6 +94,20 @@ def handle_file_path(file_path, _ctx):
         'File path {0} does not exist.'.format(file_path))
 
 
+def _get_instance(_ctx):
+    if _ctx.type == RELATIONSHIP_INSTANCE:
+        return _ctx.source.instance
+    else:  # _ctx.type == NODE_INSTANCE:
+        return _ctx.instance
+
+
+def _get_node(_ctx):
+    if _ctx.type == RELATIONSHIP_INSTANCE:
+        return _ctx.source.node
+    else:  # _ctx.type == NODE_INSTANCE:
+        return _ctx.node
+
+
 def handle_site_yaml(site_yaml_path, _ctx):
     """ Create an absolute local path to the site.yaml.
 
@@ -106,7 +121,7 @@ def handle_site_yaml(site_yaml_path, _ctx):
     site_yaml_real_dir = os.path.dirname(site_yaml_real_path)
     site_yaml_real_name = os.path.basename(site_yaml_real_path)
     site_yaml_new_dir = os.path.join(
-        _ctx.instance.runtime_properties[WORKSPACE], 'playbook')
+        _get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
     shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
     with open(site_yaml_final_path, 'r') as infile:
@@ -130,7 +145,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
     hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), 'hosts')
     if isinstance(data, dict):
         data = handle_key_data(
-            data, _ctx.instance.runtime_properties[WORKSPACE])
+            data, _get_instance(_ctx).runtime_properties[WORKSPACE])
         if os.path.exists(hosts_abspath):
             _ctx.logger.error(
                 'Hosts data was provided but {0} already exists. '
@@ -174,7 +189,7 @@ def create_playbook_workspace(ctx):
     :return:
     """
 
-    ctx.instance.runtime_properties[WORKSPACE] = mkdtemp()
+    _get_instance(ctx).runtime_properties[WORKSPACE] = mkdtemp()
 
 
 def delete_playbook_workspace(ctx):
@@ -184,7 +199,7 @@ def delete_playbook_workspace(ctx):
     :return:
     """
 
-    directory = ctx.instance.runtime_properties.get(WORKSPACE)
+    directory = _get_instance(ctx).runtime_properties.get(WORKSPACE)
     if directory and os.path.exists(directory):
         shutil.rmtree(directory)
 
@@ -209,7 +224,7 @@ def get_source_config_from_ctx(_ctx,
     """
 
     sources = sources or {}
-    if _ctx.type != RELATIONSHIP_INSTANCE and \
+    if _ctx.type == NODE_INSTANCE and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
             _ctx.instance.runtime_properties.get(SOURCES, {}):
         return AnsibleSource(_ctx.instance.runtime_properties[SOURCES]).config
@@ -228,7 +243,7 @@ def get_source_config_from_ctx(_ctx,
             get_group_name_and_hostname(
                 _ctx, group_name, hostname)
         additional_node_groups = get_additional_node_groups(
-            _ctx.node.name, _ctx.deployment.id)
+            _get_node(_ctx).name, _ctx.deployment.id)
     if '-o StrictHostKeyChecking=no' not in \
             host_config.get('ansible_ssh_common_args', ''):
         _ctx.logger.warn(
@@ -244,6 +259,29 @@ def get_source_config_from_ctx(_ctx,
     for additional_group in additional_node_groups:
         sources[additional_group] = {'hosts': {hostname: None}}
     return AnsibleSource(sources).config
+
+
+def get_source_config_from_source(_ctx, kwargs):
+    if _ctx.type == RELATIONSHIP_INSTANCE:
+        group_name = kwargs.get('group_name')
+        hostname = kwargs.get('hostname')
+        host_config = kwargs.get('host_config')
+        # get target sources
+        new_sources_dict = get_source_config_from_ctx(
+            _ctx, group_name, hostname, host_config)
+        # get source sources
+        current_sources_dict = \
+            _ctx.source.instance.runtime_properties.get(
+                SOURCES, {})
+        current_sources = AnsibleSource(current_sources_dict)
+        new_sources = AnsibleSource(new_sources_dict)
+        current_sources.merge_source(new_sources)
+        # save config
+        _ctx.source.instance.runtime_properties[SOURCES] = \
+            current_sources.config
+        return AnsibleSource(current_sources.config).config
+    else:
+        return get_source_config_from_ctx(_ctx)
 
 
 def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
@@ -283,7 +321,7 @@ def get_host_config_from_compute_node(_ctx):
 
 def handle_result(result, _ctx, ignore_failures=False, ignore_dark=False):
     _ctx.logger.debug('result: {0}'.format(result))
-    _ctx.instance.runtime_properties['result'] = result
+    _get_instance(_ctx).runtime_properties['result'] = result
     failures = result.get('failures')
     dark = result.get('dark')
     if failures and not ignore_failures:
