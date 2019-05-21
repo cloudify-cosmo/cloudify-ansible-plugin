@@ -97,14 +97,14 @@ def handle_file_path(file_path, _ctx):
 def _get_instance(_ctx):
     if _ctx.type == RELATIONSHIP_INSTANCE:
         return _ctx.source.instance
-    else:  # _ctx.type == NODE_INSTANCE:
+    else:  # _ctx.type == NODE_INSTANCE
         return _ctx.instance
 
 
 def _get_node(_ctx):
     if _ctx.type == RELATIONSHIP_INSTANCE:
         return _ctx.source.node
-    else:  # _ctx.type == NODE_INSTANCE:
+    else:  # _ctx.type == NODE_INSTANCE
         return _ctx.node
 
 
@@ -226,7 +226,7 @@ def get_source_config_from_ctx(_ctx,
     sources = sources or {}
     if _ctx.type == NODE_INSTANCE and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
-            _ctx.instance.runtime_properties.get(SOURCES, {}):
+            _ctx.instance.runtime_properties.get(SOURCES):
         return AnsibleSource(_ctx.instance.runtime_properties[SOURCES]).config
     elif _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \
@@ -261,25 +261,31 @@ def get_source_config_from_ctx(_ctx,
     return AnsibleSource(sources).config
 
 
-def get_source_config_from_source(_ctx, kwargs):
+def update_sources_from_target(new_sources_dict, _ctx):
+    # get source sources
+    current_sources_dict = _ctx.source.instance.runtime_properties.get(
+        SOURCES, {})
+    current_sources = AnsibleSource(current_sources_dict)
+    # get target sources
+    new_sources = AnsibleSource(new_sources_dict)
+    # merge sources
+    current_sources.merge_source(new_sources)
+    # save sources to source node
+    _ctx.source.instance.runtime_properties[SOURCES] = current_sources.config
+    return current_sources.config
+
+
+def get_remerged_config_sources(_ctx, kwargs):
     if _ctx.type == RELATIONSHIP_INSTANCE:
         group_name = kwargs.get('group_name')
         hostname = kwargs.get('hostname')
-        host_config = kwargs.get('host_config')
+        host_config = kwargs.get('host_config', {})
         # get target sources
         new_sources_dict = get_source_config_from_ctx(
             _ctx, group_name, hostname, host_config)
-        # get source sources
-        current_sources_dict = \
-            _ctx.source.instance.runtime_properties.get(
-                SOURCES, {})
-        current_sources = AnsibleSource(current_sources_dict)
-        new_sources = AnsibleSource(new_sources_dict)
-        current_sources.merge_source(new_sources)
-        # save config
-        _ctx.source.instance.runtime_properties[SOURCES] = \
-            current_sources.config
-        return AnsibleSource(current_sources.config).config
+        # merged sources
+        merged_sources = update_sources_from_target(new_sources_dict, _ctx)
+        return AnsibleSource(merged_sources).config
     else:
         return get_source_config_from_ctx(_ctx)
 

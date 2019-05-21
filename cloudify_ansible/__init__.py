@@ -19,7 +19,7 @@ from cloudify_ansible.utils import (
     delete_playbook_workspace,
     handle_site_yaml,
     handle_sources,
-    get_source_config_from_source,
+    get_remerged_config_sources,
     get_source_config_from_ctx
 )
 
@@ -72,7 +72,7 @@ def ansible_playbook_node(func):
             ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
         if not sources:
             if remerge_sources:
-                sources = get_source_config_from_source(ctx, kwargs)
+                sources = get_remerged_config_sources(ctx, kwargs)
             else:
                 sources = get_source_config_from_ctx(ctx)
 
