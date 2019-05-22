@@ -20,3 +20,5 @@
   - Fix bug preventing passing path or content of Ansible Inventory file.
 2.2.0:
   - Ansible Playbook Additional Args
+2.3.0:
+  - Support run `ansible.cloudify_ansible.tasks.run` in `establish` action.

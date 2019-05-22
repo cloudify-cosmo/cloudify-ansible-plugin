@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.2.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.3.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.2.0'
+    package_version: '2.3.0'
 
 node_types:
 
@@ -51,8 +51,19 @@ node_types:
           Debug level
       additional_args:
         type: string
-        description: Additional args that you want to use, for example, '-c local'.
+        description: >
+          Additional args that you want to use, for example, '-c local'.
         default: ''
+      save_playbook:
+        type: boolean
+        description: >
+          Save playbook after action
+        default: false
+      remerge_sources:
+        type: boolean
+        description: >
+          update sources on target node
+        default: false
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -62,6 +73,10 @@ node_types:
               default: { get_property: [SELF, playbook_path] }
             site_yaml_path:
               default: { get_property: [SELF, site_yaml_path] }
+            save_playbook:
+              default: { get_property: [SELF, save_playbook] }
+            remerge_sources:
+              default: { get_property: [SELF, remerge_sources] }
             sources:
               default: { get_property: [SELF, sources] }
             run_data:

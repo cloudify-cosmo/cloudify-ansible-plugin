@@ -74,10 +74,8 @@ compute_ctx.node.type_hierarchy = \
     ['cloudify.nodes.Root', 'cloudify.nodes.Compute']
 relationship_ctx = MockCloudifyContext(
     deployment_id='mock_deployment_id',
-    properties=NODE_PROPS,
     source=ctx,
-    target=compute_ctx,
-    runtime_properties=RUNTIME_PROPS)
+    target=compute_ctx)
 
 # Fix the mock ctx.
 setattr(ctx, '_local', True)

@@ -53,6 +53,11 @@ class StreamToLogger(object):
         for line in buf.rstrip().splitlines():
             self.logger.log(self.log_level, line.rstrip())
 
+    def read(self, size):
+        msg = "Read action with size {size} is unsupported.".format(size=size)
+        self.logger.log(self.log_level, msg)
+        raise IOError(msg)
+
     def flush(self):
         pass
 
@@ -168,6 +173,15 @@ class AnsiblePlaybookFromFile(object):
         return output, error, proc.returncode
 
     def execute(self):
-        sys.stdout = StreamToLogger(self.logger, logging.INFO)
-        sys.stderr = StreamToLogger(self.logger, logging.ERROR)
-        return self._execute()
+        _stdout = sys.stdout
+        _stderr = sys.stderr
+        _stdin = sys.stdin
+        try:
+            sys.stdout = StreamToLogger(self.logger, logging.INFO)
+            sys.stderr = StreamToLogger(self.logger, logging.ERROR)
+            sys.stdin = StreamToLogger(self.logger, logging.DEBUG)
+            return self._execute()
+        finally:
+            sys.stdout = _stdout
+            sys.stderr = _stderr
+            sys.stdin = _stdin
