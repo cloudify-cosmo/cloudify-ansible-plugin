@@ -17,12 +17,10 @@ from cloudify.exceptions import NonRecoverableError, OperationRetry
 
 from cloudify_ansible_sdk import (
     AnsiblePlaybookFromFile,
-    CloudifyAnsibleSDKError,
-    sources
+    CloudifyAnsibleSDKError
 )
 
 from cloudify_ansible import (
-    constants,
     ansible_playbook_node,
     ansible_relationship_source,
     utils
@@ -61,11 +59,4 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
 @operation
 @ansible_relationship_source
 def ansible_requires_host(new_sources_dict, _ctx, **_):
-    current_sources_dict = \
-        _ctx.source.instance.runtime_properties.get(
-            constants.SOURCES, {})
-    current_sources = sources.AnsibleSource(current_sources_dict)
-    new_sources = sources.AnsibleSource(new_sources_dict)
-    current_sources.merge_source(new_sources)
-    _ctx.source.instance.runtime_properties[constants.SOURCES] = \
-        current_sources.config
+    utils.update_sources_from_target(new_sources_dict, _ctx)
