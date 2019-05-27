@@ -22,3 +22,5 @@
   - Ansible Playbook Additional Args
 2.3.0:
   - Support run `ansible.cloudify_ansible.tasks.run` in `establish` action.
+2.4.0:
+  - Unlink `source` from `target` on scale down by `ansible.cloudify_ansible.tasks.ansible_remove_host`.

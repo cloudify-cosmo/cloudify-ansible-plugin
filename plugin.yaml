@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.3.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.4.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.3.0'
+    package_version: '2.4.0'
 
 node_types:
 
@@ -120,3 +120,14 @@ relationships:
                     to assume the user privileges.
                   ansible_ssh_common_args: Additional arguments to the SSH
                     command, by default: '-o StrictHostKeyChecking=no'
+        unlink:
+          implementation: ansible.cloudify_ansible.tasks.ansible_remove_host
+          inputs:
+            group_name:
+              default: ""
+              description: >
+                Ansible node group name
+            hostname:
+              default: ""
+              description: >
+                Hostname

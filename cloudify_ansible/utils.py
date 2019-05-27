@@ -29,7 +29,8 @@ except ImportError:
 from cloudify_ansible.constants import (
     BP_INCLUDES_PATH,
     WORKSPACE,
-    SOURCES
+    SOURCES,
+    HOSTS
 )
 from cloudify_ansible_sdk.sources import AnsibleSource
 
@@ -142,7 +143,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
         was either provided or generated.
     """
 
-    hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), 'hosts')
+    hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
     if isinstance(data, dict):
         data = handle_key_data(
             data, _get_instance(_ctx).runtime_properties[WORKSPACE])
@@ -254,10 +255,10 @@ def get_source_config_from_ctx(_ctx,
         hostname: host_config
     }
     sources[group_name] = {
-        'hosts': hosts
+        HOSTS: hosts
     }
     for additional_group in additional_node_groups:
-        sources[additional_group] = {'hosts': {hostname: None}}
+        sources[additional_group] = {HOSTS: {hostname: None}}
     return AnsibleSource(sources).config
 
 
@@ -270,6 +271,20 @@ def update_sources_from_target(new_sources_dict, _ctx):
     new_sources = AnsibleSource(new_sources_dict)
     # merge sources
     current_sources.merge_source(new_sources)
+    # save sources to source node
+    _ctx.source.instance.runtime_properties[SOURCES] = current_sources.config
+    return current_sources.config
+
+
+def cleanup_sources_from_target(new_sources_dict, _ctx):
+    # get source sources
+    current_sources_dict = _ctx.source.instance.runtime_properties.get(
+        SOURCES, {})
+    current_sources = AnsibleSource(current_sources_dict)
+    # get target sources
+    new_sources = AnsibleSource(new_sources_dict)
+    # merge sources
+    current_sources.remove_source(new_sources)
     # save sources to source node
     _ctx.source.instance.runtime_properties[SOURCES] = current_sources.config
     return current_sources.config

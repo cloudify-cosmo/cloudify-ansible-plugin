@@ -60,3 +60,9 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
 @ansible_relationship_source
 def ansible_requires_host(new_sources_dict, _ctx, **_):
     utils.update_sources_from_target(new_sources_dict, _ctx)
+
+
+@operation
+@ansible_relationship_source
+def ansible_remove_host(new_sources_dict, _ctx, **_):
+    utils.cleanup_sources_from_target(new_sources_dict, _ctx)

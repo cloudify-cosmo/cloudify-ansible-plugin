@@ -63,6 +63,13 @@ class AnsibleSource(object):
                     group.insert_host(hostname, host.config)
             self.insert_children(group_name, group.config)
 
+    def remove_source(self, ansible_source):
+        for group_name, group in ansible_source.children.items():
+            if group_name in self.children:
+                local_group = self.children.get(group_name)
+                for hostname, _ in group.hosts.items():
+                    local_group.remove_host(hostname)
+
     @property
     def config(self):
         new_dict = {
@@ -94,6 +101,11 @@ class AnsibleHostGroup(object):
     def insert_host(self, hostname, config):
         hostname = legalize_hostnames(hostname)
         self.hosts[hostname] = AnsibleHost(hostname, config)
+
+    def remove_host(self, hostname):
+        hostname = legalize_hostnames(hostname)
+        if hostname in self.hosts:
+            del self.hosts[hostname]
 
     @property
     def config(self):
