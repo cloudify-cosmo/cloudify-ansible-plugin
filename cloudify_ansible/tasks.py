@@ -41,8 +41,8 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
         output, error, return_code = playbook.execute()
-    except CloudifyAnsibleSDKError:
-        raise NonRecoverableError(CloudifyAnsibleSDKError)
+    except CloudifyAnsibleSDKError as e:
+        raise NonRecoverableError(e)
 
     _ctx.logger.debug('Output: {0}'.format(output))
     _ctx.logger.debug('Error: {0}'.format(error))

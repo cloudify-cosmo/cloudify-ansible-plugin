@@ -136,6 +136,16 @@ class TestPluginTasks(AnsibleTestBase):
             ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    def test_ansible_playbook_failed_sdk(self, foo):
+        foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
+            "We are failed!")
+        with self.assertRaisesRegexp(NonRecoverableError, "We are failed!"):
+            run(
+                self.playbook_path,
+                self.hosts_path,
+                ctx=ctx)
+
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_failed(self, foo):
         foo.return_value = ('output', 'error', 'return_code')
         with self.assertRaises(NonRecoverableError):

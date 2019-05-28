@@ -15,11 +15,9 @@
 from copy import deepcopy
 
 from . import mock_sources_dict, AnsibleTestBase
+from cloudify_ansible_sdk import CloudifyAnsibleSDKError
 from cloudify_ansible_sdk.sources import (
-    AnsibleHost, AnsibleHostGroup, AnsibleSource)
-
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
+    AnsibleHost, AnsibleHostGroup, AnsibleSource, legalize_hostnames)
 
 
 class TestHosts(AnsibleTestBase):
@@ -94,6 +92,63 @@ class TestHosts(AnsibleTestBase):
         self.assertIn('db2',
                       ansible_source.config
                       ['all']['children']['dbservers']['hosts'].keys())
+
+    def test_legalize_hostnames(self):
+        self.assertEqual(legalize_hostnames("a-B_c-A"), "a-b-c-a")
+        with self.assertRaisesRegexp(
+            CloudifyAnsibleSDKError,
+            'Hostname 1 is not a string'
+        ):
+            legalize_hostnames(1)
+
+    def test_parse_sources(self):
+        CHECK_FLAG = "-o StrictHostKeyChecking=no"
+        INITIAL_STATE = {
+            "hosts": {
+                "kube-check": {
+                    "parameters": {
+                        "ansible_ssh_common_args": CHECK_FLAG
+                    }
+                }
+            },
+            "all": {
+                "children": {
+                    "k8s-cluster": {
+                        "hosts": {
+                            "kube-master-yynnoj": {
+                                "ansible_ssh_common_args": CHECK_FLAG
+                            },
+                            "kube-node-09q7do": {
+                                "ansible_ssh_common_args": CHECK_FLAG
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        FINAL_STATE = {
+            "all": {
+                "hosts": {
+                    "kube-check": {
+                        "ansible_ssh_common_args": CHECK_FLAG
+                    }
+                },
+                "children": {
+                    "k8s-cluster": {
+                        "hosts": {
+                            "kube-master-yynnoj": {
+                                "ansible_ssh_common_args": CHECK_FLAG
+                            },
+                            "kube-node-09q7do": {
+                                "ansible_ssh_common_args": CHECK_FLAG
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ansible_source = AnsibleSource(INITIAL_STATE)
+        self.assertEqual(ansible_source.config, FINAL_STATE)
 
     def test_merge_sources(self):
         CHECK_FLAG = "-o StrictHostKeyChecking=no"
