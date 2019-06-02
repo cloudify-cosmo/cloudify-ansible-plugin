@@ -13,7 +13,22 @@ jobs:
 
   unittests:
     docker:
-      - image: circleci/python:2.7.15-stretch
+      - image: python:2.7
+    steps:
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote
+      - run: pip install tox && tox
+
+  wagon:
+    docker:
+      - image: earthmancfy/cloudify-centos-wagon-builder
+        entrypoint: []
+        command: []
+    working_directory: /packaging
     steps:
       - checkout
       - run:
@@ -22,60 +37,10 @@ jobs:
             git submodule init
             git submodule update --remote
       - run:
-          name: Download pip
-          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-      - run:
-          name: Install pip
-          command: sudo python get-pip.py
-      - run:
-          name: Install virtualenv
-          command: pip install --user virtualenv
-      - run:
-          name: Init virtualenv
-          command: virtualenv env && source env/bin/activate
-      - run:
-          name: install tox
-          command: pip install --user tox
-      - run: /home/circleci/.local/bin/tox -e flake8
-      - run: /home/circleci/.local/bin/tox -e py27
-
-  wagon:
-    docker:
-      - image: amd64/centos:centos7.3.1611
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: yum -y install python-devel gcc openssl git libxslt-devel libxml2-devel openldap-devel libffi-devel openssl-devel libvirt-devel
-      - run:
-          name: Download pip
-          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-      - run:
-          name: Install pip
-          command: python get-pip.py
-      - run:
-          name: Upgrade pip
-          command: pip install --upgrade pip==9.0.1
-      - run:
-          name: Install virtualenv
-          command: pip install virtualenv
-      - run:
-          name: Init virtualenv
-          command: virtualenv env
-      - run:
-          name: Install wagon
-          command: pip install wagon==0.3.2
-      - run:
-          name: many_linux
-          command: echo "manylinux1_compatible = False" > "env/bin/_manylinux.py"
-      - run:
-          name: make workspace
-          command: mkdir -p workspace/build
-      - run:
-          name: Create wagon
-          command: source env/bin/activate && wagon create -s . -v -o workspace/build -f -a '--no-cache-dir -c constraints.txt'
+          name: "Build"
+          command: "/cloudify-wagon-builder.sh"
       - persist_to_workspace:
-          root: workspace
+          root: /workspace
           paths:
             - build/*
 
