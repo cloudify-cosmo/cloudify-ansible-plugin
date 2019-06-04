@@ -31,7 +31,7 @@ UNREACHABLE_CODES = [None, 2, 4]
 SUCCESS_CODES = [0]
 
 
-@operation
+@operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
 
@@ -56,13 +56,13 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
             'One or more hosts failed.')
 
 
-@operation
+@operation(resumable=True)
 @ansible_relationship_source
 def ansible_requires_host(new_sources_dict, _ctx, **_):
     utils.update_sources_from_target(new_sources_dict, _ctx)
 
 
-@operation
+@operation(resumable=True)
 @ansible_relationship_source
 def ansible_remove_host(new_sources_dict, _ctx, **_):
     utils.cleanup_sources_from_target(new_sources_dict, _ctx)
