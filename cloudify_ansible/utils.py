@@ -333,10 +333,12 @@ def get_host_config_from_compute_node(_ctx):
             'ip', _ctx.node.properties.get('ip')),
         'ansible_user': _ctx.node.properties.get(
             'agent_config', {}).get('user'),
+        'ansible_ssh_pass': _ctx.node.properties.get(
+            'agent_config', {}).get('password'),
         'ansible_ssh_private_key_file':
             _ctx.node.properties.get('agent_config', {}).get('key'),
         'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
-        'ansible_become': True
+        'ansible_become': _ctx.node.properties.get('ansible_become', True)
     }
 
 

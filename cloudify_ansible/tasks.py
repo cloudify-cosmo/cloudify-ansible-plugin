@@ -40,7 +40,8 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
-        output, error, return_code = playbook.execute()
+        output, error, return_code = playbook.execute(
+            redirect_logs=not _ctx._local)
     except CloudifyAnsibleSDKError as e:
         raise NonRecoverableError(e)
 

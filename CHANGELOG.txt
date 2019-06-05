@@ -24,3 +24,6 @@
   - Support run `ansible.cloudify_ansible.tasks.run` in `establish` action.
 2.4.0:
   - Unlink `source` from `target` on scale down by `ansible.cloudify_ansible.tasks.ansible_remove_host`.
+  - Add `resumable` support to operations
+  - Support `ansible_ssh_pass` in `agent_config`.
+  - Fix support for `cfy local`.

@@ -64,6 +64,12 @@ node_types:
         description: >
           update sources on target node
         default: false
+      ansible_become:
+        type: boolean
+        description: >
+          A boolean value, `true` or `false` whether
+          to assume the user privileges.
+        default: false
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
