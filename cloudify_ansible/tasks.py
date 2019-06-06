@@ -32,6 +32,11 @@ SUCCESS_CODES = [0]
 
 
 @operation(resumable=True)
+def cleanup(ctx, **_):
+    utils.cleanup(ctx)
+
+
+@operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
 

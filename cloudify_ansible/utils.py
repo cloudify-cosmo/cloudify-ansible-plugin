@@ -377,3 +377,15 @@ def get_additional_node_groups(node_name, deployment_id):
         if node_name in group.get('members', []) and group_name:
             groups.append(group_name)
     return groups
+
+
+def cleanup(ctx):
+    """
+    Unset all runtime properties from node instance when delete operation
+    task if finished
+    :param _ctx: Cloudify node instance which is could be an instance of
+    RelationshipSubjectContext or CloudifyContext
+    """
+    instance = _get_instance(ctx)
+    for key, _ in instance.runtime_properties.items():
+        del instance.runtime_properties[key]

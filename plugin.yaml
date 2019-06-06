@@ -95,6 +95,8 @@ node_types:
               default: { get_property: [SELF, debug_level] }
             additional_args:
               default: { get_property: [SELF, additional_args] }
+        delete:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
 
 relationships:
 

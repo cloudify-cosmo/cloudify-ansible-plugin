@@ -27,7 +27,7 @@ from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 import cloudify_ansible_sdk
 
 from cloudify_ansible.tasks import (
-    run, ansible_requires_host, ansible_remove_host)
+    run, ansible_requires_host, ansible_remove_host, cleanup)
 from cloudify_ansible.utils import (
     handle_file_path, handle_key_data, handle_source_from_string)
 
@@ -189,6 +189,10 @@ class TestPluginTasks(AnsibleTestBase):
     def test_ansible_remove_host(self):
         current_ctx.set(relationship_ctx)
         ansible_remove_host(ctx=relationship_ctx)
+
+    def test_cleanup(self):
+        current_ctx.set(ctx)
+        cleanup(ctx=ctx)
 
     def test_handle_source_from_string(self):
         f1 = NamedTemporaryFile(delete=False)
