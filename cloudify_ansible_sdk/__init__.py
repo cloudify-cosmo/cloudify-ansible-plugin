@@ -178,6 +178,7 @@ class AnsiblePlaybookFromFile(object):
         _stdin = sys.stdin
         try:
             if redirect_logs:
+                self.logger.info('Console output will be redirected to logs')
                 sys.stdout = StreamToLogger(self.logger, logging.INFO)
                 sys.stderr = StreamToLogger(self.logger, logging.ERROR)
                 sys.stdin = StreamToLogger(self.logger, logging.DEBUG)
