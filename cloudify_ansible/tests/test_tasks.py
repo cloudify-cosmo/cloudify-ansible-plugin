@@ -26,7 +26,8 @@ from cloudify.state import current_ctx
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 import cloudify_ansible_sdk
 
-from cloudify_ansible.tasks import run, ansible_requires_host
+from cloudify_ansible.tasks import (
+    run, ansible_requires_host, ansible_remove_host, cleanup)
 from cloudify_ansible.utils import (
     handle_file_path, handle_key_data, handle_source_from_string)
 
@@ -135,6 +136,16 @@ class TestPluginTasks(AnsibleTestBase):
             ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    def test_ansible_playbook_failed_sdk(self, foo):
+        foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
+            "We are failed!")
+        with self.assertRaisesRegexp(NonRecoverableError, "We are failed!"):
+            run(
+                self.playbook_path,
+                self.hosts_path,
+                ctx=ctx)
+
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_failed(self, foo):
         foo.return_value = ('output', 'error', 'return_code')
         with self.assertRaises(NonRecoverableError):
@@ -174,6 +185,14 @@ class TestPluginTasks(AnsibleTestBase):
     def test_ansible_requires_host(self):
         current_ctx.set(relationship_ctx)
         ansible_requires_host(ctx=relationship_ctx)
+
+    def test_ansible_remove_host(self):
+        current_ctx.set(relationship_ctx)
+        ansible_remove_host(ctx=relationship_ctx)
+
+    def test_cleanup(self):
+        current_ctx.set(ctx)
+        cleanup(ctx=ctx)
 
     def test_handle_source_from_string(self):
         f1 = NamedTemporaryFile(delete=False)

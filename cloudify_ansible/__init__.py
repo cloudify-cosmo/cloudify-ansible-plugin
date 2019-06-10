@@ -72,6 +72,7 @@ def ansible_playbook_node(func):
             ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
         if not sources:
             if remerge_sources:
+                # add sources from source node to target node
                 sources = get_remerged_config_sources(ctx, kwargs)
             else:
                 sources = get_source_config_from_ctx(ctx)

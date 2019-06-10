@@ -153,6 +153,9 @@ jobs:
       - run:
           name: check relationships-blueprint
           command: cfy blueprints upload examples/relationships-blueprint.yaml -b relationships-blueprint
+      - run:
+          name: check local blueprint
+          command: cfy blueprints upload examples/local-blueprint.yaml -b local-blueprint
 
 workflows:
   version: 2

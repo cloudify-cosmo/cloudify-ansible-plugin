@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.3.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.4.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.3.0'
+    package_version: '2.4.0'
 
 node_types:
 
@@ -64,6 +64,12 @@ node_types:
         description: >
           update sources on target node
         default: false
+      ansible_become:
+        type: boolean
+        description: >
+          A boolean value, `true` or `false` whether
+          to assume the user privileges.
+        default: false
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -89,6 +95,8 @@ node_types:
               default: { get_property: [SELF, debug_level] }
             additional_args:
               default: { get_property: [SELF, additional_args] }
+        delete:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
 
 relationships:
 
@@ -120,3 +128,14 @@ relationships:
                     to assume the user privileges.
                   ansible_ssh_common_args: Additional arguments to the SSH
                     command, by default: '-o StrictHostKeyChecking=no'
+        unlink:
+          implementation: ansible.cloudify_ansible.tasks.ansible_remove_host
+          inputs:
+            group_name:
+              default: ""
+              description: >
+                Ansible node group name
+            hostname:
+              default: ""
+              description: >
+                Hostname

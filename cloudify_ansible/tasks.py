@@ -31,7 +31,12 @@ UNREACHABLE_CODES = [None, 2, 4]
 SUCCESS_CODES = [0]
 
 
-@operation
+@operation(resumable=True)
+def cleanup(ctx, **_):
+    utils.cleanup(ctx)
+
+
+@operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
 
@@ -40,9 +45,11 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
-        output, error, return_code = playbook.execute()
-    except CloudifyAnsibleSDKError:
-        raise NonRecoverableError(CloudifyAnsibleSDKError)
+        output, error, return_code = playbook.execute(
+            # local should print directly to console
+            redirect_logs=not _ctx._local)
+    except CloudifyAnsibleSDKError as e:
+        raise NonRecoverableError(e)
 
     _ctx.logger.debug('Output: {0}'.format(output))
     _ctx.logger.debug('Error: {0}'.format(error))
@@ -56,7 +63,13 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
             'One or more hosts failed.')
 
 
-@operation
+@operation(resumable=True)
 @ansible_relationship_source
 def ansible_requires_host(new_sources_dict, _ctx, **_):
     utils.update_sources_from_target(new_sources_dict, _ctx)
+
+
+@operation(resumable=True)
+@ansible_relationship_source
+def ansible_remove_host(new_sources_dict, _ctx, **_):
+    utils.cleanup_sources_from_target(new_sources_dict, _ctx)

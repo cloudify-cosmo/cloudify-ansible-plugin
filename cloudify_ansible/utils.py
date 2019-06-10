@@ -29,7 +29,8 @@ except ImportError:
 from cloudify_ansible.constants import (
     BP_INCLUDES_PATH,
     WORKSPACE,
-    SOURCES
+    SOURCES,
+    HOSTS
 )
 from cloudify_ansible_sdk.sources import AnsibleSource
 
@@ -142,7 +143,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
         was either provided or generated.
     """
 
-    hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), 'hosts')
+    hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
     if isinstance(data, dict):
         data = handle_key_data(
             data, _get_instance(_ctx).runtime_properties[WORKSPACE])
@@ -254,10 +255,10 @@ def get_source_config_from_ctx(_ctx,
         hostname: host_config
     }
     sources[group_name] = {
-        'hosts': hosts
+        HOSTS: hosts
     }
     for additional_group in additional_node_groups:
-        sources[additional_group] = {'hosts': {hostname: None}}
+        sources[additional_group] = {HOSTS: {hostname: None}}
     return AnsibleSource(sources).config
 
 
@@ -270,6 +271,20 @@ def update_sources_from_target(new_sources_dict, _ctx):
     new_sources = AnsibleSource(new_sources_dict)
     # merge sources
     current_sources.merge_source(new_sources)
+    # save sources to source node
+    _ctx.source.instance.runtime_properties[SOURCES] = current_sources.config
+    return current_sources.config
+
+
+def cleanup_sources_from_target(new_sources_dict, _ctx):
+    # get source sources
+    current_sources_dict = _ctx.source.instance.runtime_properties.get(
+        SOURCES, {})
+    current_sources = AnsibleSource(current_sources_dict)
+    # get target sources
+    new_sources = AnsibleSource(new_sources_dict)
+    # merge sources
+    current_sources.remove_source(new_sources)
     # save sources to source node
     _ctx.source.instance.runtime_properties[SOURCES] = current_sources.config
     return current_sources.config
@@ -318,10 +333,12 @@ def get_host_config_from_compute_node(_ctx):
             'ip', _ctx.node.properties.get('ip')),
         'ansible_user': _ctx.node.properties.get(
             'agent_config', {}).get('user'),
+        'ansible_ssh_pass': _ctx.node.properties.get(
+            'agent_config', {}).get('password'),
         'ansible_ssh_private_key_file':
             _ctx.node.properties.get('agent_config', {}).get('key'),
         'ansible_ssh_common_args': '-o StrictHostKeyChecking=no',
-        'ansible_become': True
+        'ansible_become': _ctx.node.properties.get('ansible_become', True)
     }
 
 
@@ -360,3 +377,15 @@ def get_additional_node_groups(node_name, deployment_id):
         if node_name in group.get('members', []) and group_name:
             groups.append(group_name)
     return groups
+
+
+def cleanup(ctx):
+    """
+    Unset all runtime properties from node instance when delete operation
+    task if finished
+    :param _ctx: Cloudify node instance which is could be an instance of
+    RelationshipSubjectContext or CloudifyContext
+    """
+    instance = _get_instance(ctx)
+    for key, _ in instance.runtime_properties.items():
+        del instance.runtime_properties[key]

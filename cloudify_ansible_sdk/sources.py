@@ -63,6 +63,13 @@ class AnsibleSource(object):
                     group.insert_host(hostname, host.config)
             self.insert_children(group_name, group.config)
 
+    def remove_source(self, ansible_source):
+        for group_name, group in ansible_source.children.items():
+            if group_name in self.children:
+                local_group = self.children.get(group_name)
+                for hostname, _ in group.hosts.items():
+                    local_group.remove_host(hostname)
+
     @property
     def config(self):
         new_dict = {
@@ -95,6 +102,11 @@ class AnsibleHostGroup(object):
         hostname = legalize_hostnames(hostname)
         self.hosts[hostname] = AnsibleHost(hostname, config)
 
+    def remove_host(self, hostname):
+        hostname = legalize_hostnames(hostname)
+        if hostname in self.hosts:
+            del self.hosts[hostname]
+
     @property
     def config(self):
         new_dict = {}
@@ -114,6 +126,7 @@ class AnsibleHost(object):
 
         self.ansible_host = parameters.get('ansible_host')
         self.ansible_user = parameters.get('ansible_user')
+        self.ansible_ssh_pass = parameters.get('ansible_ssh_pass')
         self.ansible_ssh_private_key_file = parameters.get(
             'ansible_ssh_private_key_file')
 
@@ -126,6 +139,8 @@ class AnsibleHost(object):
             self.config['ansible_host'] = self.ansible_host
         if self.ansible_user:
             self.config['ansible_user'] = self.ansible_user
+        if self.ansible_ssh_pass:
+            self.config['ansible_ssh_pass'] = self.ansible_ssh_pass
         if self.ansible_ssh_private_key_file:
             self.config['ansible_ssh_private_key_file'] = \
                 self.ansible_ssh_private_key_file

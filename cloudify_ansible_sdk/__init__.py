@@ -172,14 +172,16 @@ class AnsiblePlaybookFromFile(object):
         (output, error) = proc.communicate()
         return output, error, proc.returncode
 
-    def execute(self):
+    def execute(self, redirect_logs=True):
         _stdout = sys.stdout
         _stderr = sys.stderr
         _stdin = sys.stdin
         try:
-            sys.stdout = StreamToLogger(self.logger, logging.INFO)
-            sys.stderr = StreamToLogger(self.logger, logging.ERROR)
-            sys.stdin = StreamToLogger(self.logger, logging.DEBUG)
+            if redirect_logs:
+                self.logger.info('Console output will be redirected to logs')
+                sys.stdout = StreamToLogger(self.logger, logging.INFO)
+                sys.stderr = StreamToLogger(self.logger, logging.ERROR)
+                sys.stdin = StreamToLogger(self.logger, logging.DEBUG)
             return self._execute()
         finally:
             sys.stdout = _stdout
