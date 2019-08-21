@@ -2,13 +2,13 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - plugin.yaml
+  - plugin:cloudify-ansible-plugin
 
 inputs:
 
   site_yaml_relative_path:
     type: string
-    default: examples/ansible-examples/lamp_simple/site.yml
+    default: ansible-examples/lamp_simple/site.yml
 
   webserver_vm_ip:
     type: string
@@ -23,6 +23,11 @@ inputs:
 
   db_private_key:
     type: string
+    default: { get_input: web_private_key }
+
+  username:
+    type: string
+    default: centos
 
 node_templates:
 
@@ -39,7 +44,7 @@ node_templates:
                 hosts:
                   web:
                     ansible_host: { get_property: [ webserver_vm, ip ] }
-                    ansible_user: vagrant
+                    ansible_user: { get_input: username }
                     ansible_ssh_private_key_file: { get_property: [ webserver_vm, agent_config, key ] }
                     ansible_become: True
                     ansible_ssh_common_args: -o StrictHostKeyChecking=no
@@ -47,7 +52,7 @@ node_templates:
                 hosts:
                   db:
                     ansible_host: { get_property: [ dbserver_vm, ip ] }
-                    ansible_user: vagrant
+                    ansible_user: { get_input: username }
                     ansible_ssh_private_key_file: { get_property: [ dbserver_vm, agent_config, key ] }
                     ansible_become: True
                     ansible_ssh_common_args: -o StrictHostKeyChecking=no
@@ -64,6 +69,7 @@ node_templates:
       agent_config:
         install_method: none
         key: { get_input: web_private_key }
+        user: { get_input: username }
 
   dbserver_vm:
     type: cloudify.nodes.Compute
@@ -72,3 +78,4 @@ node_templates:
       agent_config:
         install_method: none
         key: { get_input: db_private_key }
+        user: { get_input: username }

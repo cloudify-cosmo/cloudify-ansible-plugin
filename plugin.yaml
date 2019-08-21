@@ -2,7 +2,7 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/CY-1532-ansible-enchantments.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.5.0.zip
     package_name: cloudify-ansible-plugin
     package_version: '2.5.0'
 
@@ -84,6 +84,10 @@ node_types:
             remerge_sources:
               default: { get_property: [SELF, remerge_sources] }
             sources:
+              ansible:
+                cloudify_ansible:
+                  tasks:
+                    run:
               default: { get_property: [SELF, sources] }
             run_data:
               default: { get_property: [SELF, run_data] }

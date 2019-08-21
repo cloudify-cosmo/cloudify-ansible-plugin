@@ -27,3 +27,6 @@
   - Add `resumable` support to operations
   - Support `ansible_ssh_pass` in `agent_config`.
   - Fix support for `cfy local`.
+2.5.0:
+  - Update Ansible Version to use 2.8.x
+  - Update Ansible examples
