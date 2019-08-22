@@ -2,74 +2,86 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.5.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.6.dev1.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.5.0'
+    package_version: '2.6.dev1'
+
+dsl_definitions:
+
+  playbook_config: &playbook_config
+    playbook_path:
+      type: string
+      default: ""
+      description: >
+        A path to your `site.yaml` or `main.yaml` in your
+        Ansible Playbook.
+    site_yaml_path:
+      type: string
+      default: ""
+      description: >
+        DEPRECATED.
+        A path to your `site.yaml` or `main.yaml` in your
+        Ansible Playbook.
+    sources:
+      type: string
+      default: ""
+      description: >
+        Your Inventory sources. Either YAML or a path to a file.
+        If not provided the inventory will be take from the `sources`
+        runtime property.
+    run_data:
+      default: {}
+      description: >
+        Variable values.
+    options_config:
+      default: {}
+      description: >
+        Command-line options, such as `tags` or `skip_tags`.
+    ansible_env_vars:
+      default:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+      description: >
+        A dictionary of environment variables to set.
+    debug_level:
+      type: integer
+      default: 2
+      description: >
+        Debug level
+    additional_args:
+      type: string
+      description: >
+        Additional args that you want to use, for example, '-c local'.
+      default: ''
+    save_playbook:
+      type: boolean
+      description: >
+        Save playbook after action
+      default: false
+    remerge_sources:
+      type: boolean
+      description: >
+        update sources on target node
+      default: false
+    ansible_become:
+      type: boolean
+      description: >
+        A boolean value, `true` or `false` whether
+        to assume the user privileges.
+      default: false
 
 node_types:
 
-  cloudify.nodes.ansible.Executor:
+  cloudify.nodes.ansible.Base:
     derived_from: cloudify.nodes.Root
     properties:
-      playbook_path:
-        type: string
-        default: ""
-        description: >
-          A path to your `site.yaml` or `main.yaml` in your
-          Ansible Playbook.
-      site_yaml_path:
-        type: string
-        default: ""
-        description: >
-          DEPRECATED.
-          A path to your `site.yaml` or `main.yaml` in your
-          Ansible Playbook.
-      sources:
-       type: string
-       default: ""
-       description: >
-         Your Inventory sources. Either YAML or a path to a file.
-         If not provided the inventory will be take from the `sources`
-         runtime property.
-      run_data:
-        default: {}
-        description: >
-         Variable values.
-      options_config:
-        default: {}
-        description: >
-         Command-line options, such as `tags` or `skip_tags`.
-      ansible_env_vars:
-        default:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
-        description: >
-          A dictionary of environment variables to set.
-      debug_level:
-        type: integer
-        default: 2
-        description: >
-          Debug level
-      additional_args:
-        type: string
-        description: >
-          Additional args that you want to use, for example, '-c local'.
-        default: ''
-      save_playbook:
-        type: boolean
-        description: >
-          Save playbook after action
-        default: false
-      remerge_sources:
-        type: boolean
-        description: >
-          update sources on target node
-        default: false
-      ansible_become:
-        type: boolean
-        description: >
-          A boolean value, `true` or `false` whether
-          to assume the user privileges.
-        default: false
+      <<: *playbook_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        delete:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
+
+  cloudify.nodes.ansible.Executor:
+    derived_from: cloudify.nodes.ansible.Base
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -95,8 +107,9 @@ node_types:
               default: { get_property: [SELF, debug_level] }
             additional_args:
               default: { get_property: [SELF, additional_args] }
-        delete:
-          implementation: ansible.cloudify_ansible.tasks.cleanup
+
+  cloudify.nodes.ansible.Playbook:
+    derived_from: cloudify.nodes.ansible.Base
 
 relationships:
 
@@ -128,6 +141,8 @@ relationships:
                     to assume the user privileges.
                   ansible_ssh_common_args: Additional arguments to the SSH
                     command, by default: '-o StrictHostKeyChecking=no'
+
+
         unlink:
           implementation: ansible.cloudify_ansible.tasks.ansible_remove_host
           inputs:
@@ -139,3 +154,34 @@ relationships:
               default: ""
               description: >
                 Hostname
+
+
+  cloudify.ansible.relationships.run_on_host:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        link:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            playbook_path:
+              default: { get_property: [TARGET, playbook_path] }
+            site_yaml_path:
+              default: { get_property: [TARGET, site_yaml_path] }
+            save_playbook:
+              default: { get_property: [TARGET, save_playbook] }
+            remerge_sources:
+              default: { get_property: [TARGET, remerge_sources] }
+            sources:
+              default: { get_property: [TARGET, sources] }
+            run_data:
+              default: { get_property: [TARGET, run_data] }
+            options_config:
+              default: { get_property: [TARGET, options_config] }
+            ansible_env_vars:
+              default: { get_property: [TARGET, ansible_env_vars] }
+            debug_level:
+              default: { get_property: [TARGET, debug_level] }
+            additional_args:
+              default: { get_property: [TARGET, additional_args] }
+        unlink:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
