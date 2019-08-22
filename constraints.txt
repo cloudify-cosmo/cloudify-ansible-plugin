@@ -1,4 +1,4 @@
 https://github.com/cloudify-cosmo/cloudify-common/archive/4.5.5.zip
-ansible===2.7.10
+ansible>=2.8.0
 hvac
 netaddr
