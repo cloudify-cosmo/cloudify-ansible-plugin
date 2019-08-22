@@ -84,10 +84,6 @@ node_types:
             remerge_sources:
               default: { get_property: [SELF, remerge_sources] }
             sources:
-              ansible:
-                cloudify_ansible:
-                  tasks:
-                    run:
               default: { get_property: [SELF, sources] }
             run_data:
               default: { get_property: [SELF, run_data] }
