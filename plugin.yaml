@@ -71,17 +71,10 @@ dsl_definitions:
 
 node_types:
 
-  cloudify.nodes.ansible.Base:
+  cloudify.nodes.ansible.Executor:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *playbook_config
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        delete:
-          implementation: ansible.cloudify_ansible.tasks.cleanup
-
-  cloudify.nodes.ansible.Executor:
-    derived_from: cloudify.nodes.ansible.Base
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -107,9 +100,13 @@ node_types:
               default: { get_property: [SELF, debug_level] }
             additional_args:
               default: { get_property: [SELF, additional_args] }
+        delete:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
 
   cloudify.nodes.ansible.Playbook:
-    derived_from: cloudify.nodes.ansible.Base
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *playbook_config
 
 relationships:
 
@@ -164,24 +161,24 @@ relationships:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
             playbook_path:
-              default: { get_property: [TARGET, playbook_path] }
+              default: { get_property: [SOURCE, playbook_path] }
             site_yaml_path:
-              default: { get_property: [TARGET, site_yaml_path] }
+              default: { get_property: [SOURCE, site_yaml_path] }
             save_playbook:
-              default: { get_property: [TARGET, save_playbook] }
+              default: { get_property: [SOURCE, save_playbook] }
             remerge_sources:
-              default: { get_property: [TARGET, remerge_sources] }
+              default: { get_property: [SOURCE, remerge_sources] }
             sources:
-              default: { get_property: [TARGET, sources] }
+              default: { get_property: [SOURCE, sources] }
             run_data:
-              default: { get_property: [TARGET, run_data] }
+              default: { get_property: [SOURCE, run_data] }
             options_config:
-              default: { get_property: [TARGET, options_config] }
+              default: { get_property: [SOURCE, options_config] }
             ansible_env_vars:
-              default: { get_property: [TARGET, ansible_env_vars] }
+              default: { get_property: [SOURCE, ansible_env_vars] }
             debug_level:
-              default: { get_property: [TARGET, debug_level] }
+              default: { get_property: [SOURCE, debug_level] }
             additional_args:
-              default: { get_property: [TARGET, additional_args] }
+              default: { get_property: [SOURCE, additional_args] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
