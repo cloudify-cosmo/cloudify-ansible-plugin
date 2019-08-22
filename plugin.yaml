@@ -4,7 +4,7 @@ plugins:
     executor: central_deployment_agent
     source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/CY-1429-improve-sources-handling-for-ansible.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.6.0-dev1'
+    package_version: '2.6.0.dev1'
 
 dsl_definitions:
 
@@ -151,6 +151,7 @@ relationships:
               default: ""
               description: >
                 Hostname
+
 
 
   cloudify.ansible.relationships.run_on_host:
