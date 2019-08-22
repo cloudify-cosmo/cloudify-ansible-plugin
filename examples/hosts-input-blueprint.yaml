@@ -2,17 +2,17 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - plugin.yaml
+  - plugin:cloudify-ansible-plugin
 
 inputs:
 
   site_yaml_relative_path:
     type: string
-    default: examples/ansible-examples/lamp_simple/site.yml
+    default: ansible-examples/lamp_simple/site.yml
 
   hosts_relative_path:
     type: string
-    default: examples/ansible-examples/lamp_simple/hosts
+    default: ansible-examples/lamp_simple/hosts
 
 node_templates:
 
