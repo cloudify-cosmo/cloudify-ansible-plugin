@@ -153,15 +153,11 @@ relationships:
                 Hostname
 
 
-
-
-
-
   cloudify.ansible.relationships.run_on_host:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        link:
+        establish:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
             playbook_path:
