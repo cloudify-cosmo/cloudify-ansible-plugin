@@ -160,8 +160,6 @@ relationships:
               description: >
                 Hostname
 
-
-
   cloudify.ansible.relationships.run_on_host:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
