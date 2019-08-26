@@ -37,6 +37,11 @@ def cleanup(ctx, **_):
 
 
 @operation(resumable=True)
+def set_playbook_config(ctx, **kwargs):
+    utils.set_playbook_config_as_runtime_properties(ctx, kwargs)
+
+
+@operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
 

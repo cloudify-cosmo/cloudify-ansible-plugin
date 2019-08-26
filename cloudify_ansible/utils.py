@@ -389,3 +389,14 @@ def cleanup(ctx):
     instance = _get_instance(ctx)
     for key, _ in instance.runtime_properties.items():
         del instance.runtime_properties[key]
+
+
+def set_playbook_config_as_runtime_properties(_ctx, config):
+    """
+    Set all playbook node instance configuration as runtime properties
+    :param _ctx: Cloudify node instance which is instance of CloudifyContext
+    :param config: Playbook node configurations
+    """
+    if config and isinstance(config, dict):
+        for key, value in config.items():
+            _ctx.instance.runtime_properties[key] = value
