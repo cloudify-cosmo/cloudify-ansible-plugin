@@ -19,7 +19,9 @@ from tempfile import mkdtemp, NamedTemporaryFile
 from unittest import skipUnless
 
 
-from cloudify.exceptions import NonRecoverableError, OperationRetry
+from cloudify.exceptions import (NonRecoverableError,
+                                 OperationRetry,
+                                 HttpException)
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
 
@@ -195,11 +197,18 @@ class TestPluginTasks(AnsibleTestBase):
         cleanup(ctx=ctx)
 
     def test_handle_source_from_string(self):
-        f1 = NamedTemporaryFile(delete=False)
-        self.addCleanup(remove, f1.name)
-        result = handle_source_from_string(FAKE_INVENTORY, ctx, f1.name)
-        self.assertTrue(path.exists(result))
-        self.assertTrue(FAKE_INVENTORY in open(result).read())
+        # Mock the download resource when passing fake inventory
+        with patch('cloudify.mocks.MockCloudifyContext.download_resource') \
+                as mock_download:
+            mock_download.side_effect = HttpException(FAKE_INVENTORY,
+                                                      '404',
+                                                      'File not found')
+            f1 = NamedTemporaryFile(delete=False)
+            self.addCleanup(remove, f1.name)
+            result = handle_source_from_string(FAKE_INVENTORY, ctx, f1.name)
+            self.assertTrue(path.exists(result))
+            self.assertTrue(FAKE_INVENTORY in open(result).read())
+
         f2 = NamedTemporaryFile(delete=False)
         self.addCleanup(remove, f2.name)
         result = handle_source_from_string(f2.name, ctx, f1.name)

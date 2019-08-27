@@ -14,7 +14,7 @@ dsl_definitions:
     region: { get_input: region }
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.5.5/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.0.0/types.yaml
   - plugin:cloudify-openstack-plugin
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/master/compat.yaml
   - plugin:cloudify-ansible-plugin

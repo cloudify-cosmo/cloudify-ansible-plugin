@@ -193,9 +193,9 @@ def get_inventory_file(filepath, _ctx, new_inventory_path):
 
 
 def handle_source_from_string(filepath, _ctx, new_inventory_path):
-    inventory_file = get_inventory_file(filepath, new_inventory_path)
+    inventory_file = get_inventory_file(filepath, _ctx, new_inventory_path)
     if inventory_file:
-        new_inventory_path = inventory_file
+        return inventory_file
     else:
         with open(new_inventory_path, 'w') as outfile:
             _ctx.logger.info(
