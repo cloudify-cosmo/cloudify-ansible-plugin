@@ -66,7 +66,6 @@ def ansible_playbook_node(func):
         :param kwargs:
         :return:
         """
-
         playbook_path = playbook_path or site_yaml_path
         ansible_env_vars = \
             ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}

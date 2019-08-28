@@ -88,39 +88,48 @@ node_types:
 
 node_templates:
 
-  playbook:
-    type: cloudify.nodes.ansible.Executor
+  ansible_playbook:
+    type: cloudify.nodes.ansible.Playbook
     properties:
-      site_yaml_path: { get_input: site_yaml_relative_path }
-      # dump more information about ssh connection
-      debug_level: 5
+      playbook_path: { get_input: site_yaml_relative_path }
+      save_playbook: true
     relationships:
-      - type: cloudify.ansible.relationships.connected_to_host
-        target: web
-        source_interfaces:
-          cloudify.interfaces.relationship_lifecycle:
-            preconfigure:
-              inputs:
-                group_name: webservers
-                hostname: web
-                host_config:
-                  ansible_host: { get_attribute: [ web_ip, floating_ip_address ] }
-                  ansible_user: { get_property: [ web, agent_config, user ] }
-                  ansible_ssh_private_key_file: { get_property: [ web, agent_config, key ] }
-                  ansible_become: true
-      - type: cloudify.ansible.relationships.connected_to_host
+      - type: cloudify.ansible.relationships.run_on_host
         target: db
         source_interfaces:
           cloudify.interfaces.relationship_lifecycle:
-            preconfigure:
+            establish:
               inputs:
-                group_name: dbservers
-                hostname: db
-                host_config:
-                  ansible_host: { get_attribute: [ db_ip, floating_ip_address ] }
-                  ansible_user: { get_property: [ db, agent_config, user ] }
-                  ansible_ssh_private_key_file: { get_property: [ db, agent_config, key ] }
-                  ansible_become: true
+                sources:
+                  dbservers:
+                    hosts:
+                      db:
+                        ansible_host: { get_attribute: [db_ip, floating_ip_address] }
+                        ansible_user: { get_input: username }
+                        ansible_ssh_private_key_file: { get_input: agent_key_private }
+                        ansible_become: True
+                        ansible_ssh_common_args: -o StrictHostKeyChecking=no
+      - type: cloudify.ansible.relationships.run_on_host
+        target: web
+        source_interfaces:
+          cloudify.interfaces.relationship_lifecycle:
+            establish:
+              inputs:
+                sources:
+                  webservers:
+                    hosts:
+                      web:
+                        ansible_host: { get_attribute: [web_ip, floating_ip_address] }
+                        ansible_user: { get_input: username }
+                        ansible_ssh_private_key_file: { get_input: agent_key_private }
+                        ansible_become: True
+                        ansible_ssh_common_args: -o StrictHostKeyChecking=no
+                options_config:
+                  extra_vars:
+                    db_config:
+                      host: { get_attribute: [db_ip, floating_ip_address] }
+                      dbuser: foouser
+                      dbpassword: abc
 
   web:
     type: webservers

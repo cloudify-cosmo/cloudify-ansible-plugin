@@ -19,7 +19,10 @@ from uuid import uuid1
 import yaml
 
 from cloudify.manager import get_rest_client
-from cloudify.exceptions import NonRecoverableError, OperationRetry
+from cloudify.exceptions import (NonRecoverableError,
+                                 OperationRetry,
+                                 HttpException)
+
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
 except ImportError:
@@ -162,18 +165,37 @@ def handle_sources(data, site_yaml_abspath, _ctx):
     return hosts_abspath
 
 
-def handle_source_from_string(filepath, _ctx, new_inventory_path):
-    if '\n' not in filepath:
-        # We are assuming that there is no file path with \n in it.
-        # We are also assuming that there are multiple lines in an
-        # inventory file :(
+def get_inventory_file(filepath, _ctx, new_inventory_path):
+    """
+    This method will get the location for inventory file.
+    The file location could be locally with relative to the blueprint
+    resources or it could be remotely on the remote machine
+    :return:
+    :param filepath: File path to do check for
+    :param _ctx: The Cloudify context.
+    :param new_inventory_path: New path which holds the file inventory path
+    when "filepath" is a local resource
+    :return: File location for inventory file
+    """
+    if os.path.isfile(filepath):
+        # The file already exists on the system, then return the file url
+        return filepath
+    else:
+        # Check to see if the file does not exit, then try to lookup the
+        # file from the Cloudify blueprint resources
         try:
-            open(filepath, 'r')
-            # The file already exists on the system.
-            return filepath
-        except IOError:
-            # The file doesn't exist on the system, so we need to download it.
             _ctx.download_resource(filepath, new_inventory_path)
+        except HttpException:
+            _ctx.logger.error(
+                'Error when trying to download {0}'.format(filepath))
+            return None
+        return new_inventory_path
+
+
+def handle_source_from_string(filepath, _ctx, new_inventory_path):
+    inventory_file = get_inventory_file(filepath, _ctx, new_inventory_path)
+    if inventory_file:
+        return inventory_file
     else:
         with open(new_inventory_path, 'w') as outfile:
             _ctx.logger.info(
@@ -389,3 +411,14 @@ def cleanup(ctx):
     instance = _get_instance(ctx)
     for key, _ in instance.runtime_properties.items():
         del instance.runtime_properties[key]
+
+
+def set_playbook_config_as_runtime_properties(_ctx, config):
+    """
+    Set all playbook node instance configuration as runtime properties
+    :param _ctx: Cloudify node instance which is instance of CloudifyContext
+    :param config: Playbook node configurations
+    """
+    if config and isinstance(config, dict):
+        for key, value in config.items():
+            _ctx.instance.runtime_properties[key] = value

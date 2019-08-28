@@ -30,3 +30,8 @@
 2.5.0:
   - Update Ansible Version to use 2.8.x
   - Update Ansible examples
+
+2.6.0:
+  - Add support for new node type called `cloudify.nodes.ansible.Playbook`
+  - Add support for new relationship `cloudify.ansible.relationships.run_on_host` which runs on `establish` operation
+  - Enhance handling string value for ansible inventory `sources`
