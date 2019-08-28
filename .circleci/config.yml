@@ -103,13 +103,13 @@ jobs:
           command: pip install nose testtools https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip
       - run:
           name: download manager docker image
-          command: wget http://repository.cloudifysource.org/cloudify/4.5.5/ga-release/cloudify-docker-manager-4.5.5ga.tar
+          command: wget http://repository.cloudifysource.org/cloudify/5.0.0/ga-release/cloudify-docker-manager-5.0.0.tar
       - run:
           name: load docker image
-          command: docker load -i cloudify-docker-manager-4.5.5ga.tar
+          command: docker load -i cloudify-docker-manager-5.0.0.tar
       - run:
           name: retain space by dumping the tar
-          command: rm cloudify-docker-manager-4.5.5ga.tar
+          command: rm cloudify-docker-manager-5.0.0.tar
       - run:
           name: start docker container
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host docker-cfy-manager:latest
