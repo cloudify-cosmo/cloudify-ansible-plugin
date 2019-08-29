@@ -24,6 +24,8 @@ from cloudify.exceptions import (NonRecoverableError,
                                  HttpException)
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from script_runner.tasks import ProcessException
+
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 import cloudify_ansible_sdk
@@ -149,7 +151,7 @@ class TestPluginTasks(AnsibleTestBase):
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_failed(self, foo):
-        foo.return_value = ('output', 'error', 'return_code')
+        foo.side_effect = ProcessException('Unable to run command', -1)
         with self.assertRaises(NonRecoverableError):
             run(
                 self.playbook_path,
@@ -158,7 +160,8 @@ class TestPluginTasks(AnsibleTestBase):
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_retry(self, foo):
-        foo.return_value = ('output', 'error', 2)
+        foo.side_effect = ProcessException(
+            'One or more hosts are unreachable.', 4)
         with self.assertRaises(OperationRetry):
             run(
                 self.playbook_path,
@@ -167,7 +170,9 @@ class TestPluginTasks(AnsibleTestBase):
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_with_dict_sources(self, foo):
-        foo.return_value = ('output', 'error', 'return_code')
+        foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
+            "We are failed!"
+        )
         with self.assertRaises(NonRecoverableError):
             run(
                 self.playbook_path,
