@@ -40,6 +40,9 @@ dsl_definitions:
     ansible_env_vars:
       default:
         ANSIBLE_HOST_KEY_CHECKING: "False"
+        # On Ansible 2.8.x "INVALID_TASK_ATTRIBUTE_FAILED" default value has
+        # been changed to "True" which cause failure when run playbook
+        ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
       description: >
         A dictionary of environment variables to set.
     debug_level:
@@ -68,6 +71,7 @@ dsl_definitions:
         A boolean value, `true` or `false` whether
         to assume the user privileges.
       default: false
+
   playbook_inputs: &playbook_inputs
     playbook_path:
       default: { get_property: [SELF, playbook_path] }

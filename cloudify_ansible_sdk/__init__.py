@@ -13,11 +13,9 @@
 # limitations under the License.
 
 import json
-import logging
 import os
-import subprocess
 import sys
-from tempfile import mkdtemp, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
 
 
 DEPRECATED_KEYS = [
@@ -35,31 +33,6 @@ def get_fileno():
         return sys.stdout.fileno
     except AttributeError:
         return
-
-
-class StreamToLogger(object):
-    """
-    Fake file-like stream object that redirects writes to a logger instance.
-      From here: https://stackoverflow.com/
-      questions/11124093/redirect-python-print-output-to-logger/11124247.
-    """
-    def __init__(self, logger, log_level=logging.INFO):
-        self.logger = logger
-        self.log_level = log_level
-        self.linebuf = ''
-        self.fileno = get_fileno()
-
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.log(self.log_level, line.rstrip())
-
-    def read(self, size):
-        msg = "Read action with size {size} is unsupported.".format(size=size)
-        self.logger.log(self.log_level, msg)
-        raise IOError(msg)
-
-    def flush(self):
-        pass
 
 
 class CloudifyAnsibleSDKError(Exception):
@@ -144,46 +117,14 @@ class AnsiblePlaybookFromFile(object):
         return ' '.join(options_list)
 
     @property
-    def command(self):
-        return 'ansible-playbook {verbosity} ' \
-               '-i {sources} ' \
-               '{options} ' \
-               '{additional_args} ' \
-               '{playbook}'.format(verbosity=self.verbosity,
-                                   sources=self.sources,
-                                   options=self.options,
-                                   additional_args=self.additional_args,
-                                   playbook=self.playbook)
+    def process_args(self):
+        return [
+            self.verbosity,
+            '-i {0}'.format(self.sources),
+            self.options,
+            self.additional_args,
+            self.playbook
+        ]
 
-    def _execute(self):
-        popen_args = {
-            'args': self.command,
-            'stdout': subprocess.PIPE,
-            'stderr': subprocess.STDOUT,
-            'universal_newlines': True,
-            'shell': True,
-            'cwd': mkdtemp(),
-            'env': self.env
-        }
-        self.logger.info('popen_args: {0}'.format(popen_args))
-        proc = subprocess.Popen(**popen_args)
-        for line in proc.stdout:
-            self.logger.info(line)
-        (output, error) = proc.communicate()
-        return output, error, proc.returncode
-
-    def execute(self, redirect_logs=True):
-        _stdout = sys.stdout
-        _stderr = sys.stderr
-        _stdin = sys.stdin
-        try:
-            if redirect_logs:
-                self.logger.info('Console output will be redirected to logs')
-                sys.stdout = StreamToLogger(self.logger, logging.INFO)
-                sys.stderr = StreamToLogger(self.logger, logging.ERROR)
-                sys.stdin = StreamToLogger(self.logger, logging.DEBUG)
-            return self._execute()
-        finally:
-            sys.stdout = _stdout
-            sys.stderr = _stderr
-            sys.stdin = _stdin
+    def execute(self, process_execution_func, **kwargs):
+        return process_execution_func(**kwargs)

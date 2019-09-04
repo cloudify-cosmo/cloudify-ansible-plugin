@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from logging import getLogger
-from mock import patch, Mock
+from mock import Mock
 from os import environ, path
 from unittest import skipUnless
 
@@ -90,16 +90,12 @@ class AnsibleSDKTest(AnsibleTestBase):
             self.hosts_path,
             logger=getLogger('testLogger')
         )
-        self.assertEqual(p.command.split(' ')[0],
-                         'ansible-playbook')
-        self.assertEqual(p.command.split(' ')[1],
-                         '-vv')
-        self.assertEqual(p.command.split(' ')[2],
-                         '-i')
-        self.assertIn('ansible-examples/lamp_simple/hosts',
-                      p.command.split(' ')[3])
+        self.assertEqual(p.process_args[0], '-vv')
+        self.assertEqual(p.process_args[1], '-i {0}'.format(self.hosts_path))
+        self.assertIn('--extra-vars', p.process_args[2])
+        self.assertEqual('', p.process_args[3])
         self.assertIn('ansible-examples/lamp_simple/site.yml',
-                      p.command.split(' ')[6])
+                      p.process_args[4])
 
     def test_execute(self):
         p = AnsiblePlaybookFromFile(
@@ -107,42 +103,7 @@ class AnsibleSDKTest(AnsibleTestBase):
             self.hosts_path,
             logger=getLogger('testLogger')
         )
-        comm_mock = Mock()
-        comm_mock.return_value = (0, 1)
-        with patch('subprocess.Popen') as mopen:
-            attrs = {
-                'wait.return_value': 0,
-                'stdout': [],
-                'communicate.return_value': ('output', 'error')
-            }
-            popen_mock = Mock()
-            popen_mock.configure_mock(**attrs)
-            mopen.return_value = popen_mock
-            p.execute()
-            self.assertTrue(mopen.called)
-            attrs = {
-                'wait.return_value': 4,
-                'stdout': [],
-                'communicate.return_value': ('output', 'error')
-            }
-            popen_mock = Mock()
-            popen_mock.configure_mock(**attrs)
-            mopen.return_value = popen_mock
-            p.execute()
-            self.assertTrue(mopen.called)
-        with patch('subprocess.Popen') as mopen:
-            process_mock = Mock()
-            return_value_mock = Mock()
-            return_value_attrs = {'return_code': 0}
-            return_value_mock.configure_mock(**return_value_attrs)
-            attrs = {
-                'wait.return_value': return_value_mock,
-                'stdout': [],
-                'communicate.return_value': ('output', 'error')
-            }
-            process_mock.configure_mock(**attrs)
-            mopen.return_value = process_mock
-            output = p.execute()
-            mopen.assert_called()
-            self.assertIn('output', output)
-            self.assertIn('error', output)
+        dummy_mock = Mock('Dummy process execution func')
+        dummy_mock.return_value = None
+        result = p.execute(dummy_mock)
+        self.assertIsNone(result)

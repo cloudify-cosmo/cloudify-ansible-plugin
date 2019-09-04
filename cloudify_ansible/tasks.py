@@ -13,19 +13,26 @@
 # limitations under the License.
 
 from cloudify.decorators import operation
-from cloudify.exceptions import NonRecoverableError, OperationRetry
+from cloudify.exceptions import (
+    NonRecoverableError,
+    OperationRetry
+)
+
+from script_runner.tasks import (
+    execute,
+    process_execution,
+    ProcessException
+)
 
 from cloudify_ansible_sdk import (
     AnsiblePlaybookFromFile,
     CloudifyAnsibleSDKError
 )
-
 from cloudify_ansible import (
     ansible_playbook_node,
     ansible_relationship_source,
     utils
 )
-
 
 UNREACHABLE_CODES = [None, 2, 4]
 SUCCESS_CODES = [0]
@@ -44,28 +51,31 @@ def set_playbook_config(ctx, **kwargs):
 @operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
-
     _ctx.logger.debug('playbook_args: {0}'.format(playbook_args))
 
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
-        output, error, return_code = playbook.execute(
-            # local should print directly to console
-            redirect_logs=not _ctx._local)
-    except CloudifyAnsibleSDKError as e:
-        raise NonRecoverableError(e)
-
-    _ctx.logger.debug('Output: {0}'.format(output))
-    _ctx.logger.debug('Error: {0}'.format(error))
-    _ctx.logger.debug('Return Code: {0}'.format(return_code))
-
-    if return_code in UNREACHABLE_CODES:
-        raise OperationRetry(
-            'One or more hosts are unreachable.')
-    if return_code not in SUCCESS_CODES:
-        raise NonRecoverableError(
-            'One or more hosts failed.')
+        process = {}
+        process['env'] = ansible_env_vars
+        process['args'] = playbook.process_args
+        # Prepare the script which need to be run
+        playbook.execute(
+            process_execution,
+            script_func=execute,
+            script_path='ansible-playbook',
+            ctx=_ctx,
+            process=process
+        )
+    except CloudifyAnsibleSDKError as sdk_error:
+        raise NonRecoverableError(sdk_error)
+    except ProcessException as process_error:
+        if process_error.exit_code in UNREACHABLE_CODES:
+            raise OperationRetry(
+                'One or more hosts are unreachable.')
+        if process_error.exit_code not in SUCCESS_CODES:
+            raise NonRecoverableError(
+                'One or more hosts failed.')
 
 
 @operation(resumable=True)
