@@ -12,12 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import unittest
+from mock import Mock
+from tempfile import mkstemp
 
 from cloudify.state import current_ctx
 from cloudify.mocks import MockCloudifyContext
+from cloudify.exceptions import NonRecoverableError
 
 import cloudify_ansible.utils as utils
+
+
+def download_resource_side_effect(*args, **kwargs):
+    return args, kwargs
 
 
 class UtilsTests(unittest.TestCase):
@@ -32,6 +40,8 @@ class UtilsTests(unittest.TestCase):
             properties={'d': 'c', 'b': 'a'},
             runtime_properties={'a': 'b', 'c': 'd'}
         )
+        _ctx.download_resource = Mock(
+            side_effect=download_resource_side_effect)
         current_ctx.set(_ctx)
         return _ctx
 
@@ -141,3 +151,34 @@ class UtilsTests(unittest.TestCase):
                         }
                     },
                     'hosts': {}}})
+
+    def test_nested_file_path(self):
+        ctx = self._instance_ctx()
+        _, p = mkstemp()
+        self.addCleanup(os.remove, p)
+        output = utils.download_nested_file_to_new_nested_temp_file(
+            p, p, ctx
+        )
+        self.assertEqual(output[0][1], p)
+
+    def test_handle_file_path_no_string(self):
+        class Foo(object):
+            pass
+        ctx = self._instance_ctx()
+        self.assertRaises(
+            NonRecoverableError,
+            utils.handle_file_path,
+            file_path=Foo,
+            additional_playbook_files=[],
+            _ctx=ctx,
+        )
+
+    def test_handle_file_path_additional_files(self):
+        ctx = self._instance_ctx()
+        _, p0 = mkstemp()
+        _, p1 = mkstemp()
+        _, p2 = mkstemp()
+        _, p3 = mkstemp()
+        addtl_files = [p1, p2, p3]
+        output = utils.handle_file_path(p0, addtl_files, ctx)
+        self.assertEqual(p0, output[0][0])
