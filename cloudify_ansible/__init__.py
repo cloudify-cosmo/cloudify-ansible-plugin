@@ -43,6 +43,7 @@ def ansible_playbook_node(func):
                 ansible_env_vars=None,
                 debug_level=2,
                 additional_args=None,
+                additional_playbook_files=None,
                 site_yaml_path=None,
                 save_playbook=False,
                 remerge_sources=False,
@@ -67,6 +68,7 @@ def ansible_playbook_node(func):
         :return:
         """
         playbook_path = playbook_path or site_yaml_path
+        additional_playbook_files = additional_playbook_files or []
         ansible_env_vars = \
             ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
         if not sources:
@@ -78,7 +80,8 @@ def ansible_playbook_node(func):
 
         try:
             create_playbook_workspace(ctx)
-            playbook_path = handle_site_yaml(playbook_path, ctx)
+            playbook_path = handle_site_yaml(
+                playbook_path, additional_playbook_files, ctx)
             playbook_args = {
                 'playbook_path': playbook_path,
                 'sources': handle_sources(sources, playbook_path, ctx),

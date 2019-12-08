@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.6.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.7.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.6.0'
+    package_version: '2.7.0'
 
 dsl_definitions:
 
@@ -22,6 +22,14 @@ dsl_definitions:
         DEPRECATED.
         A path to your `site.yaml` or `main.yaml` in your
         Ansible Playbook.
+    additional_playbook_files:
+      type: list
+      default: []
+      description: >
+        A list of string paths blueprint resources that you
+        would like to download to the playbook directory.
+        If you use this variable, you must list all of the paths
+        that you expect to download.
     sources:
       type: string
       default: ""

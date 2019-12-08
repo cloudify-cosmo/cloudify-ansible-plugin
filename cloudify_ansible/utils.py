@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import errno
 import shutil
 from tempfile import mkdtemp
 from uuid import uuid1
@@ -68,7 +69,30 @@ def handle_key_data(_data, workspace_dir):
     return recurse_dictionary(_data)
 
 
-def handle_file_path(file_path, _ctx):
+def download_nested_file_to_new_nested_temp_file(file_path, new_root, _ctx):
+    """ Download a file to a similar folder system with a new root directory.
+
+    :param file_path: Basically the resource path for download resource source.
+    :param new_root: Like a temporary directory
+    :param _ctx:
+    :return:
+    """
+
+    dirname, file_name = os.path.split(file_path)
+    # Create the new directory path including the new root.
+    new_dir = os.path.join(new_root, dirname)
+    new_full_path = os.path.join(new_dir, file_name)
+    try:
+        os.makedirs(new_dir)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(new_dir):
+            pass
+        else:
+            raise
+    return _ctx.download_resource(file_path, new_full_path)
+
+
+def handle_file_path(file_path, additional_playbook_files, _ctx):
     """Get the path to a file.
 
     I do this for two reasons:
@@ -78,6 +102,8 @@ def handle_file_path(file_path, _ctx):
       memory object to the PlaybookExecutor class.
 
     :param file_path: The `site_yaml_path` from `run`.
+    :param additional_playbook_files: additional files
+      adjacent to the playbook path.
     :param _ctx: The Cloudify Context.
     :return: The absolute path on the manager to the file.
     """
@@ -87,11 +113,31 @@ def handle_file_path(file_path, _ctx):
             'The variable file_path {0} is a {1},'
             'expected a string.'.format(file_path, type(file_path)))
     if not getattr(_ctx, '_local', False):
-        file_path = \
-            BP_INCLUDES_PATH.format(
-                tenant=_ctx.tenant_name,
-                blueprint=_ctx.blueprint.id,
-                relative_path=file_path)
+        if additional_playbook_files:
+            # This section is intended to handle scenario where we want
+            # to download the resource instead of use absolute path.
+            # Perhaps this should replace the old way entirely.
+            # For now, the important thing here is that we are
+            # enabling downloading the playbook to a remote host.
+            playbook_file_dir = mkdtemp()
+            new_file_path = download_nested_file_to_new_nested_temp_file(
+                file_path,
+                playbook_file_dir,
+                _ctx
+            )
+            for additional_file in additional_playbook_files:
+                download_nested_file_to_new_nested_temp_file(
+                    additional_file,
+                    playbook_file_dir,
+                    _ctx
+                )
+            return new_file_path
+        else:
+            file_path = \
+                BP_INCLUDES_PATH.format(
+                    tenant=_ctx.tenant_name,
+                    blueprint=_ctx.blueprint.id,
+                    relative_path=file_path)
     if os.path.exists(file_path):
         return file_path
     raise NonRecoverableError(
@@ -112,16 +158,18 @@ def _get_node(_ctx):
         return _ctx.node
 
 
-def handle_site_yaml(site_yaml_path, _ctx):
+def handle_site_yaml(site_yaml_path, additional_playbook_files, _ctx):
     """ Create an absolute local path to the site.yaml.
 
     :param site_yaml_path: Relative to the blueprint.
+    :param additional_playbook_files: additional playbook files relative to
+      the playbook.
     :param _ctx: The Cloudify context.
     :return: The final absolute path on the system to the site.yaml.
     """
 
     site_yaml_real_path = os.path.abspath(
-        handle_file_path(site_yaml_path, _ctx))
+        handle_file_path(site_yaml_path, additional_playbook_files, _ctx))
     site_yaml_real_dir = os.path.dirname(site_yaml_real_path)
     site_yaml_real_name = os.path.basename(site_yaml_real_path)
     site_yaml_new_dir = os.path.join(
@@ -243,6 +291,7 @@ def get_source_config_from_ctx(_ctx,
            'ansible_host': '127.0.0.1',
            'ansible_user': 'ubuntu',
        }
+    :param sources: User's sources override value.
     :return:
     """
 
@@ -405,7 +454,7 @@ def cleanup(ctx):
     """
     Unset all runtime properties from node instance when delete operation
     task if finished
-    :param _ctx: Cloudify node instance which is could be an instance of
+    :param ctx: Cloudify node instance which is could be an instance of
     RelationshipSubjectContext or CloudifyContext
     """
     instance = _get_instance(ctx)
