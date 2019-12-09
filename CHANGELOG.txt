@@ -37,3 +37,5 @@
   - Enhance handling string value for ansible inventory `sources`
   - Update Ansible SDK execution to use cloudify script runner for running command
   - Update handling logging for running Ansible command
+2.7.0
+  - Support agent_host "local" execution.
