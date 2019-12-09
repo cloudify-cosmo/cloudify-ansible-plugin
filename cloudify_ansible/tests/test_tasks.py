@@ -125,11 +125,11 @@ class TestPluginTasks(AnsibleTestBase):
         with self.assertRaises(NonRecoverableError):
             self.assertEquals(
                 '/opt/manager/resources/blueprints/None/None/foo',
-                handle_file_path('foo', ctx))
+                handle_file_path('foo', [], ctx))
         setattr(ctx, '_local', True)
         self.assertEquals(
             curdir,
-            handle_file_path(curdir, ctx))
+            handle_file_path(curdir, [], ctx))
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook(self, foo):
