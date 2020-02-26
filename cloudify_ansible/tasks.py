@@ -60,10 +60,14 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         process['env'] = ansible_env_vars
         process['args'] = playbook.process_args
         # Prepare the script which need to be run
+        # check if ansible_playbook_path was provided
+        script_path = 'ansible-playbook'
+        if playbook_args.get("ansible_playbook_path", ""):
+            script_path = playbook_args.get("ansible_playbook_path")
         playbook.execute(
             process_execution,
             script_func=execute,
-            script_path='ansible-playbook',
+            script_path=script_path,
             ctx=_ctx,
             process=process
         )
