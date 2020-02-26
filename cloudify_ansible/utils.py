@@ -468,6 +468,28 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
     :param _ctx: Cloudify node instance which is instance of CloudifyContext
     :param config: Playbook node configurations
     """
+    def _get_secure_values(data, sensitive_keys, parent_hide=False):
+        """
+        ::param data : dict to check againt sensitive_keys
+        ::param sensitive_keys : a list of keys we want to hide the values for
+        ::param parent_hide : boolean flag to pass if the parent key is
+                                in sensitive_keys
+        """
+        for key in data:
+            # check if key or its parent {dict value} in sensitive_keys
+            hide = parent_hide or (key in sensitive_keys)
+            value = data[key]
+            # handle dict value incase sensitive_keys was inside another key
+            if isinstance(value, dict):
+                # call _get_secure_value function recusivly
+                # to handle the dict value
+                inner_dict = _get_secure_values(value, sensitive_keys, hide)
+                data[key] = inner_dict
+            else:
+                data[key] = '*'*len(value) if hide else value
+        return data
+
     if config and isinstance(config, dict):
+        config = _get_secure_values(config, config.get("sensitive_keys", {}))
         for key, value in config.items():
             _ctx.instance.runtime_properties[key] = value

@@ -53,23 +53,26 @@ def secure_log_playbook_args(_ctx, args, **_):
     This function takes playbook_args and check against sensitive_keys
     to hide that sensitive values when logging
     """
-    def _log(data, sensitive_keys, log_message="", hide=False):
+    def _log(data, sensitive_keys, log_message="", parent_hide=False):
+        """
+        ::param data : dict to check againt sensitive_keys
+        ::param sensitive_keys : a list of keys we want to hide the values for
+        ::param log_message : a string to append the message to
+        ::param parent_hide : boolean flag to pass if the parent key is
+                              in sensitive_keys
+        """
         for key in data:
-            hide = key in sensitive_keys
+            # check if key in sensitive_keys or parent_hide
+            hide = parent_hide or (key in sensitive_keys)
             value = data[key]
+            # handle dict value incase sensitive_keys was inside another key
             if isinstance(value, dict):
-                inner_log_message = "{0} : \n".format(key)
-                lines = [s for s in
-                         _log(value, sensitive_keys, '', hide).splitlines()
-                         if s.strip()]
-                for line in lines:
-                    k, v = line.split(":", 1)[0], line.split(":", 1)[1]
-                    hide = hide or (k in sensitive_keys)
-                    inner_log_message += "  {0} : {1}\n".format(k,
-                                                                '*'*len(v)
-                                                                if hide else v)
-                log_message += inner_log_message
+                # call _log function recusivly to handle the dict value
+                log_message += "{0} : \n".format(key)
+                v = _log(value, sensitive_keys, "", hide)
+                log_message += "  {0}".format("  ".join(v.splitlines(True)))
             else:
+                # if hide true hide the value with "*"
                 log_message += "{0} : {1}\n".format(key, '*'*len(value)
                                                          if hide else value)
         return log_message
