@@ -48,10 +48,40 @@ def set_playbook_config(ctx, **kwargs):
     utils.set_playbook_config_as_runtime_properties(ctx, kwargs)
 
 
+def secure_log_playbook_args(_ctx, args, **_):
+    """
+    This function takes playbook_args and check against sensitive_keys
+    to hide that sensitive values when logging
+    """
+    def _log(data, sensitive_keys, log_message="", hide=False):
+        for key in data:
+            hide = key in sensitive_keys
+            value = data[key]
+            if isinstance(value, dict):
+                inner_log_message = "{0} : \n".format(key)
+                lines = [s for s in
+                         _log(value, sensitive_keys, '', hide).splitlines()
+                         if s.strip()]
+                for line in lines:
+                    k, v = line.split(":", 1)[0], line.split(":", 1)[1]
+                    hide = hide or (k in sensitive_keys)
+                    inner_log_message += "  {0} : {1}\n".format(k,
+                                                                '*'*len(v)
+                                                                if hide else v)
+                log_message += inner_log_message
+            else:
+                log_message += "{0} : {1}\n".format(key, '*'*len(value)
+                                                         if hide else value)
+        return log_message
+
+    log_message = _log(args, args.get("sensitive_keys", {}))
+    _ctx.logger.debug("playbook_args: \n {0}".format(log_message))
+
+
 @operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
-    _ctx.logger.debug('playbook_args: {0}'.format(playbook_args))
+    secure_log_playbook_args(_ctx, playbook_args)
 
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)

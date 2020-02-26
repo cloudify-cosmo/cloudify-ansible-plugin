@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.7.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.7.1.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.7.0'
+    package_version: '2.7.1'
 
 dsl_definitions:
 
@@ -41,6 +41,11 @@ dsl_definitions:
       default: {}
       description: >
         Variable values.
+    sensitive_keys:
+      type: list
+      description: keys that you want us to obscure
+      default:
+        - ansible_password
     options_config:
       default: {}
       description: >
@@ -93,6 +98,8 @@ dsl_definitions:
       default: { get_property: [SELF, sources] }
     run_data:
       default: { get_property: [SELF, run_data] }
+    sensitive_keys:
+      default: { get_property: [SELF, sensitive_keys] }
     options_config:
       default: { get_property: [SELF, options_config] }
     ansible_env_vars:
@@ -191,6 +198,8 @@ relationships:
               default: { get_attribute: [SOURCE, sources] }
             run_data:
               default: { get_attribute: [SOURCE, run_data] }
+            sensitive_keys:
+              default: { get_attribute: [SOURCE, sensitive_keys] }
             options_config:
               default: { get_attribute: [SOURCE, options_config] }
             ansible_env_vars:
