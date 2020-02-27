@@ -9,7 +9,7 @@ plugins:
 dsl_definitions:
 
   playbook_config: &playbook_config
-    ansible_playbook_path:
+    ansible_playbook_executable_path:
       type: string
       default: ""
       description: >
@@ -57,9 +57,6 @@ dsl_definitions:
         # On Ansible 2.8.x "INVALID_TASK_ATTRIBUTE_FAILED" default value has
         # been changed to "True" which cause failure when run playbook
         ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
-        # On Ansible 2.8 if the user want to change the default python module
-        # he can use the following "INTERPRETER_PYTHON" config to override that
-        INTERPRETER_PYTHON: "/usr/bin/python"
       description: >
         A dictionary of environment variables to set.
     debug_level:
@@ -90,8 +87,8 @@ dsl_definitions:
       default: false
 
   playbook_inputs: &playbook_inputs
-    ansible_playbook_path:
-      default: { get_property: [SELF, ansible_playbook_path] }
+    ansible_playbook_executable_path:
+      default: { get_property: [SELF, ansible_playbook_executable_path] }
     playbook_path:
       default: { get_property: [SELF, playbook_path] }
     site_yaml_path:
@@ -190,8 +187,8 @@ relationships:
         establish:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
-            ansible_playbook_path:
-              default: { get_attribute: [SOURCE, ansible_playbook_path] }
+            ansible_playbook_executable_path:
+              default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
             playbook_path:
               default: { get_attribute: [SOURCE, playbook_path] }
             site_yaml_path:
