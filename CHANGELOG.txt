@@ -39,3 +39,5 @@
   - Update handling logging for running Ansible command
 2.7.0
   - Support agent_host "local" execution.
+2.7.1
+  - Support refresh Ansible playbook-with-different-name from another blueprint using deployment update.

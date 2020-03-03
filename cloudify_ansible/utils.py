@@ -108,6 +108,21 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
     :return: The absolute path on the manager to the file.
     """
 
+    def _get_deployment_blueprint(deployment_id):
+        new_blueprint = ""
+        try:
+            # get the latest deployment update to get the new blueprint id
+            client = get_rest_client()
+            dep_upd = \
+                client.deployment_updates.list(deployment_id=deployment_id,
+                                               is_descending=True)[0]
+            new_blueprint = \
+                client.deployment_updates.get(dep_upd.id)["new_blueprint_id"]
+        except KeyError:
+            raise NonRecoverableError(
+                "can't get blueprint for deployment {0}".format(deployment_id))
+        return new_blueprint
+
     if not isinstance(file_path, basestring):
         raise NonRecoverableError(
             'The variable file_path {0} is a {1},'
@@ -133,10 +148,15 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 )
             return new_file_path
         else:
+            # handle update deployment different blueprint playbook name
+            deployment_blueprint = _ctx.blueprint.id
+            if _ctx.workflow_id == 'update':
+                deployment_blueprint = \
+                    _get_deployment_blueprint(_ctx.deployment.id)
             file_path = \
                 BP_INCLUDES_PATH.format(
                     tenant=_ctx.tenant_name,
-                    blueprint=_ctx.blueprint.id,
+                    blueprint=deployment_blueprint,
                     relative_path=file_path)
     if os.path.exists(file_path):
         return file_path
