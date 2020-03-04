@@ -115,7 +115,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
             client = get_rest_client()
             dep_upd = \
                 client.deployment_updates.list(deployment_id=deployment_id,
-                                               is_descending=True)[0]
+                                               sort='created_at')[-1]
             new_blueprint = \
                 client.deployment_updates.get(dep_upd.id)["new_blueprint_id"]
         except KeyError:
