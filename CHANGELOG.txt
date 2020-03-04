@@ -41,3 +41,4 @@
   - Support agent_host "local" execution.
 2.7.1
   - Support refresh Ansible playbook-with-different-name from another blueprint using deployment update.
+  - Pin Ansible version to latest stable.
