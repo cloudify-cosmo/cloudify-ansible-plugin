@@ -27,6 +27,6 @@ setup(
     zip_safe=False,
     install_requires=[
         "cloudify-common>=4.5.5",
-        "ansible>=2.8.0"
+        "ansible==2.9.5"
     ]
 )
