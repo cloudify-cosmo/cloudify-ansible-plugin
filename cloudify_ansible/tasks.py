@@ -92,11 +92,18 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         process = {}
         process['env'] = ansible_env_vars
         process['args'] = playbook.process_args
+        # check if ansible_playbook_executable_path was provided
+        # if not provided default to "ansible-playbook" which will use the
+        # executable included in the plugin
+        script_path = \
+            playbook_args.get("ansible_playbook_executable_path",
+                              "ansible-playbook")
+
         # Prepare the script which need to be run
         playbook.execute(
             process_execution,
             script_func=execute,
-            script_path='ansible-playbook',
+            script_path=script_path,
             ctx=_ctx,
             process=process
         )

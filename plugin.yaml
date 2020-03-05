@@ -9,6 +9,12 @@ plugins:
 dsl_definitions:
 
   playbook_config: &playbook_config
+    ansible_playbook_executable_path:
+      type: string
+      default: ""
+      description: >
+        A full path to your ansible_playbook executable if user don't want to
+        use the included version of executable in the plugin
     playbook_path:
       type: string
       default: ""
@@ -86,6 +92,8 @@ dsl_definitions:
       default: false
 
   playbook_inputs: &playbook_inputs
+    ansible_playbook_executable_path:
+      default: { get_property: [SELF, ansible_playbook_executable_path] }
     playbook_path:
       default: { get_property: [SELF, playbook_path] }
     site_yaml_path:
@@ -186,6 +194,8 @@ relationships:
         establish:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
+            ansible_playbook_executable_path:
+              default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
             playbook_path:
               default: { get_attribute: [SOURCE, playbook_path] }
             site_yaml_path:
