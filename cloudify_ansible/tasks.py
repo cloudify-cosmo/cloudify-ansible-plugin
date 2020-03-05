@@ -48,10 +48,43 @@ def set_playbook_config(ctx, **kwargs):
     utils.set_playbook_config_as_runtime_properties(ctx, kwargs)
 
 
+def secure_log_playbook_args(_ctx, args, **_):
+    """
+    This function takes playbook_args and check against sensitive_keys
+    to hide that sensitive values when logging
+    """
+    def _log(data, sensitive_keys, log_message="", parent_hide=False):
+        """
+        ::param data : dict to check againt sensitive_keys
+        ::param sensitive_keys : a list of keys we want to hide the values for
+        ::param log_message : a string to append the message to
+        ::param parent_hide : boolean flag to pass if the parent key is
+                              in sensitive_keys
+        """
+        for key in data:
+            # check if key in sensitive_keys or parent_hide
+            hide = parent_hide or (key in sensitive_keys)
+            value = data[key]
+            # handle dict value incase sensitive_keys was inside another key
+            if isinstance(value, dict):
+                # call _log function recusivly to handle the dict value
+                log_message += "{0} : \n".format(key)
+                v = _log(value, sensitive_keys, "", hide)
+                log_message += "  {0}".format("  ".join(v.splitlines(True)))
+            else:
+                # if hide true hide the value with "*"
+                log_message += "{0} : {1}\n".format(key, '*'*len(value)
+                                                         if hide else value)
+        return log_message
+
+    log_message = _log(args, args.get("sensitive_keys", {}))
+    _ctx.logger.debug("playbook_args: \n {0}".format(log_message))
+
+
 @operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
-    _ctx.logger.debug('playbook_args: {0}'.format(playbook_args))
+    secure_log_playbook_args(_ctx, playbook_args)
 
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
