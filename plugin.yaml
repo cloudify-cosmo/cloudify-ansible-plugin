@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.7.1.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.7.2.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.7.1'
+    package_version: '2.7.2'
 
 dsl_definitions:
 
@@ -15,19 +15,27 @@ dsl_definitions:
       description: >
         A full path to your ansible_playbook executable if user don't want to
         use the included version of executable in the plugin
+    playbook_source_path:
+      type: string
+      default: ""
+      description: >
+        A full path/URL that contain playbook specified in playbook_path
+        or site_yaml_path.
     playbook_path:
       type: string
       default: ""
       description: >
         A path to your `site.yaml` or `main.yaml` in your
-        Ansible Playbook.
+        Ansible Playbook relative to blueprint or playbook_source_path
+        if playbook_source_path is URL to archive File relative inside the archive.
     site_yaml_path:
       type: string
       default: ""
       description: >
         DEPRECATED.
         A path to your `site.yaml` or `main.yaml` in your
-        Ansible Playbook.
+        Ansible Playbook relative to blueprint or playbook_source_path
+        if playbook_source_path is URL to archive File relative inside the archive.
     additional_playbook_files:
       type: list
       default: []
@@ -94,6 +102,8 @@ dsl_definitions:
   playbook_inputs: &playbook_inputs
     ansible_playbook_executable_path:
       default: { get_property: [SELF, ansible_playbook_executable_path] }
+    playbook_source_path:
+      default: { get_property: [SELF, playbook_source_path] }
     playbook_path:
       default: { get_property: [SELF, playbook_path] }
     site_yaml_path:
@@ -141,6 +151,11 @@ node_types:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: ansible.cloudify_ansible.tasks.set_playbook_config
+          inputs:
+            <<: *playbook_inputs
+      ansible:
+        reload:
+          implementation: ansible.cloudify_ansible.tasks.run
           inputs:
             <<: *playbook_inputs
 
@@ -196,6 +211,8 @@ relationships:
           inputs:
             ansible_playbook_executable_path:
               default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
+            playbook_source_path:
+              default: { get_attribute: [SOURCE, playbook_source_path] }
             playbook_path:
               default: { get_attribute: [SOURCE, playbook_path] }
             site_yaml_path:
@@ -220,3 +237,31 @@ relationships:
               default: { get_attribute: [SOURCE, additional_args] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
+
+workflows:
+  reload_ansible_playbook:
+    mapping: ansible.cloudify_ansible.workflows.reload_playbook
+    parameters:
+      playbook_source_path:
+        type: string
+        default: ""
+        description: >
+          A full path/URL that contain playbook specified in playbook_path
+          or site_yaml_path.
+      playbook_path:
+        type: string
+        default: ""
+        description: >
+          A path to your `site.yaml` or `main.yaml` in your
+          Ansible Playbook relative to blueprint or playbook_source_path
+          if playbook_source_path is URL to archive File relative inside the archive.
+      node_instance_ids:
+        type: list
+        default: []
+        description: |
+          List of node instance ID's to reload for.
+      node_ids:
+        type: list
+        default: []
+        description: |
+          List of node templates to reload for.

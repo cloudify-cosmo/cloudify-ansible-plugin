@@ -44,3 +44,5 @@
   - Better handle logging based on customer choice of sensitive data.
   - Support refresh Ansible playbook-with-different-name from another blueprint using deployment update.
   - Pin Ansible version to latest stable.
+2.7.2
+  - Support playbook from URL and added reload playbook workflow.

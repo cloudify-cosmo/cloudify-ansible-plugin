@@ -20,8 +20,47 @@ from cloudify_ansible.utils import (
     handle_site_yaml,
     handle_sources,
     get_remerged_config_sources,
-    get_source_config_from_ctx
+    get_source_config_from_ctx,
+    _get_instance
 )
+
+import os
+import shutil
+import zipfile
+import requests
+import tempfile
+
+
+def unzip_archive(archive_path):
+    """
+    Unzip a zip archive.
+    this method memic strip components
+    """
+    intoDir = tempfile.mkdtemp()
+    tmpDir = tempfile.mkdtemp()
+    try:
+        zipIn = zipfile.ZipFile(archive_path, 'r')
+        zipIn.extractall(tmpDir)
+        members = zipIn.namelist()
+        if len(members) > 0:
+            firstDir = members[0].split('/')[0]
+            if all([firstDir == m.split('/')[0] for m in members]):
+                moveFrom = os.path.join(tmpDir, firstDir)
+                if os.path.exists(moveFrom) and \
+                   os.path.isdir(moveFrom):
+                    for item in os.listdir(moveFrom):
+                        shutil.move(os.path.join(moveFrom, item),
+                                    intoDir)
+                    return intoDir
+            for item in os.listdir(tmpDir):
+                shutil.move(os.path.join(tmpDir, item), intoDir)
+            return intoDir
+    finally:
+        if zipIn:
+            zipIn.close()
+        if intoDir != tmpDir and os.path.exists(tmpDir):
+            shutil.rmtree(tmpDir)
+    return intoDir
 
 
 def ansible_relationship_source(func):
@@ -47,6 +86,7 @@ def ansible_playbook_node(func):
                 site_yaml_path=None,
                 save_playbook=False,
                 remerge_sources=False,
+                playbook_source_path=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -78,10 +118,37 @@ def ansible_playbook_node(func):
             else:
                 sources = get_source_config_from_ctx(ctx)
 
+        # store sources in node runtime_properties
+        _get_instance(ctx).runtime_properties['sources'] = sources
+        _get_instance(ctx).update()
+
         try:
             create_playbook_workspace(ctx)
-            playbook_path = handle_site_yaml(
-                playbook_path, additional_playbook_files, ctx)
+            # check if source path is provided [full path/URL]
+            if playbook_source_path:
+                # here we will combine playbook_source_path with playbook_path
+                playbook_tmp_path = playbook_source_path
+                split = playbook_source_path.split('://')
+                schema = split[0]
+                if schema in ['http', 'https']:
+                    with requests.get(playbook_source_path,
+                                      allow_redirects=True,
+                                      stream=True) as response:
+                        response.raise_for_status()
+                        with tempfile.NamedTemporaryFile(
+                                suffix=".zip", delete=False) as source_temp:
+                            playbook_tmp_path = source_temp.name
+                            for chunk in \
+                                    response.iter_content(chunk_size=None):
+                                source_temp.write(chunk)
+                        # unzip the downloaded file
+                        playbook_tmp_path = unzip_archive(playbook_tmp_path)
+                playbook_path = "{0}/{1}".format(playbook_tmp_path,
+                                                 playbook_path)
+            else:
+                # here will handle the bundled ansible files
+                playbook_path = handle_site_yaml(
+                    playbook_path, additional_playbook_files, ctx)
             playbook_args = {
                 'playbook_path': playbook_path,
                 'sources': handle_sources(sources, playbook_path, ctx),
