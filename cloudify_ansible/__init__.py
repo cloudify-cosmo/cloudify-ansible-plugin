@@ -25,10 +25,23 @@ from cloudify_ansible.utils import (
 )
 
 import os
-import shutil
 import zipfile
 import requests
 import tempfile
+import tarfile
+
+from git import Repo
+
+TAR_FILE_EXTENSTIONS = ('tar', 'gz', 'bz2', 'tgz', 'tbz')
+
+
+def _handle_parent_directory(intoDir):
+    extracted_files = os.listdir(intoDir)
+    if len(extracted_files) == 1:
+        inner_dir = os.path.join(intoDir, extracted_files[0])
+        if os.path.isdir(inner_dir):
+            return inner_dir
+    return intoDir
 
 
 def unzip_archive(archive_path):
@@ -37,29 +50,25 @@ def unzip_archive(archive_path):
     this method memic strip components
     """
     intoDir = tempfile.mkdtemp()
-    tmpDir = tempfile.mkdtemp()
     try:
         zipIn = zipfile.ZipFile(archive_path, 'r')
-        zipIn.extractall(tmpDir)
-        members = zipIn.namelist()
-        if len(members) > 0:
-            firstDir = members[0].split('/')[0]
-            if all([firstDir == m.split('/')[0] for m in members]):
-                moveFrom = os.path.join(tmpDir, firstDir)
-                if os.path.exists(moveFrom) and \
-                   os.path.isdir(moveFrom):
-                    for item in os.listdir(moveFrom):
-                        shutil.move(os.path.join(moveFrom, item),
-                                    intoDir)
-                    return intoDir
-            for item in os.listdir(tmpDir):
-                shutil.move(os.path.join(tmpDir, item), intoDir)
-            return intoDir
+        zipIn.extractall(intoDir)
+        intoDir = _handle_parent_directory(intoDir)
     finally:
         if zipIn:
             zipIn.close()
-        if intoDir != tmpDir and os.path.exists(tmpDir):
-            shutil.rmtree(tmpDir)
+    return intoDir
+
+
+def untar_archive(archive_path):
+    intoDir = tempfile.mkdtemp()
+    try:
+        tarIn = tarfile.open(archive_path, 'r')
+        tarIn.extractall(intoDir)
+        intoDir = _handle_parent_directory(intoDir)
+    finally:
+        if tarIn:
+            tarIn.close()
     return intoDir
 
 
@@ -131,18 +140,29 @@ def ansible_playbook_node(func):
                 split = playbook_source_path.split('://')
                 schema = split[0]
                 if schema in ['http', 'https']:
-                    with requests.get(playbook_source_path,
-                                      allow_redirects=True,
-                                      stream=True) as response:
-                        response.raise_for_status()
-                        with tempfile.NamedTemporaryFile(
-                                suffix=".zip", delete=False) as source_temp:
-                            playbook_tmp_path = source_temp.name
-                            for chunk in \
-                                    response.iter_content(chunk_size=None):
-                                source_temp.write(chunk)
-                        # unzip the downloaded file
+                    file_name = playbook_source_path.rsplit('/', 1)[1]
+                    file_type = file_name.rsplit('.', 1)[1]
+                    if file_type != 'git':
+                        with requests.get(playbook_source_path,
+                                          allow_redirects=True,
+                                          stream=True) as response:
+                            response.raise_for_status()
+                            with tempfile.NamedTemporaryFile(
+                                    suffix=file_type, delete=False) \
+                                    as source_temp:
+                                playbook_tmp_path = source_temp.name
+                                for chunk in \
+                                        response.iter_content(chunk_size=None):
+                                    source_temp.write(chunk)
+                    else:
+                        playbook_tmp_path = tempfile.mkdtemp()
+                        Repo.clone_from(playbook_source_path,
+                                        playbook_tmp_path)
+                    # unzip the downloaded file
+                    if file_type == 'zip':
                         playbook_tmp_path = unzip_archive(playbook_tmp_path)
+                    elif file_type in TAR_FILE_EXTENSTIONS:
+                        playbook_tmp_path = untar_archive(playbook_tmp_path)
                 playbook_path = "{0}/{1}".format(playbook_tmp_path,
                                                  playbook_path)
             else:
