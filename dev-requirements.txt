@@ -2,4 +2,4 @@ cloudify==4.5.5
 ansible==2.9.5
 hvac # needed for kubespray
 netaddr # needed for kubespray
-cloudify-utilities-plugins-sdk==0.0.15
+cloudify-utilities-plugins-sdk==0.0.16
