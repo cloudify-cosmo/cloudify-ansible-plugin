@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from cloudify import ctx as ctx_from_import
+
+from cloudify_common_sdk.resource_downloader import get_shared_resource
+from cloudify_common_sdk.resource_downloader import unzip_archive
+from cloudify_common_sdk.resource_downloader import untar_archive
+from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
 from cloudify_ansible.utils import (
     create_playbook_workspace,
@@ -23,53 +30,6 @@ from cloudify_ansible.utils import (
     get_source_config_from_ctx,
     _get_instance
 )
-
-import os
-import zipfile
-import requests
-import tempfile
-import tarfile
-
-from git import Repo
-
-TAR_FILE_EXTENSTIONS = ('tar', 'gz', 'bz2', 'tgz', 'tbz')
-
-
-def _handle_parent_directory(intoDir):
-    extracted_files = os.listdir(intoDir)
-    if len(extracted_files) == 1:
-        inner_dir = os.path.join(intoDir, extracted_files[0])
-        if os.path.isdir(inner_dir):
-            return inner_dir
-    return intoDir
-
-
-def unzip_archive(archive_path):
-    """
-    Unzip a zip archive.
-    this method memic strip components
-    """
-    intoDir = tempfile.mkdtemp()
-    try:
-        zipIn = zipfile.ZipFile(archive_path, 'r')
-        zipIn.extractall(intoDir)
-        intoDir = _handle_parent_directory(intoDir)
-    finally:
-        if zipIn:
-            zipIn.close()
-    return intoDir
-
-
-def untar_archive(archive_path):
-    intoDir = tempfile.mkdtemp()
-    try:
-        tarIn = tarfile.open(archive_path, 'r')
-        tarIn.extractall(intoDir)
-        intoDir = _handle_parent_directory(intoDir)
-    finally:
-        if tarIn:
-            tarIn.close()
-    return intoDir
 
 
 def ansible_relationship_source(func):
@@ -136,33 +96,21 @@ def ansible_playbook_node(func):
             # check if source path is provided [full path/URL]
             if playbook_source_path:
                 # here we will combine playbook_source_path with playbook_path
-                playbook_tmp_path = playbook_source_path
-                split = playbook_source_path.split('://')
-                schema = split[0]
-                if schema in ['http', 'https']:
-                    file_name = playbook_source_path.rsplit('/', 1)[1]
-                    file_type = file_name.rsplit('.', 1)[1]
-                    if file_type != 'git':
-                        with requests.get(playbook_source_path,
-                                          allow_redirects=True,
-                                          stream=True) as response:
-                            response.raise_for_status()
-                            with tempfile.NamedTemporaryFile(
-                                    suffix=file_type, delete=False) \
-                                    as source_temp:
-                                playbook_tmp_path = source_temp.name
-                                for chunk in \
-                                        response.iter_content(chunk_size=None):
-                                    source_temp.write(chunk)
-                    else:
-                        playbook_tmp_path = tempfile.mkdtemp()
-                        Repo.clone_from(playbook_source_path,
-                                        playbook_tmp_path)
-                    # unzip the downloaded file
-                    if file_type == 'zip':
-                        playbook_tmp_path = unzip_archive(playbook_tmp_path)
-                    elif file_type in TAR_FILE_EXTENSTIONS:
-                        playbook_tmp_path = untar_archive(playbook_tmp_path)
+                playbook_tmp_path = get_shared_resource(playbook_source_path)
+                if playbook_tmp_path == playbook_source_path:
+                    # didn't download anything so check the provided path
+                    # if file and absolute path
+                    if os.path.isfile(playbook_tmp_path) and \
+                            os.path.isabs(playbook_tmp_path):
+                        # check file type if archived
+                        file_name = playbook_tmp_path.rsplit('/', 1)[1]
+                        file_type = file_name.rsplit('.', 1)[1]
+                        if file_type == 'zip':
+                            playbook_tmp_path = \
+                                unzip_archive(playbook_tmp_path)
+                        elif file_type in TAR_FILE_EXTENSTIONS:
+                            playbook_tmp_path = \
+                                untar_archive(playbook_tmp_path)
                 playbook_path = "{0}/{1}".format(playbook_tmp_path,
                                                  playbook_path)
             else:
