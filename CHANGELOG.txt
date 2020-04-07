@@ -48,3 +48,5 @@
   - Support playbook from URL and added reload playbook workflow.
 2.8.1
   - Use shared resource downloader from cloudify-utilities-sdk.
+2.8.2
+  - Handle private key logging.
