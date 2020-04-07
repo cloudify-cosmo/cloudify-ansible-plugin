@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.8.1.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.8.2.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.8.1'
+    package_version: '2.8.2'
 
 dsl_definitions:
 
@@ -37,7 +37,8 @@ dsl_definitions:
         Ansible Playbook relative to blueprint or playbook_source_path
         if playbook_source_path is URL to archive File relative inside the archive.
     additional_playbook_files:
-      type: list
+      # uncomment on 5+
+      # type: list
       default: []
       description: >
         A list of string paths blueprint resources that you
@@ -56,7 +57,8 @@ dsl_definitions:
       description: >
         Variable values.
     sensitive_keys:
-      type: list
+      # uncomment on 5+
+      # type: list
       description: keys that you want us to obscure
       default:
         - ansible_password
@@ -256,12 +258,14 @@ workflows:
           Ansible Playbook relative to blueprint or playbook_source_path
           if playbook_source_path is URL to archive File relative inside the archive.
       node_instance_ids:
-        type: list
+        # uncomment on 5+
+        # type: list
         default: []
         description: |
           List of node instance ID's to reload for.
       node_ids:
-        type: list
+        # uncomment on 5+
+        # type: list
         default: []
         description: |
           List of node templates to reload for.
