@@ -61,6 +61,6 @@
 
 2.8.1
   - Use shared resource downloader from cloudify-utilities-sdk.
-
-2.8.2
   - Fix upload blueprint to 4.5.5
+2.8.2
+  - Handle private key logging.

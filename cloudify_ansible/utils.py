@@ -196,8 +196,6 @@ def handle_site_yaml(site_yaml_path, additional_playbook_files, _ctx):
         _get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
     shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
-    with open(site_yaml_final_path, 'r') as infile:
-        _ctx.logger.debug('Contents site.yaml:\n {0}'.format(infile.read()))
     return site_yaml_final_path
 
 
@@ -223,13 +221,9 @@ def handle_sources(data, site_yaml_abspath, _ctx):
                 'Hosts data was provided but {0} already exists. '
                 'Overwriting existing file.'.format(hosts_abspath))
         with open(hosts_abspath, 'w') as outfile:
-            _ctx.logger.info(
-                'Writing this data to temp file: {0}'.format(data))
             yaml.safe_dump(data, outfile, default_flow_style=False)
     elif isinstance(data, basestring):
         hosts_abspath = handle_source_from_string(data, _ctx, hosts_abspath)
-    with open(hosts_abspath, 'r') as infile:
-        _ctx.logger.debug('Contents hosts:\n {0}'.format(infile.read()))
     return hosts_abspath
 
 
