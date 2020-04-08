@@ -93,7 +93,7 @@ class TestDecorator(AnsibleTestBase):
             ):
                 ansible_playbook_node(func)(
                     playbook_path=self.playbook_path)
-            fake_file.assert_called_with("hosts", "r")
+            fake_file.assert_called_with("hosts", "w")
         func.assert_called_with(
             {
                 'playbook_path': 'Check',
@@ -124,7 +124,7 @@ class TestDecorator(AnsibleTestBase):
                     playbook_path=self.playbook_path,
                     group_name="name_of_group",
                     remerge_sources=True)
-            fake_file.assert_called_with("hosts", "r")
+            fake_file.assert_called_with("hosts", "w")
         func.assert_called_with(
             {
                 'playbook_path': 'Check',
