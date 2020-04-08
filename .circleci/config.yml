@@ -203,7 +203,7 @@ jobs:
           command: pip install --upgrade setuptools
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.2.12.zip
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.2.13.zip
       - run: python .circleci/package_release.py
 
 workflows:
