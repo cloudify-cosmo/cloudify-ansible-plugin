@@ -21,6 +21,8 @@ from cloudify_common_sdk.resource_downloader import unzip_archive
 from cloudify_common_sdk.resource_downloader import untar_archive
 from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
+from cloudify_ansible_sdk import DIRECT_PARAMS
+
 from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
@@ -124,6 +126,11 @@ def ansible_playbook_node(func):
                 'additional_args': additional_args or '',
                 'logger': ctx.logger
             }
+            # copy additional params from kwargs
+            for field in DIRECT_PARAMS:
+                if kwargs.get(field):
+                    playbook_args[field] = kwargs[field]
+
             playbook_args.update(**kwargs)
             func(playbook_args, ansible_env_vars, ctx)
         finally:

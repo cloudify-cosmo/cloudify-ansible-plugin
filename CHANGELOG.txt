@@ -50,17 +50,21 @@
 2.7.0
   - Support agent_host "local" execution.
 
-2.7.1
+2.7.1:
   - Support changing the default Ansible configuration executable path.
   - Better handle logging based on customer choice of sensitive data.
   - Support refresh Ansible playbook-with-different-name from another blueprint using deployment update.
   - Pin Ansible version to latest stable.
 
-2.8.0
+2.8.0:
   - Support playbook from URL and added reload playbook workflow.
 
-2.8.1
+2.8.1:
   - Use shared resource downloader from cloudify-utilities-sdk.
   - Fix upload blueprint to 4.5.5
-2.8.2
+
+2.8.2:
   - Handle private key logging.
+
+2.9.0:
+  - Add additional parameters(can be also passed by additional_args in old plugin versions): start_at_task, timeout and etc.

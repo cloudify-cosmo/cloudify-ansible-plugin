@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.8.2.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.9.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.8.2'
+    package_version: '2.9.0'
 
 dsl_definitions:
 
@@ -84,6 +84,36 @@ dsl_definitions:
       description: >
         Additional args that you want to use, for example, '-c local'.
       default: ''
+    start_at_task:
+      type: string
+      description: >
+        Start the playbook at the task matching this name
+      required: false
+    scp_extra_args:
+      type: string
+      description: >
+        Specify extra arguments to pass to scp only (e.g. -l)
+      required: false
+    sftp_extra_args:
+      type: string
+      description: >
+        Specify extra arguments to pass to sftp only (e.g. -f, -l)
+      required: false
+    ssh_common_args:
+      type: string
+      description: >
+        Specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)
+      required: false
+    ssh_extra_args:
+      type: string
+      description: >
+        Specify extra arguments to pass to ssh only (e.g. -R)
+      required: false
+    timeout:
+      type: string
+      description: >
+        Override the connection timeout in seconds (default=10)
+      required: false
     save_playbook:
       type: boolean
       description: >
@@ -128,6 +158,18 @@ dsl_definitions:
       default: { get_property: [SELF, debug_level] }
     additional_args:
       default: { get_property: [SELF, additional_args] }
+    start_at_task:
+      default: { get_property: [SELF, start_at_task] }
+    scp_extra_args:
+      default: { get_attribute: [SELF, scp_extra_args] }
+    sftp_extra_args:
+      default: { get_attribute: [SELF, sftp_extra_args] }
+    ssh_common_args:
+      default: { get_attribute: [SELF, ssh_common_args] }
+    ssh_extra_args:
+      default: { get_attribute: [SELF, ssh_extra_args] }
+    timeout:
+      default: { get_attribute: [SELF, timeout] }
 
 
 node_types:
@@ -237,6 +279,18 @@ relationships:
               default: { get_attribute: [SOURCE, debug_level] }
             additional_args:
               default: { get_attribute: [SOURCE, additional_args] }
+            start_at_task:
+              default: { get_attribute: [SOURCE, start_at_task] }
+            scp_extra_args:
+              default: { get_attribute: [SOURCE, scp_extra_args] }
+            sftp_extra_args:
+              default: { get_attribute: [SOURCE, sftp_extra_args] }
+            ssh_common_args:
+              default: { get_attribute: [SOURCE, ssh_common_args] }
+            ssh_extra_args:
+              default: { get_attribute: [SOURCE, ssh_extra_args] }
+            timeout:
+              default: { get_attribute: [SOURCE, timeout] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
 
