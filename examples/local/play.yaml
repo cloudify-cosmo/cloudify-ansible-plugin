@@ -4,3 +4,6 @@
     - name: Print host name
       command: hostname -I
       become: no
+    - name: Print uname
+      command: uname -a
+      become: no
