@@ -7,3 +7,6 @@
 [submodule "examples/openvpn"]
 	path = examples/openvpn
 	url = https://github.com/EarthmanT/pi_openvpn.git
+[submodule "examples/blueprint-examples"]
+	path = examples/blueprint-examples
+	url = https://github.com/cloudify-community/blueprint-examples.git
