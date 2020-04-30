@@ -163,7 +163,7 @@ workflows:
       - centos-wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master|dev|blueprint-test)/
       - cloudify-manager:
           context: ecosystem
           requires:
@@ -171,7 +171,7 @@ workflows:
             - centos-wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master|dev|blueprint-test)/
       - release:
           context: ecosystem
           requires:
