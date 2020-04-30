@@ -39,7 +39,7 @@ jobs:
       - run: /home/circleci/.local/bin/tox -e flake8
       - run: /home/circleci/.local/bin/tox -e py27
 
-  wagon:
+  centos-wagon:
     docker:
       - image: amd64/centos:centos7.3.1611
     steps:
@@ -79,99 +79,51 @@ jobs:
           paths:
             - build/*
 
+
   cloudify-manager:
     machine:
-      image: ubuntu-1604:201903-01
       enabled: true
       python:
         version: pypy-2.2.1
     environment:
       CLOUDIFY_SSL_TRUST_ALL: true
+      IAAS: gcp
     steps:
       - checkout
       - run:
           name: "Pull Submodules"
           command: |
-            git submodule init
-            git submodule update --remote
+            git submodule update --init --recursive
       - attach_workspace:
           at: workspace
       - run:
-          name: Download cloudify cli 5.0.0
-          command: |
-            wget http://repository.cloudifysource.org/cloudify/5.0.0/ga-release/cloudify-cli_5.0.0~ga_amd64.deb
+          name: update pip
+          command: pip install -U pip
       - run:
-          name: Install cloudify cli 5.0.0
-          command: |
-            sudo dpkg -i cloudify-cli_5.0.0~ga_amd64.deb
+          name: install cloudify
+          command: pip install -U cloudify==5.0.0 pytest==4.6.3 pyyaml==3.10
       - run:
-          name: Retain space by dumping the deb
-          command: sudo rm cloudify-cli_5.0.0~ga_amd64.deb
-      - run:
-          name: Download manager docker image
+          name: download manager docker image
           command: wget http://repository.cloudifysource.org/cloudify/5.0.0/ga-release/cloudify-docker-manager-5.0.0.tar
       - run:
-          name: Load docker image
+          name: load docker image
           command: docker load -i cloudify-docker-manager-5.0.0.tar
       - run:
-          name: Retain space by dumping the tar
+          name: retain space by dumping the tar
           command: rm cloudify-docker-manager-5.0.0.tar
       - run:
-          name: Start docker container
+          name: show images
+          command: docker images
+      - run:
+          name: start docker container
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudifyplatform/premium-cloudify-manager-aio
       - run:
-          name: Init CLI profile
-          command: |
-            counter=0
-            until [ $counter -ge 10 ]
-            do
-                cfy profiles use localhost -u admin -p admin -t default_tenant && break
-                counter=$[$counter+1]
-                sleep 2
-            done
+          name: Install Git
+          command: docker exec cfy_manager yum install -y git python-netaddr
       - run:
-          name: Upload license to manager to use it
-          command: |
-            set +x
-            echo ${TEST_LICENSE} | base64 --decode > license.yaml
-            set -x
-            cfy license upload license.yaml
-      - run:
-          name: Install plugins bundle
-          command: cfy plugins bundle-upload
-      - run:
-          name: Install updated openstack
-          command: cfy plugins upload http://repository.cloudifysource.org/cloudify/wagons/cloudify-openstack-plugin/3.2.2/cloudify_openstack_plugin-3.2.2-py27-none-linux_x86_64-centos-Core.wgn -y http://www.getcloudify.org/spec/openstack-plugin/3.2.2/plugin.yaml || true
-      - run:
-          name: Wagon upload
-          command: cfy plugins upload workspace/build/cloudify_ansible_plugin-*-py27-none-linux_x86_64-centos-Core.wgn -y plugin.yaml || true
-      - run:
-          name: Fix blueprints little bit
-          command: sed "s/\- plugin.yaml/\- plugin:cloudify-ansible-plugin/g" -i examples/*.yaml
-      - run:
-          name: Check another-relationships-blueprint
-          command: cfy blueprints upload examples/another-relationships-blueprint.yaml -b another-relationships-blueprint
-      - run:
-          name: Check clearwater-blueprint
-          command: cfy blueprints upload examples/clearwater-blueprint.yaml -b clearwater-blueprint
-      - run:
-          name: Check compute-blueprint
-          command: cfy blueprints upload examples/compute-blueprint.yaml -b compute-blueprint
-      - run:
-          name: Check hosts-input-blueprint
-          command: cfy blueprints upload examples/hosts-input-blueprint.yaml -b hosts-input-blueprint
-      - run:
-          name: Check openstack-lamp
-          command: cfy blueprints upload examples/openstack-lamp.yaml -b openstack-lamp
-      - run:
-          name: Check openvpn-blueprint
-          command: cfy blueprints upload examples/openvpn-blueprint.yaml -b openvpn-blueprint
-      - run:
-          name: Check relationships-blueprint
-          command: cfy blueprints upload examples/relationships-blueprint.yaml -b relationships-blueprint
-      - run:
-          name: Check local blueprint
-          command: cfy blueprints upload examples/local-blueprint.yaml -b local-blueprint
+          name: install local project
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+      - run: pytest -s .circleci/test_examples.py
 
   release:
     docker:
@@ -182,7 +134,7 @@ jobs:
           name: "Pull Submodules"
           command: |
             git submodule init
-            git submodule update --remote
+            git submodule update --remote --recursive
       - run:
           name: Download pip
           command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
@@ -211,20 +163,22 @@ workflows:
   tests:
     jobs:
       - unittests
-      - wagon:
+      - centos-wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - cloudify-manager:
+          context: ecosystem
+          requires:
+            - unittests
+            - centos-wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
       - release:
           context: ecosystem
+          requires:
+            - cloudify-manager
           filters:
             branches:
               only: /master/
-      - cloudify-manager:
-          context: ecosystem
-          requires:
-            - unittests
-            - wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
