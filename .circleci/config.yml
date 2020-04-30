@@ -122,7 +122,7 @@ jobs:
           command: docker exec cfy_manager yum install -y git python-netaddr
       - run:
           name: Install Git
-          command: docker exec cfy_manager source /opt/mgmtworker/env/bin/activate && pip install netaddr ipaddr
+          command: docker exec cfy_manager /opt/mgmtworker/env/bin/activate && pip install netaddr ipaddr
       - run:
           name: install local project
           command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
