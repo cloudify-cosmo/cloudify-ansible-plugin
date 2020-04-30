@@ -122,7 +122,7 @@ jobs:
           command: docker exec cfy_manager yum install -y git python-netaddr
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/CY-2570-Plugins-Build.zip
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
       - run: pytest -s .circleci/test_examples.py
 
   release:
@@ -166,7 +166,7 @@ workflows:
       - centos-wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev|blueprint-test)/
+              only: /([0-9\.]*\-build|master|dev)/
       - cloudify-manager:
           context: ecosystem
           requires:
@@ -174,7 +174,7 @@ workflows:
             - centos-wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev|blueprint-test)/
+              only: /([0-9\.]*\-build|master|dev)/
       - release:
           context: ecosystem
           requires:
