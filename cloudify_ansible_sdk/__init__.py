@@ -26,6 +26,8 @@ DEPRECATED_KEYS = [
     'modules',
     'private_key_file']
 LIST_TYPES = ['skip-tags', 'tags']
+DIRECT_PARAMS = ['start_at_task', 'scp_extra_args', 'sftp_extra_args',
+                 'ssh_common_args', 'ssh_extra_args', 'timeout']
 
 
 def get_fileno():
@@ -72,6 +74,13 @@ class AnsiblePlaybookFromFile(object):
                 self.logger.error(
                     'This key been deprecated: {0} {1}'.format(
                         deprecated_key, kwargs[deprecated_key]))
+
+        # add known additional params to additional_args
+        for field in DIRECT_PARAMS:
+            if kwargs.get(field):
+                self.additional_args += "--{field} {value} ".format(
+                    field=field.replace("_", "-"),
+                    value=json.dumps(kwargs[field]))
 
     @property
     def env(self):

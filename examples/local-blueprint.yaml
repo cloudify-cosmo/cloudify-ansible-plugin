@@ -45,6 +45,8 @@ node_types:
               default: 4
             save_playbook:
               default: true
+            start_at_task:
+              default: "Print uname"
 
 node_templates:
 

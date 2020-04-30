@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='cloudify-ansible-plugin',
-    version='2.8.2',
+    version='2.9.0',
     author='Cloudify Platform LTD',
     author_email='hello@cloudify.co',
     description='Manage Ansible nodes by Cloudify.',
@@ -28,6 +28,6 @@ setup(
     install_requires=[
         "cloudify-common>=4.5.5",
         "ansible==2.9.5",
-        "cloudify-utilities-plugins-sdk==0.0.16",  # Shared Resource Downloader
+        "cloudify-utilities-plugins-sdk==0.0.19",  # Shared Resource Downloader
     ]
 )
