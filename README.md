@@ -8,7 +8,7 @@ and provides an agentless method for executing operations on remote hosts.
 Similar to the Script Plugin and the Fabric Plugin, there is no one node type
 associated with the Ansible plugin. Instead, you modify existing node types to
 perform one or more of their lifecycle operations using the Ansible plugin and
-any additiona inputs that you provide.
+any additional inputs that you provide.
 
 ## Node types
 
