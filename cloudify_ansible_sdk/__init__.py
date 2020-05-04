@@ -17,6 +17,8 @@ import os
 import sys
 from tempfile import NamedTemporaryFile
 
+from cloudify._compat import text_type
+
 
 DEPRECATED_KEYS = [
     'site_yaml_path',
@@ -113,7 +115,7 @@ class AnsiblePlaybookFromFile(object):
                 del key
                 continue
             key = key.replace("_", "-")
-            if isinstance(value, basestring):
+            if isinstance(value, text_type):
                 value = value.encode('utf-8')
             elif isinstance(value, dict):
                 value = json.dumps(value)

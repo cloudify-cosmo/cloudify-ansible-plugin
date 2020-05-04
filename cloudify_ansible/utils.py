@@ -23,6 +23,7 @@ from cloudify.manager import get_rest_client
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException)
+from cloudify._compat import text_type
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
@@ -123,7 +124,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 "can't get blueprint for deployment {0}".format(deployment_id))
         return new_blueprint
 
-    if not isinstance(file_path, basestring):
+    if not isinstance(file_path, text_type):
         raise NonRecoverableError(
             'The variable file_path {0} is a {1},'
             'expected a string.'.format(file_path, type(file_path)))
@@ -222,7 +223,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
                 'Overwriting existing file.'.format(hosts_abspath))
         with open(hosts_abspath, 'w') as outfile:
             yaml.safe_dump(data, outfile, default_flow_style=False)
-    elif isinstance(data, basestring):
+    elif isinstance(data, text_type):
         hosts_abspath = handle_source_from_string(data, _ctx, hosts_abspath)
     return hosts_abspath
 

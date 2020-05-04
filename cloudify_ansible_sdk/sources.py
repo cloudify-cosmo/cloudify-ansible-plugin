@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from cloudify._compat import text_type
+
 from cloudify_ansible_sdk import CloudifyAnsibleSDKError
 
 
 def legalize_hostnames(hostname):
-    if not isinstance(hostname, basestring):
+    if not isinstance(hostname, text_type):
         raise CloudifyAnsibleSDKError(
             'Hostname {0} is not a string'.format(hostname))
     hostname = hostname.replace('_', '-')
