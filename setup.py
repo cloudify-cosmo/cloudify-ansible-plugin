@@ -26,7 +26,7 @@ setup(
     license='LICENSE',
     zip_safe=False,
     install_requires=[
-        "cloudify-common>=4.5.5",
+        "cloudify-common==5.1.0.dev1",
         "ansible==2.9.5",
         "cloudify-utilities-plugins-sdk==0.0.19",  # Shared Resource Downloader
     ]

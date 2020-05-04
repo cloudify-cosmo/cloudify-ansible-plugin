@@ -1,4 +1,4 @@
-cloudify==4.5.5
+https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip
 ansible==2.9.5
 hvac # needed for kubespray
 netaddr # needed for kubespray
