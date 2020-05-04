@@ -20,3 +20,4 @@
 -f lib2to3.fixes.fix_metaclass
 -f libfuturize.fixes.fix_cmp
 -f lib2to3.fixes.fix_basestring
+-f libfuturize.fixes.fix_unicode_keep_u
