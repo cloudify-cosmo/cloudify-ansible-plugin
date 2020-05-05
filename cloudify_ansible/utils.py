@@ -473,7 +473,7 @@ def cleanup(ctx):
     RelationshipSubjectContext or CloudifyContext
     """
     instance = _get_instance(ctx)
-    for key, _ in instance.runtime_properties.items():
+    for key, _ in list(instance.runtime_properties.items()):
         del instance.runtime_properties[key]
 
 

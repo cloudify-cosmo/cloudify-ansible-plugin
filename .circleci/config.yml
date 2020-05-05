@@ -37,7 +37,23 @@ jobs:
           name: install tox
           command: pip install --user tox
       - run: /home/circleci/.local/bin/tox -e flake8
-      - run: /home/circleci/.local/bin/tox -e py27
+      - run: /home/circleci/.local/bin/tox -e nosetests
+
+  unittests3:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote
+      - run:
+          name: install tox
+          command: pip install --user tox
+      - run: /home/circleci/.local/bin/tox -e flake8
+      - run: /home/circleci/.local/bin/tox -e nosetests
 
   centos-wagon:
     docker:
@@ -192,6 +208,7 @@ workflows:
     jobs: &all_jobs
       - py3_compat
       - unittests
+      - unittests3
       - centos-wagon:
           filters:
             branches:
