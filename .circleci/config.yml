@@ -156,6 +156,8 @@ jobs:
       - run:
           name: install local project
           command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+      - attach_workspace:
+          at: workspace
       - run: python .circleci/package_release.py
 
 workflows:
@@ -179,6 +181,7 @@ workflows:
           context: ecosystem
           requires:
             - cloudify-manager
+            - wagon
           filters:
             branches:
               only: /master/
