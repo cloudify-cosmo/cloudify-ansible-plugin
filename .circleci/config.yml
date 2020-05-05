@@ -37,7 +37,23 @@ jobs:
           name: install tox
           command: pip install --user tox
       - run: /home/circleci/.local/bin/tox -e flake8
-      - run: /home/circleci/.local/bin/tox -e py27
+      - run: /home/circleci/.local/bin/tox -e nosetests
+
+  unittests3:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote
+      - run:
+          name: install tox
+          command: pip install --user tox
+      - run: /home/circleci/.local/bin/tox -e flake8
+      - run: /home/circleci/.local/bin/tox -e nosetests
 
   centos-wagon:
     docker:
@@ -160,11 +176,46 @@ jobs:
           at: workspace
       - run: python .circleci/package_release.py
 
+  py3_compat:
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - run:
+          name: install futurize
+          command: pip install future --user
+      - run:
+          # those modules contain code that futurize would want to change,
+          # so let's just remove them so that it doesn't report on them
+          # (there's no "exclude" functionality in futurize)
+          name: remove compat modules
+          command: |
+            rm cloudify_ansible_sdk/_compat.py
+      - run:
+          name: find python3-incompatible code
+          command: |
+            FUTURIZE="futurize ."
+            while read line; do
+              [[ "$line" =~ ^#.* ]] && continue
+              FUTURIZE="${FUTURIZE} ${line}"
+            done<.circleci/py3fixers
+            $FUTURIZE>futurize_diffs
+      - run:
+          name: check that there is no python3-incompatible code
+          command: |
+            if [[ -s futurize_diffs ]]; then
+              echo "Python-3-incompatible code found"
+              cat futurize_diffs
+              exit 1
+            fi
+
 workflows:
   version: 2
   tests:
     jobs: &all_jobs
+      - py3_compat
       - unittests
+      - unittests3
       - centos-wagon:
           filters:
             branches:

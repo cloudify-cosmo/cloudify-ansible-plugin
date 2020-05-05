@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2020 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,21 +13,20 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+"""Python 2 + 3 compatibility utils"""
+# flake8: noqa
 
-from setuptools import setup
+import sys
+PY2 = sys.version_info[0] == 2
 
-setup(
-    name='cloudify-ansible-plugin',
-    version='2.9.0',
-    author='Cloudify Platform LTD',
-    author_email='hello@cloudify.co',
-    description='Manage Ansible nodes by Cloudify.',
-    packages=['cloudify_ansible', 'cloudify_ansible_sdk'],
-    license='LICENSE',
-    zip_safe=False,
-    install_requires=[
-        "cloudify-common==5.1.0.dev1",
-        "ansible==2.9.5",
-        "cloudify-utilities-plugins-sdk==0.0.19",  # Shared Resource Downloader
-    ]
-)
+
+if PY2:
+    text_type = unicode
+
+else:
+    text_type = str
+
+
+__all__ = [
+    'PY2', 'text_type',
+]

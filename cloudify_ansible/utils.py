@@ -23,6 +23,7 @@ from cloudify.manager import get_rest_client
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException)
+from cloudify_ansible_sdk._compat import text_type
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
@@ -123,7 +124,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 "can't get blueprint for deployment {0}".format(deployment_id))
         return new_blueprint
 
-    if not isinstance(file_path, basestring):
+    if not isinstance(file_path, (text_type, bytes)):
         raise NonRecoverableError(
             'The variable file_path {0} is a {1},'
             'expected a string.'.format(file_path, type(file_path)))
@@ -196,7 +197,7 @@ def handle_site_yaml(site_yaml_path, additional_playbook_files, _ctx):
         _get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
     shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
-    return site_yaml_final_path
+    return u'{0}'.format(site_yaml_final_path)
 
 
 def handle_sources(data, site_yaml_abspath, _ctx):
@@ -222,7 +223,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
                 'Overwriting existing file.'.format(hosts_abspath))
         with open(hosts_abspath, 'w') as outfile:
             yaml.safe_dump(data, outfile, default_flow_style=False)
-    elif isinstance(data, basestring):
+    elif isinstance(data, text_type):
         hosts_abspath = handle_source_from_string(data, _ctx, hosts_abspath)
     return hosts_abspath
 
@@ -472,7 +473,7 @@ def cleanup(ctx):
     RelationshipSubjectContext or CloudifyContext
     """
     instance = _get_instance(ctx)
-    for key, _ in instance.runtime_properties.items():
+    for key, _ in list(instance.runtime_properties.items()):
         del instance.runtime_properties[key]
 
 

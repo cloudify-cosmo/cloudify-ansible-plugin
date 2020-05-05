@@ -18,6 +18,7 @@ from cloudify_ansible import (
 
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from cloudify_ansible_sdk._compat import PY2
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase
 
@@ -82,6 +83,10 @@ class TestDecorator(AnsibleTestBase):
         relationship_ctx = self._get_ctx()
         current_ctx.set(relationship_ctx)
 
+        if PY2:
+            builtins_open = '__builtin__.open'
+        else:
+            builtins_open = 'builtins.open'
         func = Mock()
         with patch(
             "cloudify_ansible.handle_site_yaml",
@@ -89,7 +94,7 @@ class TestDecorator(AnsibleTestBase):
         ):
             fake_file = mock_open()
             with patch(
-                '__builtin__.open', fake_file
+                builtins_open, fake_file
             ):
                 ansible_playbook_node(func)(
                     playbook_path=self.playbook_path)
@@ -111,6 +116,10 @@ class TestDecorator(AnsibleTestBase):
         relationship_ctx = self._get_ctx()
         current_ctx.set(relationship_ctx)
 
+        if PY2:
+            builtins_open = '__builtin__.open'
+        else:
+            builtins_open = 'builtins.open'
         func = Mock()
         with patch(
             "cloudify_ansible.handle_site_yaml",
@@ -118,7 +127,7 @@ class TestDecorator(AnsibleTestBase):
         ):
             fake_file = mock_open()
             with patch(
-                '__builtin__.open', fake_file
+                builtins_open, fake_file
             ):
                 ansible_playbook_node(func)(
                     playbook_path=self.playbook_path,

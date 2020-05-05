@@ -113,14 +113,12 @@ class AnsiblePlaybookFromFile(object):
                 del key
                 continue
             key = key.replace("_", "-")
-            if isinstance(value, basestring):
-                value = value.encode('utf-8')
-            elif isinstance(value, dict):
+            if isinstance(value, dict):
                 value = json.dumps(value)
             elif isinstance(value, list) and key not in LIST_TYPES:
-                value = [i.encode('utf-8') for i in value]
+                value = [i for i in value]
             elif isinstance(value, list):
-                value = ",".join(value).encode('utf-8')
+                value = u",".join(value)
             options_list.append(
                 '--{key}={value}'.format(key=key, value=repr(value)))
         return ' '.join(options_list)
