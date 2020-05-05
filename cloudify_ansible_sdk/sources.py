@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cloudify._compat import text_type
-
 from cloudify_ansible_sdk import CloudifyAnsibleSDKError
+from cloudify_ansible_sdk._compat import text_type
 
 
 def legalize_hostnames(hostname):

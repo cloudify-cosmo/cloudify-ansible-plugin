@@ -23,7 +23,7 @@ from cloudify.manager import get_rest_client
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException)
-from cloudify._compat import text_type
+from cloudify_ansible_sdk._compat import text_type
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE

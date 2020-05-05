@@ -18,7 +18,7 @@ from cloudify_ansible import (
 
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
-from cloudify._compat import PY2
+from cloudify_ansible_sdk._compat import PY2
 
 from cloudify_ansible_sdk.tests import AnsibleTestBase
 
