@@ -31,7 +31,11 @@ executors:
 commands:
   run_unittest:
     steps:
-      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote --recursive
       - run:
           name: install tox
           command: pip install --user tox
@@ -179,11 +183,13 @@ jobs:
   unittests_py27:
     executor: py27
     steps:
+      - checkout
       - run_unittest
 
   unittests_py36:
     executor: py36
     steps:
+      - checkout
       - run_unittest
 
   py3_compat:
