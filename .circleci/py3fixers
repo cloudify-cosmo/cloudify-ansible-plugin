@@ -14,10 +14,10 @@
 # fix_dict is not idempotent
 # -f lib2to3.fixes.fix_dict
 -f lib2to3.fixes.fix_map
--f lib2to3.fixes.fix_xrange
 -f lib2to3.fixes.fix_zip
+-f lib2to3.fixes.fix_xrange
+-f lib2to3.fixes.fix_basestring
+-f libfuturize.fixes.fix_cmp
 -f libfuturize.fixes.fix_division_safe
 -f lib2to3.fixes.fix_metaclass
--f libfuturize.fixes.fix_cmp
--f lib2to3.fixes.fix_basestring
 -f libfuturize.fixes.fix_unicode_keep_u
