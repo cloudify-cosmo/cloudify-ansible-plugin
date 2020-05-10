@@ -203,7 +203,7 @@ jobs:
     steps:
       - checkout
       - generate_py27_wagon
-      - generate_py3_wagon
+      # - generate_py3_wagon  # TODO: When we have Python3 Manager Integration Test.
 
   integration_tests:
     executor: cloudify-machine
