@@ -1,5 +1,5 @@
-https://github.com/cloudify-cosmo/cloudify-common/archive/4.5.5.zip
 ansible==2.9.5
 hvac
 netaddr
-cloudify-utilities-plugins-sdk==0.0.16
+ipaddr
+netaddr
