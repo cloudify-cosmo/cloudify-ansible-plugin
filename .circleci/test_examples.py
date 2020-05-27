@@ -28,7 +28,7 @@ SECRETS_TO_CREATE = {
 
 prepare_test(secrets=SECRETS_TO_CREATE)
 
-blueprint_list = ['examples/blueprint-examples/kubernetes/kubespray/gcp.yaml']
+blueprint_list = ['examples/blueprint-examples/hello-world-example/gcp.yaml']
 
 
 @pytest.fixture(scope='function', params=blueprint_list)
