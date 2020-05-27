@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.9.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.9.1.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.9.0'
+    package_version: '2.9.1'
 
 dsl_definitions:
 
@@ -88,32 +88,32 @@ dsl_definitions:
       type: string
       description: >
         Start the playbook at the task matching this name
-      required: false
+      default: ''
     scp_extra_args:
       type: string
       description: >
         Specify extra arguments to pass to scp only (e.g. -l)
-      required: false
+      default: ''
     sftp_extra_args:
       type: string
       description: >
         Specify extra arguments to pass to sftp only (e.g. -f, -l)
-      required: false
+      default: ''
     ssh_common_args:
       type: string
       description: >
         Specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)
-      required: false
+      default: ''
     ssh_extra_args:
       type: string
       description: >
         Specify extra arguments to pass to ssh only (e.g. -R)
-      required: false
+      default: ''
     timeout:
       type: string
       description: >
         Override the connection timeout in seconds (default=10)
-      required: false
+      default: 10
     save_playbook:
       type: boolean
       description: >
