@@ -128,13 +128,13 @@ commands:
           command: pip install -U cloudify==5.0.0 pytest==4.6.3 pyyaml==3.10
       - run:
           name: download manager docker image
-          command: wget http://repository.cloudifysource.org/cloudify/5.0.0/ga-release/cloudify-docker-manager-5.0.0.tar
+          command: wget http://repository.cloudifysource.org/cloudify/5.0.0/ga-release/cloudify-docker-manager-5.0.5.tar
       - run:
           name: load docker image
-          command: docker load -i cloudify-docker-manager-5.0.0.tar
+          command: docker load -i cloudify-docker-manager-5.0.5.tar
       - run:
           name: retain space by dumping the tar
-          command: rm cloudify-docker-manager-5.0.0.tar
+          command: rm cloudify-docker-manager-5.0.5.tar
       - run:
           name: show images
           command: docker images
