@@ -28,6 +28,6 @@ setup(
     install_requires=[
         "cloudify-common>=4.5.5",
         "ansible==2.9.5",
-        "cloudify-utilities-plugins-sdk>=0.0.19",  # Shared Resource Downloader
+        "cloudify-utilities-plugins-sdk>=0.0.26",  # Shared Resource Downloader
     ]
 )
