@@ -228,7 +228,7 @@ jobs:
     executor: wagon_generator
     steps:
       - checkout
-      - generate_rhel_py27py36_wagon
+#      - generate_rhel_py27py36_wagon
 
   integration_tests:
     executor: cloudify-machine
