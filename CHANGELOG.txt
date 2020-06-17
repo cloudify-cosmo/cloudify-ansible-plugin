@@ -71,3 +71,6 @@
 
 2.9.1:
   - Fix Bug introduced by plugin yaml changes in 2.9.1
+
+2.9.2:
+  - Update wagon builder to py2py3 wagon and add rhel wagon builder.
