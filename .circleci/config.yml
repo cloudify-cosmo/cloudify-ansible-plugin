@@ -302,11 +302,11 @@ workflows:
       - wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master|dev|replace-wagon-builder-to-py2py3-builder)/
       - rhel_wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master|dev|replace-wagon-builder-to-py2py3-builder)/
       - integration_tests_505:
           requires:
             - wagon
