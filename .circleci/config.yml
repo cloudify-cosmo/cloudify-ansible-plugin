@@ -222,7 +222,6 @@ jobs:
     steps:
       - checkout
       - generate_py27py36_wagon
-      # - generate_py3_wagon  # TODO: When we have Python3 Manager Integration Test.
 
   rhel_wagon:
     executor: wagon_generator
@@ -252,21 +251,21 @@ workflows:
       - py3_compat
       - unittests_py27
       - unittests_py36
-      - wagon #:
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-      - rhel_wagon #:
-      #          filters:
-      #            branches:
-      #              only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests:
           requires:
             - wagon
             - rhel_wagon
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
