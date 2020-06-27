@@ -115,25 +115,6 @@ commands:
           paths:
             - build/*
 
-  generate_py3_wagon:
-    steps:
-      - run:
-          name: Create Workspace Build directory.
-          command: mkdir -p workspace/build
-      - run:
-          name: Build py3 Wagon
-          command: |
-              git clone https://github.com/cloudify-cosmo/cloudify-wagon-build-containers.git
-              docker build -t cloudify-centos-7-py3-wagon-builder cloudify-wagon-build-containers/centos_7_py3
-              docker run -v ~/project/:/packaging cloudify-centos-7-py3-wagon-builder
-      - run:
-          name: copy wagon to workspace
-          command: cp *.wgn workspace/build/
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - build/*
-
   run_integration_tests_505:
     steps:
       - run:
@@ -147,7 +128,8 @@ commands:
           command: pip install -U pip
       - run:
           name: install cloudify
-          command: pip install -U cloudify==5.0.0 pytest==4.6.3 pyyaml==3.10
+          command: |
+            pip install -r test-requirements.txt
       - run:
           name: download manager docker image
           command: wget http://repository.cloudifysource.org/cloudify/5.0.5/ga-release/cloudify-docker-manager-5.0.5.tar
@@ -181,10 +163,8 @@ commands:
           command: pip install -U pip
       - run:
           name: install cloudify
-          command: >
-            pip install -U git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
-            git+https://github.com/cloudify-cosmo/cloudify-cli@master#egg=cloudify-cli==master
-            pytest==4.6.3 pyyaml==3.12
+          command: |
+            pip install -r test-requirements.txt
       - run:
           name: download manager docker image
           command:  wget http://repository.cloudifysource.org/cloudify/5.1.0/.dev1-release/cloudify-docker-manager-5.1.0.dev1.tar
@@ -295,7 +275,7 @@ jobs:
 workflows:
   version: 2
   tests:
-    jobs: &all_jobs
+    jobs:
       - py3_compat
       - unittests_py27
       - unittests_py36
@@ -313,14 +293,14 @@ workflows:
             - rhel_wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master|dev|replace-wagon-builder-to-py2py3-builder)/
       - integration_tests_510:
           requires:
             - wagon
             - rhel_wagon
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev|replace-wagon-builder-to-py2py3-builder)/
       - release:
           filters:
             branches:
@@ -338,4 +318,29 @@ workflows:
           branches:
             only:
               - master
-    jobs: *all_jobs
+    jobs:
+      - py3_compat
+      - unittests_py27
+      - unittests_py36
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - integration_tests_505:
+          requires:
+            - wagon
+            - rhel_wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
+      - integration_tests_510:
+          requires:
+            - wagon
+            - rhel_wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/

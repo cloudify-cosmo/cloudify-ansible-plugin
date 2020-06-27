@@ -22,11 +22,21 @@ from ecosystem_tests.dorkl import (
     cleanup_on_failure, prepare_test
 )
 
+'''Temporary until all the plugins in the bundle will 
+released with py2py3 wagons'''
+UT_VERSION = '1.23.5'
+UT_WAGON = 'https://github.com/cloudify-incubator/cloudify-utilities-plugin/' \
+           'releases/download/{v}/cloudify_utilities_plugin-{v}-centos' \
+           '-Core-py27.py36-none-linux_x86_64.wgn'.format(v=UT_VERSION)
+UT_PLUGIN = 'https://github.com/cloudify-incubator/cloudify-utilities-' \
+            'plugin/releases/download/{v}/plugin.yaml'.format(v=UT_VERSION)
+PLUGINS_TO_UPLOAD = [(UT_WAGON, UT_PLUGIN)]
 SECRETS_TO_CREATE = {
     'gcp_credentials': True
 }
 
-prepare_test(secrets=SECRETS_TO_CREATE)
+prepare_test(plugins=PLUGINS_TO_UPLOAD, secrets=SECRETS_TO_CREATE,
+             execute_bundle_upload=False)
 
 blueprint_list = ['examples/blueprint-examples/hello-world-example/gcp.yaml']
 

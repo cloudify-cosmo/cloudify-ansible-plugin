@@ -74,3 +74,4 @@
 
 2.9.2:
   - Update wagon builder to py2py3 wagon and add rhel wagon builder.
+  - Added 5.1.0 manager integration tests.
