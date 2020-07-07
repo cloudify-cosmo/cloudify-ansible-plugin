@@ -76,5 +76,5 @@
   - Update wagon builder to py2py3 wagon and add rhel wagon builder.
   - Added 5.1.0 manager integration tests.
 2.9.3:
-  - Update the 5.1 integration tests to use the aio docker image.
+  - Update 5.1 integration tests to use the aio docker image.
   - Use the bundle upload on the integration tests.
