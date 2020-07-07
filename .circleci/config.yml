@@ -182,7 +182,7 @@ commands:
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --network host cloudify-manager-aio:latest
       - run:
           name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+          command: pip install git+https://github.com/cloudify-incubator/cloudify-ecosystem-test.git@add-cfy-profiles-list-log
       - run: pytest -s .circleci/test_examples.py
 
 
@@ -294,7 +294,7 @@ workflows:
             - rhel_wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev|CY-3060-use-bundle)/
+              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests_510:
           requires:
             - wagon
