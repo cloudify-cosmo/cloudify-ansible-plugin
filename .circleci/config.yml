@@ -185,7 +185,6 @@ commands:
           command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
       - run: pytest -s .circleci/test_examples.py
 
-
   release_plugin:
     steps:
       - run:
@@ -294,7 +293,7 @@ workflows:
             - rhel_wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master)/
+              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests_510:
           requires:
             - wagon
