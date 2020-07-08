@@ -147,7 +147,7 @@ commands:
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudifyplatform/premium-cloudify-manager-aio
       - run:
           name: install local project
-          command: pip install git+https://github.com/cloudify-incubator/cloudify-ecosystem-test.git@add-wait-for-starter
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
       - run: pytest -s .circleci/test_examples.py
 
   run_integration_tests_510:
@@ -182,7 +182,7 @@ commands:
           command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudify-manager-aio:latest
       - run:
           name: install local project
-          command: pip install git+https://github.com/cloudify-incubator/cloudify-ecosystem-test.git@add-wait-for-starter
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
       - run: pytest -s .circleci/test_examples.py
 
 
@@ -283,25 +283,25 @@ workflows:
       - wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev|CY-3060-use-bundle)/
+              only: /([0-9\.]*\-build|master|dev)/
       - rhel_wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev|CY-3060-use-bundle)/
+              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests_505:
           requires:
             - wagon
             - rhel_wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|CY-3060-use-bundle)/
+              only: /([0-9\.]*\-build|master)/
       - integration_tests_510:
           requires:
             - wagon
             - rhel_wagon
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev|CY-3060-use-bundle)/
+              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
