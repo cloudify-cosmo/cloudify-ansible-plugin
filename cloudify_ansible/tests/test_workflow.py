@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import path, environ
+import os
 import subprocess
 from unittest import skipUnless
 
@@ -30,29 +30,25 @@ IGNORED_LOCAL_WORKFLOW_MODULES = (
 PRIVATE_KEY_DIR = '.vagrant/machines/{0}/virtualbox/private_key'
 
 # This just gives us a path to the setup.py directory.
-_plugin_directory = \
-    '/{0}'.format(
-        '/'.join(
-            path.abspath(path.dirname(__file__)).split('/')[1:-2]
-        )
-    )
+_plugin_directory = '/{0}'.format(
+    '/'.join(os.path.abspath(os.path.dirname(__file__)).split('/')[1:-2]))
 
 _compute_blueprint_path = \
-   path.join(
-       _plugin_directory,
-       'examples/compute-blueprint.yaml')
+    os.path.join(
+        _plugin_directory,
+        'examples/compute-blueprint.yaml')
 _relationships_blueprint = \
-    path.join(_plugin_directory,
-              'examples/relationships-blueprint.yaml')
+    os.path.join(_plugin_directory,
+                 'examples/relationships-blueprint.yaml')
 _another_relationships_blueprint = \
-    path.join(_plugin_directory,
-              'examples/another-relationships-blueprint.yaml')
+    os.path.join(_plugin_directory,
+                 'examples/another-relationships-blueprint.yaml')
 _openvpn_blueprint = \
-    path.join(_plugin_directory,
-              'examples/openvpn-blueprint.yaml')
+    os.path.join(_plugin_directory,
+                 'examples/openvpn-blueprint.yaml')
 _clearwater_blueprint = \
-    path.join(_plugin_directory,
-              'examples/clearwater-blueprint.yaml')
+    os.path.join(_plugin_directory,
+                 'examples/clearwater-blueprint.yaml')
 
 
 def load_new_vagrant_env(boxes=None):
@@ -77,7 +73,7 @@ class TestPluginWorkflows(AnsibleTestBase):
             shell=True)
 
     @skipUnless(
-        environ.get('TEST_ZPLAYS', False),
+        os.environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     def test3_compute_blueprint(self):
@@ -101,7 +97,7 @@ class TestPluginWorkflows(AnsibleTestBase):
                 'ansible_playbook')[0].runtime_properties.keys())
 
     @skipUnless(
-        environ.get('TEST_ZPLAYS', False),
+        os.environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     def test4_relationships_blueprint(self):
@@ -127,7 +123,7 @@ class TestPluginWorkflows(AnsibleTestBase):
                         cwd=_plugin_directory, shell=True)
 
     @skipUnless(
-        environ.get('TEST_ZPLAYS', False),
+        os.environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     def test5_another_relationships_blueprint(self):
@@ -153,7 +149,7 @@ class TestPluginWorkflows(AnsibleTestBase):
                         cwd=_plugin_directory, shell=True)
 
     @skipUnless(
-        environ.get('TEST_OPENVPN', False),
+        os.environ.get('TEST_OPENVPN', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_OPENVPN=true')
     def test6_openvpn_blueprint(self):
@@ -172,7 +168,7 @@ class TestPluginWorkflows(AnsibleTestBase):
                 'openvpn')[0].runtime_properties.keys())
 
     @skipUnless(
-        environ.get('TEST_ZPLAYS', False),
+        os.environ.get('TEST_ZPLAYS', False),
         reason='This test requires you to run "vagrant up". '
                'And export TEST_ZPLAYS=true')
     def test6_clearwater_blueprint(self):

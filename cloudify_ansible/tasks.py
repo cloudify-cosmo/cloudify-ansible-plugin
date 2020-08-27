@@ -73,8 +73,8 @@ def secure_log_playbook_args(_ctx, args, **_):
                 log_message += "  {0}".format("  ".join(v.splitlines(True)))
             else:
                 # if hide true hide the value with "*"
-                log_message += "{0} : {1}\n".format(key, '*'*len(value)
-                                                         if hide else value)
+                log_message += "{0} : {1}\n".format(
+                    key, '*' * len(value) if hide else value)
         return log_message
 
     log_message = _log(args, args.get("sensitive_keys", {}))

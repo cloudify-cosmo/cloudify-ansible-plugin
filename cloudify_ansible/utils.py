@@ -501,7 +501,7 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
                 inner_dict = _get_secure_values(value, sensitive_keys, hide)
                 data[key] = inner_dict
             else:
-                data[key] = '*'*len(value) if hide else value
+                data[key] = '*' * len(value) if hide else value
         return data
 
     if config and isinstance(config, dict):

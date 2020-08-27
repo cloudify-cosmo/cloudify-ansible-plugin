@@ -1,8 +1,13 @@
-nose
 mock
+pyfakefs
+pytest
+pytest-cov
+flake8
+nose
+pep8
+nose-exclude
+nose
 
 # For integration tests
 git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
 git+https://github.com/cloudify-cosmo/cloudify-cli@master#egg=cloudify-cli==master
-pytest==4.6.3
-pyyaml==3.12
