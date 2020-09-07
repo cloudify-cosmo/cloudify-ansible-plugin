@@ -23,6 +23,7 @@ from cloudify.manager import get_rest_client
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException)
+from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import text_type
 
 try:
@@ -109,20 +110,25 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
     :return: The absolute path on the manager to the file.
     """
 
+    def _get_tenant_name():
+        client = get_rest_client()
+        blueprint_from_rest = client.blueprints.get(_ctx.blueprint.id)
+        if blueprint_from_rest['visibility'] == VisibilityState.GLOBAL:
+            return blueprint_from_rest['tenant_name']
+        return _ctx.tenant_name
+
     def _get_deployment_blueprint(deployment_id):
-        new_blueprint = ""
         try:
             # get the latest deployment update to get the new blueprint id
             client = get_rest_client()
             dep_upd = \
                 client.deployment_updates.list(deployment_id=deployment_id,
                                                sort='created_at')[-1]
-            new_blueprint = \
-                client.deployment_updates.get(dep_upd.id)["new_blueprint_id"]
+            return client.deployment_updates.get(
+                dep_upd.id)["new_blueprint_id"]
         except KeyError:
             raise NonRecoverableError(
                 "can't get blueprint for deployment {0}".format(deployment_id))
-        return new_blueprint
 
     if not isinstance(file_path, (text_type, bytes)):
         raise NonRecoverableError(
@@ -156,7 +162,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                     _get_deployment_blueprint(_ctx.deployment.id)
             file_path = \
                 BP_INCLUDES_PATH.format(
-                    tenant=_ctx.tenant_name,
+                    tenant=_get_tenant_name(),
                     blueprint=deployment_blueprint,
                     relative_path=file_path)
     if os.path.exists(file_path):
@@ -501,7 +507,7 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
                 inner_dict = _get_secure_values(value, sensitive_keys, hide)
                 data[key] = inner_dict
             else:
-                data[key] = '*'*len(value) if hide else value
+                data[key] = '*' * len(value) if hide else value
         return data
 
     if config and isinstance(config, dict):
