@@ -11,6 +11,7 @@ checkout:
 
 
 executors:
+
   py27:
     docker:
       - image: circleci/python:2.7

@@ -79,3 +79,6 @@
 2.9.3:
   - Support global visibility blueprints.
   - Support existing inventory file.
+
+2.9.4:
+  - fix build issue
