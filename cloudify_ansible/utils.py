@@ -529,7 +529,8 @@ def make_virtualenv(path):
         Make a venv for installing ansible module inside.
     """
 
-    ctx_from_import.logger.info("the sys.executable is:{ex}".format(ex=sys.executable))
+    ctx_from_import.logger.info(
+        "the sys.executable is:{ex}".format(ex=sys.executable))
     runner.run([
         sys.executable, '-m', 'virtualenv', path
     ])
@@ -539,7 +540,8 @@ def install_packages_to_venv(venv, packages_list):
     command = [
                   get_python_path(venv), '-m', 'pip', 'install'
               ] + packages_list
-    ctx_from_import.logger.info("commmannd:*********************************{}".format(command))
+    ctx_from_import.logger.info(
+        "commmannd:*********************************{}".format(command))
     runner.run(command=command, cwd=venv)
 
 
@@ -568,7 +570,6 @@ def get_executable_path(executable, venv):
 
 
 def create_playbook_venv(_ctx, packages_to_install):
-
     DEPLOYMENT_OLD_WORKDIR = os.path.join('/opt', 'mgmtworker', 'work',
                                           'deployments',
                                           _get_tenant_name(_ctx),
@@ -588,6 +589,12 @@ def create_playbook_venv(_ctx, packages_to_install):
                                   " because there is on deployment work "
                                   "directory")
     make_virtualenv(path=venv_path)
-    _get_instance(_ctx).runtime_properties['playbook_venv'] = venv_path
+    _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
     install_packages_to_venv(venv_path, packages_to_install)
     return venv_path
+
+
+def delete_playbook_venv(ctx):
+    directory = _get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
+    if directory and os.path.exists(directory):
+        shutil.rmtree(directory)

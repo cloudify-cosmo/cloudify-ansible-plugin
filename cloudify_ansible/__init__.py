@@ -26,6 +26,7 @@ from cloudify_ansible_sdk import DIRECT_PARAMS
 from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
+    delete_playbook_venv,
     create_playbook_venv,
     handle_site_yaml,
     handle_sources,
@@ -100,7 +101,7 @@ def ansible_playbook_node(func):
         try:
             extra_packages = extra_packages or ctx.node.properties.get(
                 'extra_packages') or []
-            extra_packages.append('ansible==2.9.5')
+            extra_packages.append(u'ansible==2.9.5')
             create_playbook_venv(ctx,
                                  packages_to_install=extra_packages)
             create_playbook_workspace(ctx)
@@ -145,5 +146,5 @@ def ansible_playbook_node(func):
         finally:
             if not save_playbook:
                 delete_playbook_workspace(ctx)
-
+            delete_playbook_venv(ctx)
     return wrapper
