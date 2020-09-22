@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import sys
 import errno
 import shutil
 from tempfile import mkdtemp
@@ -20,11 +21,13 @@ from uuid import uuid1
 import yaml
 
 from cloudify.manager import get_rest_client
+from cloudify.utils import LocalCommandRunner
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException)
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import text_type
+from cloudify import ctx as ctx_from_import
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
@@ -34,11 +37,14 @@ except ImportError:
 
 from cloudify_ansible.constants import (
     BP_INCLUDES_PATH,
+    PLAYBOOK_VENV,
     WORKSPACE,
     SOURCES,
     HOSTS
 )
 from cloudify_ansible_sdk.sources import AnsibleSource
+
+runner = LocalCommandRunner()
 
 
 def handle_key_data(_data, workspace_dir):
@@ -68,6 +74,7 @@ def handle_key_data(_data, workspace_dir):
                 os.chmod(private_key_file, 0o600)
                 existing_dict[key] = private_key_file
         return existing_dict
+
     return recurse_dictionary(_data)
 
 
@@ -94,6 +101,14 @@ def download_nested_file_to_new_nested_temp_file(file_path, new_root, _ctx):
     return _ctx.download_resource(file_path, new_full_path)
 
 
+def _get_tenant_name(_ctx):
+    client = get_rest_client()
+    blueprint_from_rest = client.blueprints.get(_ctx.blueprint.id)
+    if blueprint_from_rest['visibility'] == VisibilityState.GLOBAL:
+        return blueprint_from_rest['tenant_name']
+    return _ctx.tenant_name
+
+
 def handle_file_path(file_path, additional_playbook_files, _ctx):
     """Get the path to a file.
 
@@ -109,13 +124,6 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
     :param _ctx: The Cloudify Context.
     :return: The absolute path on the manager to the file.
     """
-
-    def _get_tenant_name():
-        client = get_rest_client()
-        blueprint_from_rest = client.blueprints.get(_ctx.blueprint.id)
-        if blueprint_from_rest['visibility'] == VisibilityState.GLOBAL:
-            return blueprint_from_rest['tenant_name']
-        return _ctx.tenant_name
 
     def _get_deployment_blueprint(deployment_id):
         try:
@@ -162,7 +170,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                     _get_deployment_blueprint(_ctx.deployment.id)
             file_path = \
                 BP_INCLUDES_PATH.format(
-                    tenant=_get_tenant_name(),
+                    tenant=_get_tenant_name(_ctx),
                     blueprint=deployment_blueprint,
                     relative_path=file_path)
     if os.path.exists(file_path):
@@ -301,7 +309,6 @@ def get_source_config_from_ctx(_ctx,
                                hostname=None,
                                host_config=None,
                                sources=None):
-
     """Generate a source config from CTX.
 
     :param _ctx: Either a NodeInstance or a RelationshipInstance ctx.
@@ -323,7 +330,7 @@ def get_source_config_from_ctx(_ctx,
         return AnsibleSource(_ctx.instance.runtime_properties[SOURCES]).config
     elif _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \
-            get_host_config_from_compute_node(_ctx.target)
+                      get_host_config_from_compute_node(_ctx.target)
         group_name, hostname = \
             get_group_name_and_hostname(
                 _ctx.target, group_name, hostname)
@@ -331,7 +338,7 @@ def get_source_config_from_ctx(_ctx,
             _ctx.target.node.name, _ctx.deployment.id)
     else:
         host_config = host_config or \
-            get_host_config_from_compute_node(_ctx)
+                      get_host_config_from_compute_node(_ctx)
         group_name, hostname = \
             get_group_name_and_hostname(
                 _ctx, group_name, hostname)
@@ -489,6 +496,7 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
     :param _ctx: Cloudify node instance which is instance of CloudifyContext
     :param config: Playbook node configurations
     """
+
     def _get_secure_values(data, sensitive_keys, parent_hide=False):
         """
         ::param data : dict to check againt sensitive_keys
@@ -514,3 +522,72 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
         config = _get_secure_values(config, config.get("sensitive_keys", {}))
         for key, value in config.items():
             _ctx.instance.runtime_properties[key] = value
+
+
+def make_virtualenv(path):
+    """
+        Make a venv for installing ansible module inside.
+    """
+
+    ctx_from_import.logger.info("the sys.executable is:{ex}".format(ex=sys.executable))
+    runner.run([
+        sys.executable, '-m', 'virtualenv', path
+    ])
+
+
+def install_packages_to_venv(venv, packages_list):
+    command = [
+                  get_python_path(venv), '-m', 'pip', 'install'
+              ] + packages_list
+    ctx_from_import.logger.info("commmannd:*********************************{}".format(command))
+    runner.run(command=command, cwd=venv)
+
+
+def get_python_path(venv):
+    """
+    Path to the python executable in the given venv
+    Taken from cloudify common utils.
+    """
+
+    return get_executable_path(
+        'python.exe' if os.name == 'nt' else 'python',
+        venv=venv
+    )
+
+
+def get_executable_path(executable, venv):
+    """Lookup the path to the executable, os agnostic.
+    Taken from cloudify common utils.
+    :param executable: the name of the executable
+    :param venv: the venv to look for the executable in
+    """
+    if os.name == 'nt':
+        return '{0}\\Scripts\\{1}'.format(venv, executable)
+    else:
+        return '{0}/bin/{1}'.format(venv, executable)
+
+
+def create_playbook_venv(_ctx, packages_to_install):
+
+    DEPLOYMENT_OLD_WORKDIR = os.path.join('/opt', 'mgmtworker', 'work',
+                                          'deployments',
+                                          _get_tenant_name(_ctx),
+                                          _ctx.deployment.id)
+
+    DEPLOYMENT_NEW_WORKDIR = os.path.join('/opt', 'manager', 'resources',
+                                          'deployments',
+                                          _get_tenant_name(_ctx),
+                                          _ctx.deployment.id)
+
+    if os.path.isdir(DEPLOYMENT_NEW_WORKDIR):
+        venv_path = mkdtemp(dir=DEPLOYMENT_NEW_WORKDIR)
+    elif os.path.isdir(DEPLOYMENT_OLD_WORKDIR):
+        venv_path = mkdtemp(dir=DEPLOYMENT_OLD_WORKDIR)
+    else:
+        raise NonRecoverableError("Cant create virtual env for playbook"
+                                  " because there is on deployment work "
+                                  "directory")
+    make_virtualenv(path=venv_path)
+    _get_instance(_ctx).runtime_properties['playbook_venv'] = venv_path
+    install_packages_to_venv(venv_path, packages_to_install)
+    return venv_path

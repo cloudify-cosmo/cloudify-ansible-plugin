@@ -15,6 +15,12 @@ dsl_definitions:
       description: >
         A full path to your ansible_playbook executable if user don't want to
         use the included version of executable in the plugin
+    extra_packages:
+      # uncomment on 5+
+      # type: list
+      default: []
+      description: >
+        List of packages to install on playbooks virtual env before running the playbook.
     playbook_source_path:
       type: string
       default: ""
