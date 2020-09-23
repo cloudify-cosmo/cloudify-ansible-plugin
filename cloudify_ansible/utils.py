@@ -20,6 +20,7 @@ from tempfile import mkdtemp
 from uuid import uuid1
 import yaml
 
+from cloudify import ctx
 from cloudify.manager import get_rest_client
 from cloudify.utils import LocalCommandRunner
 from cloudify.exceptions import (NonRecoverableError,
@@ -99,7 +100,8 @@ def download_nested_file_to_new_nested_temp_file(file_path, new_root, _ctx):
     return _ctx.download_resource(file_path, new_full_path)
 
 
-def _get_tenant_name(_ctx):
+def _get_tenant_name(_ctx=None):
+    _ctx = _ctx or ctx
     client = get_rest_client()
     blueprint_from_rest = client.blueprints.get(_ctx.blueprint.id)
     if blueprint_from_rest['visibility'] == VisibilityState.GLOBAL:

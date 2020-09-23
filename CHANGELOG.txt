@@ -83,5 +83,5 @@
 2.9.4:
   - fix build issue
 
-2.9.5:
+2.10.0:
   - Controller run each playbook in different venv.
