@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 
 from cloudify.decorators import operation
 from cloudify.exceptions import (
@@ -102,13 +101,10 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         script_path = \
             playbook_args.get(
                 "ansible_playbook_executable_path",
-                utils.get_executable_path(executable="ansible-playbook", venv=
-                    utils._get_instance(_ctx).runtime_properties[
+                utils.get_executable_path(
+                    executable="ansible-playbook",
+                    venv=utils._get_instance(_ctx).runtime_properties[
                         constants.PLAYBOOK_VENV]))
-
-
-        _ctx.logger.info(
-            "***********script_path***************:{}".format(script_path))
 
         # Prepare the script which need to be run
         playbook.execute(

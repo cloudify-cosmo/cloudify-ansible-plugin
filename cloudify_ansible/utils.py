@@ -27,7 +27,6 @@ from cloudify.exceptions import (NonRecoverableError,
                                  HttpException)
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import text_type
-from cloudify import ctx as ctx_from_import
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
@@ -330,7 +329,7 @@ def get_source_config_from_ctx(_ctx,
         return AnsibleSource(_ctx.instance.runtime_properties[SOURCES]).config
     elif _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \
-                      get_host_config_from_compute_node(_ctx.target)
+            get_host_config_from_compute_node(_ctx.target)
         group_name, hostname = \
             get_group_name_and_hostname(
                 _ctx.target, group_name, hostname)
@@ -338,7 +337,7 @@ def get_source_config_from_ctx(_ctx,
             _ctx.target.node.name, _ctx.deployment.id)
     else:
         host_config = host_config or \
-                      get_host_config_from_compute_node(_ctx)
+            get_host_config_from_compute_node(_ctx)
         group_name, hostname = \
             get_group_name_and_hostname(
                 _ctx, group_name, hostname)
@@ -528,73 +527,55 @@ def make_virtualenv(path):
     """
         Make a venv for installing ansible module inside.
     """
-
-    ctx_from_import.logger.info(
-        "the sys.executable is:{ex}".format(ex=sys.executable))
     runner.run([
         sys.executable, '-m', 'virtualenv', path
     ])
 
 
 def install_packages_to_venv(venv, packages_list):
-    command = [
-                  get_python_path(venv), '-m', 'pip', 'install'
-              ] + packages_list
-    ctx_from_import.logger.info(
-        "commmannd:*********************************{}".format(command))
+    # Force reinstall in playbook venv in order to make sure
+    # they being installed on specified environment .
+    command = [get_executable_path('python', venv=venv), '-m', 'pip',
+               'install', '--force-reinstall'] + packages_list
     runner.run(command=command, cwd=venv)
 
 
-def get_python_path(venv):
-    """
-    Path to the python executable in the given venv
-    Taken from cloudify common utils.
-    """
-
-    return get_executable_path(
-        'python.exe' if os.name == 'nt' else 'python',
-        venv=venv
-    )
-
-
 def get_executable_path(executable, venv):
-    """Lookup the path to the executable, os agnostic.
-    Taken from cloudify common utils.
+    """
     :param executable: the name of the executable
     :param venv: the venv to look for the executable in
     """
-    if os.name == 'nt':
-        return '{0}\\Scripts\\{1}'.format(venv, executable)
-    else:
-        return '{0}/bin/{1}'.format(venv, executable)
+    return '{0}/bin/{1}'.format(venv, executable)
 
 
 def create_playbook_venv(_ctx, packages_to_install):
-    DEPLOYMENT_OLD_WORKDIR = os.path.join('/opt', 'mgmtworker', 'work',
-                                          'deployments',
-                                          _get_tenant_name(_ctx),
-                                          _ctx.deployment.id)
+    """
+        Handle creation of virtual environments for running playbooks.
+        The virtual environments will be created at the deployment directory.
+       :param _ctx: cloudify context.
+       :param packages_to_install: list of python packages to install
+        inside venv.
+       """
+    deployments_old_workdir = os.path.join('/opt', 'mgmtworker', 'work',
+                                           'deployments',
+                                           _get_tenant_name(_ctx),
+                                           _ctx.deployment.id)
 
-    DEPLOYMENT_NEW_WORKDIR = os.path.join('/opt', 'manager', 'resources',
-                                          'deployments',
-                                          _get_tenant_name(_ctx),
-                                          _ctx.deployment.id)
+    deployments_new_workdir = os.path.join('/opt', 'manager',
+                                           'resources',
+                                           'deployments',
+                                           _get_tenant_name(_ctx),
+                                           _ctx.deployment.id)
 
-    if os.path.isdir(DEPLOYMENT_NEW_WORKDIR):
-        venv_path = mkdtemp(dir=DEPLOYMENT_NEW_WORKDIR)
-    elif os.path.isdir(DEPLOYMENT_OLD_WORKDIR):
-        venv_path = mkdtemp(dir=DEPLOYMENT_OLD_WORKDIR)
+    if os.path.isdir(deployments_new_workdir):
+        venv_path = mkdtemp(dir=deployments_new_workdir)
+    elif os.path.isdir(deployments_old_workdir):
+        venv_path = mkdtemp(dir=deployments_old_workdir)
     else:
         raise NonRecoverableError("Cant create virtual env for playbook"
-                                  " because there is on deployment work "
+                                  " because there is no deployment work "
                                   "directory")
     make_virtualenv(path=venv_path)
     _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
     install_packages_to_venv(venv_path, packages_to_install)
     return venv_path
-
-
-def delete_playbook_venv(ctx):
-    directory = _get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
-    if directory and os.path.exists(directory):
-        shutil.rmtree(directory)

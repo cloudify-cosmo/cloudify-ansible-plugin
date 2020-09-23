@@ -23,16 +23,17 @@ from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
 from cloudify_ansible_sdk import DIRECT_PARAMS
 
+from cloudify_ansible.constants import ANSIBLE_TO_INSTALL
 from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
-    delete_playbook_venv,
     create_playbook_venv,
     handle_site_yaml,
     handle_sources,
     get_remerged_config_sources,
     get_source_config_from_ctx,
-    _get_instance
+    _get_instance,
+    _get_node
 )
 
 
@@ -99,9 +100,9 @@ def ansible_playbook_node(func):
         _get_instance(ctx).update()
 
         try:
-            extra_packages = extra_packages or ctx.node.properties.get(
+            extra_packages = extra_packages or _get_node(ctx).properties.get(
                 'extra_packages') or []
-            extra_packages.append(u'ansible==2.9.5')
+            extra_packages.append(ANSIBLE_TO_INSTALL)
             create_playbook_venv(ctx,
                                  packages_to_install=extra_packages)
             create_playbook_workspace(ctx)
@@ -146,5 +147,4 @@ def ansible_playbook_node(func):
         finally:
             if not save_playbook:
                 delete_playbook_workspace(ctx)
-            delete_playbook_venv(ctx)
     return wrapper
