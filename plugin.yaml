@@ -20,7 +20,7 @@ dsl_definitions:
       # type: list
       default: []
       description: >
-        List of python packages to install on playbook virtual env before running the playbook.
+        List of python packages to install on controller virtual env before running the playbook.
     playbook_source_path:
       type: string
       default: ""

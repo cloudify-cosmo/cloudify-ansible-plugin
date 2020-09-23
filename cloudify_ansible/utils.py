@@ -73,7 +73,6 @@ def handle_key_data(_data, workspace_dir):
                 os.chmod(private_key_file, 0o600)
                 existing_dict[key] = private_key_file
         return existing_dict
-
     return recurse_dictionary(_data)
 
 
@@ -495,7 +494,6 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
     :param _ctx: Cloudify node instance which is instance of CloudifyContext
     :param config: Playbook node configurations
     """
-
     def _get_secure_values(data, sensitive_keys, parent_hide=False):
         """
         ::param data : dict to check againt sensitive_keys
