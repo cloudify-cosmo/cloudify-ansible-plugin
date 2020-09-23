@@ -96,8 +96,9 @@ class TestDecorator(AnsibleTestBase):
             with patch(
                 builtins_open, fake_file
             ):
-                ansible_playbook_node(func)(
-                    playbook_path=self.playbook_path)
+                with patch('cloudify_ansible.create_playbook_venv'):
+                    ansible_playbook_node(func)(
+                        playbook_path=self.playbook_path)
             fake_file.assert_called_with("hosts", "w")
         func.assert_called_with(
             {
@@ -129,10 +130,11 @@ class TestDecorator(AnsibleTestBase):
             with patch(
                 builtins_open, fake_file
             ):
-                ansible_playbook_node(func)(
-                    playbook_path=self.playbook_path,
-                    group_name="name_of_group",
-                    remerge_sources=True)
+                with patch('cloudify_ansible.create_playbook_venv'):
+                    ansible_playbook_node(func)(
+                        playbook_path=self.playbook_path,
+                        group_name="name_of_group",
+                        remerge_sources=True)
             fake_file.assert_called_with("hosts", "w")
         func.assert_called_with(
             {

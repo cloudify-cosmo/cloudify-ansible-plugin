@@ -48,7 +48,8 @@ COMPUTE_NODE_PROPS = {
 }
 RUNTIME_PROPS = {
     'external_id': None,
-    'resource_config': {}
+    'resource_config': {},
+    'playbook_venv': '/path/to/venv'
 }
 RELS = []
 OP_CTX = {
@@ -134,51 +135,57 @@ class TestPluginTasks(AnsibleTestBase):
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook(self, foo):
-        foo.return_value = ('output', 'error', 0)
-        run(
-            self.playbook_path,
-            self.hosts_path,
-            ctx=ctx)
+        with patch('cloudify_ansible.create_playbook_venv'):
+            foo.return_value = ('output', 'error', 0)
+            run(
+                self.playbook_path,
+                self.hosts_path,
+                ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_failed_sdk(self, foo):
         foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
             "We are failed!")
-        with self.assertRaisesRegexp(NonRecoverableError, "We are failed!"):
-            run(
-                self.playbook_path,
-                self.hosts_path,
-                ctx=ctx)
+        with patch('cloudify_ansible.create_playbook_venv'):
+            with self.assertRaisesRegexp(NonRecoverableError,
+                                         "We are failed!"):
+                run(
+                    self.playbook_path,
+                    self.hosts_path,
+                    ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_failed(self, foo):
         foo.side_effect = ProcessException('Unable to run command', -1)
-        with self.assertRaises(NonRecoverableError):
-            run(
-                self.playbook_path,
-                self.hosts_path,
-                ctx=ctx)
+        with patch('cloudify_ansible.create_playbook_venv'):
+            with self.assertRaises(NonRecoverableError):
+                run(
+                    self.playbook_path,
+                    self.hosts_path,
+                    ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_retry(self, foo):
         foo.side_effect = ProcessException(
             'One or more hosts are unreachable.', 4)
-        with self.assertRaises(OperationRetry):
-            run(
-                self.playbook_path,
-                self.hosts_path,
-                ctx=ctx)
+        with patch('cloudify_ansible.create_playbook_venv'):
+            with self.assertRaises(OperationRetry):
+                run(
+                    self.playbook_path,
+                    self.hosts_path,
+                    ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_with_dict_sources(self, foo):
         foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
             "We are failed!"
         )
-        with self.assertRaises(NonRecoverableError):
-            run(
-                self.playbook_path,
-                mock_sources_dict,
-                ctx=ctx)
+        with patch('cloudify_ansible.create_playbook_venv'):
+            with self.assertRaises(NonRecoverableError):
+                run(
+                    self.playbook_path,
+                    mock_sources_dict,
+                    ctx=ctx)
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
