@@ -11,7 +11,7 @@ dsl_definitions:
   playbook_config: &playbook_config
     ansible_playbook_executable_path:
       type: string
-      default: "ansible-playbook"
+      default: ""
       description: >
         A full path to your ansible_playbook executable if user don't want to
         use the included version of executable in the plugin

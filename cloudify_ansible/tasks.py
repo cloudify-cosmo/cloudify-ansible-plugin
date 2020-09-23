@@ -88,7 +88,6 @@ def secure_log_playbook_args(_ctx, args, **_):
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
     secure_log_playbook_args(_ctx, playbook_args)
-
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
@@ -98,13 +97,11 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         # check if ansible_playbook_executable_path was provided
         # if not provided default to "ansible-playbook" which will use the
         # executable included in the temporary virtual env for the deployment.
-        script_path = \
-            playbook_args.get(
-                "ansible_playbook_executable_path",
-                utils.get_executable_path(
-                    executable="ansible-playbook",
-                    venv=utils._get_instance(_ctx).runtime_properties[
-                        constants.PLAYBOOK_VENV]))
+        script_path = playbook_args.get("ansible_playbook_executable_path") or\
+            utils.get_executable_path(
+            executable="ansible-playbook",
+            venv=utils._get_instance(_ctx).runtime_properties[
+                constants.PLAYBOOK_VENV])
 
         # Prepare the script which need to be run
         playbook.execute(
