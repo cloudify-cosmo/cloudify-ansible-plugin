@@ -251,7 +251,7 @@ commands:
             pip install -r test-requirements.txt
       - run:
           name: download manager docker image
-          command:  wget http://repository.cloudifysource.org/cloudify/5.1.0/.dev1-release/cloudify-manager-aio-docker-5.1.0.dev1.tar
+          command:  curl http://repository.cloudifysource.org/cloudify/5.1.0/.dev1-release/cloudify-manager-aio-docker-5.1.0.dev1.tar -o  cloudify-manager-aio-docker-5.1.0.dev1.tar  -v
       - run:
           name: load docker image
           command: docker load -i cloudify-manager-aio-docker-5.1.0.dev1.tar
@@ -424,33 +424,33 @@ workflows:
       - unittests_py36
       - validate_version
       - validate_documentation
-      - wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - rhel_wagon:
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
-      - build_bundle:
-          filters:
-            branches:
-              only: /master/
+      - wagon #:
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
+      - rhel_wagon #:
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
+      - build_bundle #:
+#          filters:
+#            branches:
+#              only: /master/
           requires:
             - wagon
             - rhel_wagon
       - integration_tests_505:
           requires:
             - build_bundle
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
       - integration_tests_510:
           requires:
             - build_bundle
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master|dev)/
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master|dev)/
       - release:
           filters:
             branches:
