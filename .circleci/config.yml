@@ -432,7 +432,7 @@ workflows:
 #          filters:
 #            branches:
 #              only: /([0-9\.]*\-build|master|dev)/
-      - build_bundle #:
+      - build_bundle:
 #          filters:
 #            branches:
 #              only: /master/
