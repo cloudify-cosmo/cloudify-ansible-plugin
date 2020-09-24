@@ -2,19 +2,25 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.9.4.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.10.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.9.4'
+    package_version: '2.10.0'
 
 dsl_definitions:
 
   playbook_config: &playbook_config
     ansible_playbook_executable_path:
       type: string
-      default: "ansible-playbook"
+      default: ""
       description: >
         A full path to your ansible_playbook executable if user don't want to
         use the included version of executable in the plugin
+    extra_packages:
+      # uncomment on 5+
+      # type: list
+      default: []
+      description: >
+        List of python packages to install on controller virtual env before running the playbook.
     playbook_source_path:
       type: string
       default: ""
@@ -134,6 +140,8 @@ dsl_definitions:
   playbook_inputs: &playbook_inputs
     ansible_playbook_executable_path:
       default: { get_property: [SELF, ansible_playbook_executable_path] }
+    extra_packages:
+      default: { get_property: [ SELF, extra_packages ] }
     playbook_source_path:
       default: { get_property: [SELF, playbook_source_path] }
     playbook_path:
@@ -255,6 +263,8 @@ relationships:
           inputs:
             ansible_playbook_executable_path:
               default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
+            extra_packages:
+              default: { get_attribute: [SOURCE, extra_packages] }
             playbook_source_path:
               default: { get_attribute: [SOURCE, playbook_source_path] }
             playbook_path:

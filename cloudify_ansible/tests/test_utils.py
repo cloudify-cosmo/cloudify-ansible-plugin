@@ -14,7 +14,7 @@
 
 import os
 import unittest
-from mock import Mock
+from mock import Mock, patch
 from tempfile import mkstemp
 
 from cloudify.state import current_ctx
@@ -22,6 +22,7 @@ from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
 
 import cloudify_ansible.utils as utils
+from cloudify_ansible.constants import PLAYBOOK_VENV
 
 
 def download_resource_side_effect(*args, **kwargs):
@@ -38,7 +39,8 @@ class UtilsTests(unittest.TestCase):
         _ctx = MockCloudifyContext(
             'node_name',
             properties={'d': 'c', 'b': 'a'},
-            runtime_properties={'a': 'b', 'c': 'd'}
+            runtime_properties={'a': 'b', 'c': 'd'},
+            deployment_id='test-deployment'
         )
         _ctx.download_resource = Mock(
             side_effect=download_resource_side_effect)
@@ -182,3 +184,41 @@ class UtilsTests(unittest.TestCase):
         addtl_files = [p1, p2, p3]
         output = utils.handle_file_path(p0, addtl_files, ctx)
         self.assertEqual(p0, output[0][0])
+
+    def test_create_playbook_venv(self):
+        with patch('cloudify_ansible.utils._get_tenant_name',
+                   return_value='default-tenant'):
+            with patch('cloudify_ansible.utils.os.path.isdir',
+                       return_value=True):
+                with patch('cloudify_ansible.utils.mkdtemp',
+                           return_value=os.path.join(
+                        '/opt',
+                        'mgmtworker',
+                        'work',
+                        'deployments',
+                        'default-tenant',
+                        'test-deployment')):
+                    with patch('cloudify_ansible.utils.runner.run'):
+                        ctx = self._instance_ctx()
+                        utils.create_playbook_venv(_ctx=ctx,
+                                                   packages_to_install=[])
+                    self.assertEqual(ctx.instance.runtime_properties.get(
+                        PLAYBOOK_VENV), os.path.join(
+                        '/opt',
+                        'mgmtworker',
+                        'work',
+                        'deployments',
+                        'default-tenant',
+                        'test-deployment'))
+
+    def test_create_playbook_venv_no_path(self):
+        with patch('cloudify_ansible.utils._get_tenant_name',
+                   return_value='default-tenant'):
+            with patch('cloudify_ansible.utils.os.path.isdir',
+                       return_value=False):
+                ctx = self._instance_ctx()
+                with self.assertRaisesRegexp(
+                        NonRecoverableError,
+                        "Cant create virtual env for playbook"):
+                    utils.create_playbook_venv(_ctx=ctx,
+                                               packages_to_install=[])

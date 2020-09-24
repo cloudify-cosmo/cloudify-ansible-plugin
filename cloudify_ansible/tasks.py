@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from cloudify.decorators import operation
 from cloudify.exceptions import (
     NonRecoverableError,
@@ -31,7 +32,8 @@ from cloudify_ansible_sdk import (
 from cloudify_ansible import (
     ansible_playbook_node,
     ansible_relationship_source,
-    utils
+    utils,
+    constants
 )
 
 UNREACHABLE_CODES = [None, 2, 4]
@@ -53,6 +55,7 @@ def secure_log_playbook_args(_ctx, args, **_):
     This function takes playbook_args and check against sensitive_keys
     to hide that sensitive values when logging
     """
+
     def _log(data, sensitive_keys, log_message="", parent_hide=False):
         """
         ::param data : dict to check againt sensitive_keys
@@ -85,7 +88,6 @@ def secure_log_playbook_args(_ctx, args, **_):
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **_):
     secure_log_playbook_args(_ctx, playbook_args)
-
     try:
         playbook = AnsiblePlaybookFromFile(**playbook_args)
         utils.assign_environ(ansible_env_vars)
@@ -94,10 +96,12 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         process['args'] = playbook.process_args
         # check if ansible_playbook_executable_path was provided
         # if not provided default to "ansible-playbook" which will use the
-        # executable included in the plugin
-        script_path = \
-            playbook_args.get("ansible_playbook_executable_path",
-                              "ansible-playbook")
+        # executable included in the temporary virtual env for the deployment.
+        script_path = playbook_args.get("ansible_playbook_executable_path") or\
+            utils.get_executable_path(
+            executable="ansible-playbook",
+            venv=utils._get_instance(_ctx).runtime_properties[
+                constants.PLAYBOOK_VENV])
 
         # Prepare the script which need to be run
         playbook.execute(

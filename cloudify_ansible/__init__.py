@@ -23,14 +23,17 @@ from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
 from cloudify_ansible_sdk import DIRECT_PARAMS
 
+from cloudify_ansible.constants import ANSIBLE_TO_INSTALL
 from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
+    create_playbook_venv,
     handle_site_yaml,
     handle_sources,
     get_remerged_config_sources,
     get_source_config_from_ctx,
-    _get_instance
+    _get_instance,
+    _get_node
 )
 
 
@@ -42,11 +45,11 @@ def ansible_relationship_source(func):
         source_dict = get_source_config_from_ctx(
             ctx, group_name, hostname, host_config)
         func(source_dict, ctx)
+
     return wrapper
 
 
 def ansible_playbook_node(func):
-
     def wrapper(playbook_path=None,
                 sources=None,
                 ctx=ctx_from_import,
@@ -58,6 +61,7 @@ def ansible_playbook_node(func):
                 save_playbook=False,
                 remerge_sources=False,
                 playbook_source_path=None,
+                extra_packages=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -75,6 +79,8 @@ def ansible_playbook_node(func):
           your Ansible Playbook.
         :param save_playbook: don't remove playbook after action
         :param remerge_sources: update sources on target node
+        :param extra_packages: list of packages to install to ansible playbook
+         controller env.
         :param kwargs:
         :return:
         """
@@ -94,6 +100,11 @@ def ansible_playbook_node(func):
         _get_instance(ctx).update()
 
         try:
+            extra_packages = extra_packages or _get_node(ctx).properties.get(
+                'extra_packages') or []
+            extra_packages.append(ANSIBLE_TO_INSTALL)
+            create_playbook_venv(ctx,
+                                 packages_to_install=extra_packages)
             create_playbook_workspace(ctx)
             # check if source path is provided [full path/URL]
             if playbook_source_path:
@@ -136,5 +147,4 @@ def ansible_playbook_node(func):
         finally:
             if not save_playbook:
                 delete_playbook_workspace(ctx)
-
     return wrapper
