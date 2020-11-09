@@ -540,6 +540,8 @@ def install_packages_to_venv(venv, packages_list):
     if packages_list:
         command = [get_executable_path('python', venv=venv), '-m', 'pip',
                    'install', '--force-reinstall'] + packages_list
+        ctx.logger.info("Installing {packages} on playbook`s venv.".format(
+            packages=packages_list))
         try:
             runner.run(command=command, cwd=venv)
         except CommandExecutionException as e:
@@ -584,13 +586,11 @@ def create_playbook_venv(_ctx, packages_to_install):
                                   " because there is no deployment work "
                                   "directory")
     make_virtualenv(path=venv_path)
-
     try:
-        _ctx.logger.info("Installing Ansible on playbook`s venv.")
         install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
     except NonRecoverableError:
-        _ctx.logger.info("Failed to install Ansible inside venv, using"
-                         " Ansible executable of the plugin venv,"
+        _ctx.logger.info("Failed to install Ansible inside playbook venv,"
+                         " using Ansible executable of the plugin venv,"
                          "extra_packages are not being installed.")
         shutil.rmtree(venv_path)
         _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
