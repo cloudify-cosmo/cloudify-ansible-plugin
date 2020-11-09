@@ -23,7 +23,6 @@ from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
 from cloudify_ansible_sdk import DIRECT_PARAMS
 
-from cloudify_ansible.constants import ANSIBLE_TO_INSTALL
 from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
@@ -102,7 +101,6 @@ def ansible_playbook_node(func):
         try:
             extra_packages = extra_packages or _get_node(ctx).properties.get(
                 'extra_packages') or []
-            extra_packages.append(ANSIBLE_TO_INSTALL)
             create_playbook_venv(ctx,
                                  packages_to_install=extra_packages)
             create_playbook_workspace(ctx)

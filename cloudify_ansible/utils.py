@@ -25,7 +25,8 @@ from cloudify.manager import get_rest_client
 from cloudify.utils import LocalCommandRunner
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
-                                 HttpException)
+                                 HttpException,
+                                 CommandExecutionException)
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import text_type
 
@@ -36,6 +37,7 @@ except ImportError:
     RELATIONSHIP_INSTANCE = 'relationship-instance'
 
 from cloudify_ansible.constants import (
+    ANSIBLE_TO_INSTALL,
     BP_INCLUDES_PATH,
     PLAYBOOK_VENV,
     WORKSPACE,
@@ -537,15 +539,20 @@ def install_packages_to_venv(venv, packages_list):
     # they being installed on specified environment .
     command = [get_executable_path('python', venv=venv), '-m', 'pip',
                'install', '--force-reinstall'] + packages_list
-    runner.run(command=command, cwd=venv)
+    try:
+        runner.run(command=command, cwd=venv)
+    except CommandExecutionException as e:
+        raise NonRecoverableError("Can't install extra_package on playbook`s"
+                                  " venv. Error message: "
+                                  "{msg}".format(msg=e.message))
 
 
 def get_executable_path(executable, venv):
     """
     :param executable: the name of the executable
-    :param venv: the venv to look for the executable in
+    :param venv: the venv to look for the executable in.
     """
-    return '{0}/bin/{1}'.format(venv, executable)
+    return '{0}/bin/{1}'.format(venv, executable) if venv else executable
 
 
 def create_playbook_venv(_ctx, packages_to_install):
@@ -576,6 +583,16 @@ def create_playbook_venv(_ctx, packages_to_install):
                                   " because there is no deployment work "
                                   "directory")
     make_virtualenv(path=venv_path)
+
+    try:
+        install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
+    except NonRecoverableError:
+        _ctx.logger.info("Failed to install Ansible inside venv, using"
+                         " Ansible executable of the plugin venv,"
+                         "extra_packages are not being installed")
+        shutil.rmtree(venv_path)
+        _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
+        return
+
     _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
     install_packages_to_venv(venv_path, packages_to_install)
-    return venv_path
