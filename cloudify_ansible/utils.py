@@ -537,14 +537,15 @@ def make_virtualenv(path):
 def install_packages_to_venv(venv, packages_list):
     # Force reinstall in playbook venv in order to make sure
     # they being installed on specified environment .
-    command = [get_executable_path('python', venv=venv), '-m', 'pip',
-               'install', '--force-reinstall'] + packages_list
-    try:
-        runner.run(command=command, cwd=venv)
-    except CommandExecutionException as e:
-        raise NonRecoverableError("Can't install extra_package on playbook`s"
-                                  " venv. Error message: "
-                                  "{msg}".format(msg=e.message))
+    if packages_list:
+        command = [get_executable_path('python', venv=venv), '-m', 'pip',
+                   'install', '--force-reinstall'] + packages_list
+        try:
+            runner.run(command=command, cwd=venv)
+        except CommandExecutionException as e:
+            raise NonRecoverableError("Can't install extra_package on"
+                                      " playbook`s venv. Error message: "
+                                      "{err}".format(err=e))
 
 
 def get_executable_path(executable, venv):
@@ -585,11 +586,12 @@ def create_playbook_venv(_ctx, packages_to_install):
     make_virtualenv(path=venv_path)
 
     try:
+        _ctx.logger.info("Installing Ansible on playbook`s venv.")
         install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
     except NonRecoverableError:
         _ctx.logger.info("Failed to install Ansible inside venv, using"
                          " Ansible executable of the plugin venv,"
-                         "extra_packages are not being installed")
+                         "extra_packages are not being installed.")
         shutil.rmtree(venv_path)
         _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
         return
