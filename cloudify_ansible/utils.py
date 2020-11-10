@@ -541,8 +541,9 @@ def install_packages_to_venv(venv, packages_list):
     # they being installed on specified environment .
     if packages_list:
         command = [get_executable_path('python', venv=venv), '-m', 'pip',
-                   'install', '--force-reinstall',
-                   '--retries=2', '--timeout=15'] + packages_list
+                   'install', '--force-reinstall', '--retries=2',
+                   '--timeout=15'] + packages_list
+        ctx.logger.debug("cmd:{}".format(command))
         ctx.logger.info("Installing {packages} on playbook`s venv.".format(
             packages=packages_list))
         try:
