@@ -532,7 +532,7 @@ def make_virtualenv(path):
     """
     ctx.logger.debug("Creating vritualenv at: {path}".format(path=path))
     runner.run([
-        sys.executable, '-m', 'virtualenv', path
+        sys.executable, '-m', 'virtualenv', '--no-download', path
     ])
 
 
@@ -541,7 +541,8 @@ def install_packages_to_venv(venv, packages_list):
     # they being installed on specified environment .
     if packages_list:
         command = [get_executable_path('python', venv=venv), '-m', 'pip',
-                   'install', '--force-reinstall'] + packages_list
+                   'install', '--force-reinstall',
+                   '--retries=2', '--timeout=15'] + packages_list
         ctx.logger.info("Installing {packages} on playbook`s venv.".format(
             packages=packages_list))
         try:
