@@ -25,7 +25,9 @@ from cloudify.manager import get_rest_client
 from cloudify.utils import LocalCommandRunner
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
-                                 HttpException)
+                                 HttpException,
+                                 CommandExecutionException)
+from cloudify_common_sdk.utils import get_deployment_dir
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import text_type
 
@@ -36,6 +38,7 @@ except ImportError:
     RELATIONSHIP_INSTANCE = 'relationship-instance'
 
 from cloudify_ansible.constants import (
+    ANSIBLE_TO_INSTALL,
     BP_INCLUDES_PATH,
     PLAYBOOK_VENV,
     WORKSPACE,
@@ -527,25 +530,35 @@ def make_virtualenv(path):
     """
         Make a venv for installing ansible module inside.
     """
+    ctx.logger.debug("Creating vritualenv at: {path}".format(path=path))
     runner.run([
-        sys.executable, '-m', 'virtualenv', path
+        sys.executable, '-m', 'virtualenv', '--no-download', path
     ])
 
 
 def install_packages_to_venv(venv, packages_list):
     # Force reinstall in playbook venv in order to make sure
     # they being installed on specified environment .
-    command = [get_executable_path('python', venv=venv), '-m', 'pip',
-               'install', '--force-reinstall'] + packages_list
-    runner.run(command=command, cwd=venv)
+    if packages_list:
+        command = [get_executable_path('python', venv=venv), '-m', 'pip',
+                   'install', '--force-reinstall',
+                   '--retries=2', '--timeout=15'] + packages_list
+        ctx.logger.info("Installing {packages} on playbook`s venv.".format(
+            packages=packages_list))
+        try:
+            runner.run(command=command, cwd=venv)
+        except CommandExecutionException as e:
+            raise NonRecoverableError("Can't install extra_package on"
+                                      " playbook`s venv. Error message: "
+                                      "{err}".format(err=e))
 
 
 def get_executable_path(executable, venv):
     """
     :param executable: the name of the executable
-    :param venv: the venv to look for the executable in
+    :param venv: the venv to look for the executable in.
     """
-    return '{0}/bin/{1}'.format(venv, executable)
+    return '{0}/bin/{1}'.format(venv, executable) if venv else executable
 
 
 def create_playbook_venv(_ctx, packages_to_install):
@@ -556,26 +569,21 @@ def create_playbook_venv(_ctx, packages_to_install):
        :param packages_to_install: list of python packages to install
         inside venv.
        """
-    deployments_old_workdir = os.path.join('/opt', 'mgmtworker', 'work',
-                                           'deployments',
-                                           _get_tenant_name(_ctx),
-                                           _ctx.deployment.id)
-
-    deployments_new_workdir = os.path.join('/opt', 'manager',
-                                           'resources',
-                                           'deployments',
-                                           _get_tenant_name(_ctx),
-                                           _ctx.deployment.id)
-
-    if os.path.isdir(deployments_new_workdir):
-        venv_path = mkdtemp(dir=deployments_new_workdir)
-    elif os.path.isdir(deployments_old_workdir):
-        venv_path = mkdtemp(dir=deployments_old_workdir)
-    else:
-        raise NonRecoverableError("Cant create virtual env for playbook"
-                                  " because there is no deployment work "
-                                  "directory")
+    deployment_dir = get_deployment_dir(_ctx.deployment.id)
+    venv_path = mkdtemp(dir=deployment_dir)
     make_virtualenv(path=venv_path)
+    try:
+        install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
+    except NonRecoverableError:
+        _ctx.logger.info("Failed to install Ansible inside playbook"
+                         " virtualenv, using Ansible executable of the plugin"
+                         " virtualenv.")
+        shutil.rmtree(venv_path)
+        _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
+        if packages_to_install:
+            raise NonRecoverableError('Do not use extra_packages when'
+                                      ' working on the plugin virtualenv.')
+        return
+
     _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
     install_packages_to_venv(venv_path, packages_to_install)
-    return venv_path

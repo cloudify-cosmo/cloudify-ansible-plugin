@@ -85,3 +85,6 @@
 
 2.10.0:
   - Controller run each playbook in different venv.
+
+2.10.1:
+  - Fix bug of multi tenancy, if working offline use the plugin venv ansible-playbook executable and can't use "extra_packages".

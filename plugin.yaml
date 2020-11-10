@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.10.0.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.10.1.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.10.0'
+    package_version: '2.10.1'
 
 dsl_definitions:
 
@@ -21,6 +21,7 @@ dsl_definitions:
       default: []
       description: >
         List of python packages to install on controller virtual env before running the playbook.
+        If the manager has no internet connection this feature cannot be used.
     playbook_source_path:
       type: string
       default: ""
