@@ -549,7 +549,9 @@ def install_packages_to_venv(venv, packages_list):
         ctx.logger.info("Installing {packages} on playbook`s venv.".format(
             packages=packages_list))
         try:
-            res = runner.run(command=command, cwd=venv, execution_env={'PYTHONPATH':''})
+            res = runner.run(command=command,
+                             cwd=venv,
+                             execution_env={'PYTHONPATH': ''})
             ctx.logger.info("std out:  \n\n")
             ctx.logger.info(res.std_out)
             ctx.logger.info("std err: \n\n")
@@ -583,7 +585,8 @@ def get_executable_path(executable, venv):
 #         install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
 #     except NonRecoverableError:
 #         _ctx.logger.info("Failed to install Ansible inside playbook"
-#                          " virtualenv, using Ansible executable of the plugin"
+#                          " virtualenv, using Ansible executable of
+#                          the plugin"
 #                          " virtualenv.")
 #         shutil.rmtree(venv_path)
 #         _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
@@ -617,7 +620,7 @@ def create_playbook_venv(_ctx, packages_to_install):
         _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
         if packages_to_install:
             raise NonRecoverableError('Do not use extra_packages when'
-                                  ' working on the plugin virtualenv.')
+                                      ' working on the plugin virtualenv.')
 
 
 def is_connected_to_internet():
@@ -625,6 +628,6 @@ def is_connected_to_internet():
         urlopen('http://google.com', timeout=5)
         ctx.logger.info("Connected to internet")
         return True
-    except URLError as e:
+    except URLError:
         ctx.logger.info("No Internet connection")
         return False
