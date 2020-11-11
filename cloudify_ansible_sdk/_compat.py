@@ -22,11 +22,12 @@ PY2 = sys.version_info[0] == 2
 
 if PY2:
     text_type = unicode
-
+    from urllib2 import urlopen, URLError
 else:
     text_type = str
-
+    from urllib.request import urlopen
+    from urllib.error import URLError
 
 __all__ = [
-    'PY2', 'text_type',
+    'PY2', 'text_type', 'urlopen', 'URLError'
 ]
