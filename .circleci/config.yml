@@ -433,9 +433,9 @@ workflows:
             branches:
               only: /([0-9\.]*\-build|master|dev|fix-waiting-too-much-bug)/
       - build_bundle:
-          filters:
-            branches:
-              only: /master/
+#          filters:
+#            branches:
+#              only: /master/
           requires:
             - wagon
             - rhel_wagon
