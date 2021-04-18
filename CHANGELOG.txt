@@ -88,3 +88,5 @@
 
 2.10.1:
   - Fix bug of multi tenancy, if working offline use the plugin venv ansible-playbook executable and can't use "extra_packages".
+2.11.0:
+  - RD-469: Send JSON event to event log during execution.
