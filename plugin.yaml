@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.10.1.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.11.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.10.1'
+    package_version: '2.11.0'
 
 dsl_definitions:
 
@@ -79,6 +79,7 @@ dsl_definitions:
         # On Ansible 2.8.x "INVALID_TASK_ATTRIBUTE_FAILED" default value has
         # been changed to "True" which cause failure when run playbook
         ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
+        ANSIBLE_STDOUT_CALLBACK: json
       description: >
         A dictionary of environment variables to set.
     debug_level:

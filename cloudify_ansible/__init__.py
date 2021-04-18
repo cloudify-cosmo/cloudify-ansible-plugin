@@ -22,7 +22,7 @@ from cloudify_common_sdk.resource_downloader import untar_archive
 from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
 from cloudify_ansible_sdk import DIRECT_PARAMS
-
+from cloudify_ansible import constants
 from cloudify_ansible.utils import (
     create_playbook_workspace,
     delete_playbook_workspace,
@@ -46,6 +46,17 @@ def ansible_relationship_source(func):
         func(source_dict, ctx)
 
     return wrapper
+
+
+def set_ansible_env_vars(ansible_env_vars=None):
+    ansible_env_vars = ansible_env_vars or {}
+    if constants.OPTION_HOST_CHECKING not in ansible_env_vars:
+        ansible_env_vars[constants.OPTION_HOST_CHECKING] = "False"
+    if constants.OPTION_STDOUT_FORMAT not in ansible_env_vars:
+        ansible_env_vars[constants.OPTION_STDOUT_FORMAT] = "json"
+    if constants.OPTION_TASK_FAILED_ATTRIBUTE not in ansible_env_vars:
+        ansible_env_vars[constants.OPTION_TASK_FAILED_ATTRIBUTE] = "False"
+    return ansible_env_vars
 
 
 def ansible_playbook_node(func):
@@ -85,8 +96,7 @@ def ansible_playbook_node(func):
         """
         playbook_path = playbook_path or site_yaml_path
         additional_playbook_files = additional_playbook_files or []
-        ansible_env_vars = \
-            ansible_env_vars or {'ANSIBLE_HOST_KEY_CHECKING': "False"}
+        ansible_env_vars = set_ansible_env_vars(ansible_env_vars)
         if not sources:
             if remerge_sources:
                 # add sources from source node to target node
