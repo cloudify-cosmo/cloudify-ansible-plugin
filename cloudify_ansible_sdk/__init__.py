@@ -15,8 +15,6 @@
 import os
 import sys
 import json
-from copy import deepcopy
-from pexpect import spawn
 from tempfile import NamedTemporaryFile
 
 
