@@ -165,17 +165,10 @@ class AnsiblePlaybookFromFile(object):
             '-m setup all'
         ]
 
-    def execute(self, process_execution_func, **kwargs):
-        self.logger.info('command: {}'.format(kwargs))
+    @staticmethod
+    def execute(process_execution_func, **kwargs):
         return process_execution_func(**kwargs)
 
-    def execute_with_step(self, exec_path, **kwargs):
-        kwargs = deepcopy(kwargs)
-        kwargs['args'].insert(0, exec_path)
-        kwargs['args'].append('--step')  # Specify list tasks flag.
-        self.logger.info('command: {}'.format(kwargs))
-        return spawn(' '.join(kwargs['args']))
-
-    def get_facts(self, process_execution_func, **kwargs):
-        self.logger.info('command: {}'.format(kwargs))
+    @staticmethod
+    def get_facts(process_execution_func, **kwargs):
         return process_execution_func(**kwargs)

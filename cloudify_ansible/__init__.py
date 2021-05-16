@@ -148,7 +148,6 @@ def ansible_playbook_node(func):
                 playbook_path = handle_site_yaml(
                     playbook_path, additional_playbook_files, ctx)
 
-
             playbook_args = {
                 'playbook_path': playbook_path,
                 'sources': handle_sources(sources, playbook_path, ctx),

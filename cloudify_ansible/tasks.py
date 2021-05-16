@@ -112,7 +112,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process['args'] = playbook.process_args
 
     try:
-        plays = playbook.execute(
+        playbook.execute(
             utils.process_execution,
             script_func=execute,
             script_path=script_path,
@@ -144,13 +144,6 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
                 _instance.runtime_properties[
                     constants.AVAILABLE_TAGS]))
 
-    # plays = utils.get_plays(plays, _node.id)
-    #
-    # if _node.properties.get('store_plays', False):
-    #     _instance.runtime_properties[constants.PLAYS] = plays
-
-    # _instance.runtime_properties[constants.COMPLETED_STEPS] = \
-    #     utils.get_tasks_by_host(plays)
     if 'establish' in _ctx.operation.name.split('.')[-1]:
         _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
 

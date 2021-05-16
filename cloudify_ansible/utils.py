@@ -46,6 +46,7 @@ from script_runner.tasks import (
     ProcessException,
     POLL_LOOP_INTERVAL,
     process_ctx_request,
+    create_process_config,
     POLL_LOOP_LOG_ITERATIONS,
     _get_process_environment,
     ILLEGAL_CTX_OPERATION_ERROR,
@@ -633,6 +634,15 @@ def is_connected_to_internet():
 
 
 def execute_copy(script_path, ctx, process):
+    """Copied entirely from script_runner, the only difference is
+    that the stdout is read in the return.
+
+    :param script_path:
+    :param ctx:
+    :param process:
+    :return: stdout string
+    """
+
     on_posix = 'posix' in sys.builtin_module_names
 
     proxy = start_ctx_proxy(ctx, process)
@@ -746,29 +756,17 @@ def execute_copy(script_path, ctx, process):
     return output
 
 
-def create_process_config(process, operation_kwargs):
-    env_vars = operation_kwargs.copy()
-    if 'ctx' in env_vars:
-        del env_vars['ctx']
-    env_vars.update(process.get('env', {}))
-    output_env_vars = {}
-    for k, v in env_vars.items():
-        k = str(k)
-        if isinstance(v, (dict, list, set, bool)):
-            envvar_value = json.dumps(v)
-            if IS_WINDOWS:
-                # the windows shell removes all double quotes - escape them
-                # to still be able to pass JSON in env vars to the shell
-                envvar_value = envvar_value.replace('"', '\\"')
-
-            output_env_vars[k] = envvar_value
-        else:
-            output_env_vars[k] = str(v)
-    process['env'] = output_env_vars
-    return process
-
-
 def process_execution(script_func, script_path, ctx, process=None):
+    """Entirely lifted from the script runner, the only difference is
+    we return the return value of the script_func, instead of the return
+    code stored in the ctx.
+
+    :param script_func:
+    :param script_path:
+    :param ctx:
+    :param process:
+    :return:
+    """
     ctx.is_script_exception_defined = ScriptException is not None
 
     def abort_operation(message=None):
@@ -819,6 +817,17 @@ def process_execution(script_func, script_path, ctx, process=None):
 
 
 def get_plays(string, node_name):
+    """When play output is returned in JSON, we can parse it and
+    retrieve only the play dictionary. This is a little messy, and it's
+    not actually used in the plugin. I want to leave it hear for now,
+    for a future time when someone will ask for how to get plays from the
+    JSON command output. It might never be used, but it's good for us
+    to have just in case.
+
+    :param string:
+    :param node_name:
+    :return:
+    """
     string_without_whitespace = '\n'.join(
         string).replace("\n", "").replace("\t", "").replace(" ", "")
     surrouding_elements = ',"plays":(.*),"stats":{"' + node_name
@@ -832,6 +841,15 @@ def get_plays(string, node_name):
 
 
 def get_facts(string):
+    """Facts are collected in the ansible check command.
+    This output is returned in string, and then we need to split the string,
+    and then parse the JSON embedded in the string.
+    There is currently not a better way to do this. A thousand curses on
+    Ansible for dumping mixed format output.
+
+    :param string:
+    :return:
+    """
     new_string = []
     for line in string.split('\n'):
         if line.startswith('META'):
@@ -844,12 +862,13 @@ def get_facts(string):
     try:
         return json.loads(selected.group(1))
     except (AttributeError, IndexError):
-        ctx.logger.info('Unable to parse result. '
-                        'Not storing result in runtime properties.')
+        ctx.logger.error('Unable to parse result. '
+                         'Not storing result in runtime properties.')
         return selected
 
 
 def get_tasks_by_host(plays):
+    """Find all the task names associated with a host. Currently not used."""
     task_names = []
     for play in plays:
         for task in play['tasks']:
@@ -857,74 +876,18 @@ def get_tasks_by_host(plays):
     return task_names
 
 
-def generate_steps_list(element):
-    task_list = []
-    if not isinstance(element, bytes):
-        return task_list
-    decoded_element = element.decode('utf-8')
-    if not isinstance(decoded_element, str):
-        return task_list
-    split_decoded_element = decoded_element.split('\n')
-    for line in split_decoded_element:
-        m = re.search('^' + CHECK_REG, line)
-        if m:
-            task_list.append(m.group(1))
-    return task_list
+def process_block_tags(block, tasks, tags):
+    """ Get tags from blocks in a playbook. Uses Ansible as a programming
+    library. Copied from Ansible.
 
-
-def perform_dry_run_on_pexpect(child, regex=None, max_steps=None):
-    max_steps = max_steps or 1
-    regex = regex or CHECK_REG
-    steps = []
-    counter = 0
-    while True:
-        if max_steps == -1:
-            pass
-        elif counter >= max_steps:
-            break
-        ctx.logger.info('Before: {}'.format(child.before))
-        finished = False
-        try:
-            if child.expect(regex):
-                ctx.logger.info('After: {}'.format(child.after))
-                ctx.logger.info('Gottt here.')
-                finished = True
-        except EOF:
-            finished = True
-        else:
-            child.sendline(b'N')
-        finally:
-            ctx.logger.info('After: {}'.format(child.after))
-            new_steps = generate_steps_list(child.after)
-            for new_step in new_steps:
-                if new_step not in steps:
-                    steps.append(new_step.replace(' ', ''))
-        if finished:
-            break
-        counter += 1
-    return steps
-
-
-def process_block_tasks(block, tasks):
-    """
-
-    :param block: ansible.playbook.block.Block
-    :param tasks: list
+    :param block:
+    :param tasks:
+    :param tags:
     :return:
     """
     for task in block.block:
         if isinstance(task, type(block)):
-            process_block_tasks(task, tasks)
-        else:
-            if task.action == 'meta':
-                continue
-            tasks.append(task.name.replace(' ', ''))
-
-
-def process_block_tags(block, tasks, tags):
-    for task in block.block:
-        if isinstance(task, type(block)):
-            process_block_tasks(task, tasks)
+            process_block_tags(task, tasks)
         else:
             if task.action == 'meta':
                 continue
@@ -934,20 +897,12 @@ def process_block_tags(block, tasks, tags):
                     tags.append(tag)
 
 
-def get_tasks_from_playbook(playbook):
-    """ Get a list of task names
+def get_tags_from_playbook(playbook):
+    """ Get a list of tag names
 
     :param playbook: ansible.playbook.Playbook
     :return: list
     """
-    tasks = []
-    for play in playbook.get_plays():
-        for block in play.compile():
-            process_block_tasks(block, tasks)
-    return tasks
-
-
-def get_tags_from_playbook(playbook):
     tasks = []
     tags = []
     for play in playbook.get_plays():
@@ -975,6 +930,15 @@ def get_available_steps(playbook_path):
 
 
 def get_our_tags(all_tags, op_number, max_ops):
+    """Given a list of tags, calculate the number that we need to run
+    in successive retries in order to finish them all in the
+    maximum number of retries.
+
+    :param all_tags:
+    :param op_number:
+    :param max_ops:
+    :return:
+    """
     if not all_tags:
         return [], []
     for num, tag in enumerate(all_tags):
@@ -993,6 +957,13 @@ def get_our_tags(all_tags, op_number, max_ops):
 
 
 def get_playbook_args_tags(_node, _instance, playbook_path):
+    """ Check which tags are completed of all available tags.
+
+    :param _node:
+    :param _instance:
+    :param playbook_path:
+    :return:
+    """
 
     if AVAILABLE_TAGS not in _instance.runtime_properties:
         tags = _node.properties.get('tags', [])
