@@ -14,7 +14,6 @@
 from mock import Mock, patch, mock_open
 from cloudify_ansible import (
     constants,
-    set_ansible_env_vars,
     ansible_playbook_node
 )
 

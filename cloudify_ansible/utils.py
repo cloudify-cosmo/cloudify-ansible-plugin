@@ -22,7 +22,6 @@ import errno
 import shutil
 import subprocess
 from uuid import uuid1
-from pexpect import EOF
 from copy import deepcopy
 from tempfile import mkdtemp
 
@@ -41,12 +40,10 @@ from cloudify.exceptions import (NonRecoverableError,
                                  HttpException,
                                  CommandExecutionException)
 from script_runner.tasks import (
-    IS_WINDOWS,
     start_ctx_proxy,
     ProcessException,
     POLL_LOOP_INTERVAL,
     process_ctx_request,
-    create_process_config,
     POLL_LOOP_LOG_ITERATIONS,
     _get_process_environment,
     ILLEGAL_CTX_OPERATION_ERROR,
@@ -72,8 +69,6 @@ try:
 except ImportError:
     ScriptException = Exception
 
-CHECK_REG = \
-    'Perform\stask\\:\sTASK:\s(.+?)\s\\(N\\)o\\/\\(y\\)es\/\\(c\\)ontinue'
 
 try:
     from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
@@ -735,8 +730,8 @@ def execute_copy(script_path, ctx, process):
     if isinstance(ctx._return_value, RuntimeError):
         raise NonRecoverableError(str(ctx._return_value))
     elif return_code != 0:
-        if not (ctx.is_script_exception_defined and
-                isinstance(ctx._return_value, ScriptException)):
+        if not ctx.is_script_exception_defined and isinstance(
+                ctx._return_value, ScriptException):
             if log_stdout:
                 stdout = ''.join(stdout_consumer.output)
             else:
@@ -806,8 +801,8 @@ def process_execution(script_func, script_path, ctx, process=None):
 
     actual_result = script_func(script_path, ctx, process)
     script_result = ctx._return_value
-    if (ctx.is_script_exception_defined and
-       isinstance(script_result, ScriptException)):
+    if ctx.is_script_exception_defined and isinstance(
+            script_result, ScriptException):
         if script_result.retry:
             return script_result
         else:
@@ -948,7 +943,7 @@ def get_our_tags(all_tags, op_number, max_ops):
     our_tags = deepcopy(all_tags)
     remaining_tags = len(our_tags)
     if remaining_tags > remaining_operations:
-        our_tags = our_tags[0:round(remaining_tags/remaining_operations)]
+        our_tags = our_tags[0:round(remaining_tags // remaining_operations)]
     else:
         our_tags = [our_tags[0]]
     for tag in our_tags:

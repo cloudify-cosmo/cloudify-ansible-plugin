@@ -22,7 +22,6 @@ from cloudify.exceptions import (
 
 from script_runner.tasks import (
     execute,
-    process_execution,
     ProcessException
 )
 

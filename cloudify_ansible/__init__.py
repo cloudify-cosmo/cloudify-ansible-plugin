@@ -15,25 +15,19 @@
 import os
 
 from cloudify import ctx as ctx_from_import
-from cloudify.exceptions import OperationRetry
 
-from cloudify_common_sdk.resource_downloader import get_shared_resource
-from cloudify_common_sdk.resource_downloader import unzip_archive
 from cloudify_common_sdk.resource_downloader import untar_archive
+from cloudify_common_sdk.resource_downloader import unzip_archive
+from cloudify_common_sdk.resource_downloader import get_shared_resource
 from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
 from cloudify_ansible_sdk import DIRECT_PARAMS
 from cloudify_ansible import constants
 from cloudify_ansible.utils import (
     get_node,
-    get_facts,
-    get_plays,
-    get_our_tags,
     get_instance,
     handle_sources,
     handle_site_yaml,
-    get_tasks_by_host,
-    get_available_steps,
     create_playbook_venv,
     create_playbook_workspace,
     delete_playbook_workspace,
