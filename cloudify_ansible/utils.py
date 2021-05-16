@@ -13,31 +13,48 @@
 # limitations under the License.
 
 import os
+import re
 import sys
+import json
+import time
+import yaml
 import errno
 import shutil
-from tempfile import mkdtemp
+import subprocess
 from uuid import uuid1
-import yaml
+from pexpect import EOF
+from copy import deepcopy
+from tempfile import mkdtemp
+
 
 from cloudify import ctx
+from ansible.playbook import Playbook
 from cloudify.manager import get_rest_client
-from cloudify.utils import LocalCommandRunner
+from ansible.vars.manager import VariableManager
+from ansible.parsing.dataloader import DataLoader
+from cloudify.utils import LocalCommandRunner, OutputConsumer
+from cloudify_common_sdk.utils import get_deployment_dir
+from cloudify_rest_client.constants import VisibilityState
+from cloudify_ansible_sdk._compat import text_type, urlopen, URLError
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException,
                                  CommandExecutionException)
-from cloudify_common_sdk.utils import get_deployment_dir
-from cloudify_rest_client.constants import VisibilityState
-from cloudify_ansible_sdk._compat import text_type, urlopen, URLError
-
-try:
-    from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
-except ImportError:
-    NODE_INSTANCE = 'node-instance'
-    RELATIONSHIP_INSTANCE = 'relationship-instance'
+from script_runner.tasks import (
+    IS_WINDOWS,
+    start_ctx_proxy,
+    ProcessException,
+    POLL_LOOP_INTERVAL,
+    process_ctx_request,
+    POLL_LOOP_LOG_ITERATIONS,
+    _get_process_environment,
+    ILLEGAL_CTX_OPERATION_ERROR,
+    UNSUPPORTED_SCRIPT_FEATURE_ERROR
+)
 
 from cloudify_ansible.constants import (
+    COMPLETED_TAGS,
+    AVAILABLE_TAGS,
     ANSIBLE_TO_INSTALL,
     BP_INCLUDES_PATH,
     PLAYBOOK_VENV,
@@ -48,6 +65,20 @@ from cloudify_ansible.constants import (
 from cloudify_ansible_sdk.sources import AnsibleSource
 
 runner = LocalCommandRunner()
+
+try:
+    from cloudify.proxy.client import ScriptException
+except ImportError:
+    ScriptException = Exception
+
+CHECK_REG = \
+    'Perform\stask\\:\sTASK:\s(.+?)\s\\(N\\)o\\/\\(y\\)es\/\\(c\\)ontinue'
+
+try:
+    from cloudify.constants import RELATIONSHIP_INSTANCE, NODE_INSTANCE
+except ImportError:
+    NODE_INSTANCE = 'node-instance'
+    RELATIONSHIP_INSTANCE = 'relationship-instance'
 
 
 def handle_key_data(_data, workspace_dir):
@@ -182,15 +213,17 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
         'File path {0} does not exist.'.format(file_path))
 
 
-def _get_instance(_ctx):
+def get_instance(_ctx):
     if _ctx.type == RELATIONSHIP_INSTANCE:
         return _ctx.source.instance
     else:  # _ctx.type == NODE_INSTANCE
         return _ctx.instance
 
 
-def _get_node(_ctx):
+def get_node(_ctx, target=False):
     if _ctx.type == RELATIONSHIP_INSTANCE:
+        if target:
+            return _ctx.target.node
         return _ctx.source.node
     else:  # _ctx.type == NODE_INSTANCE
         return _ctx.node
@@ -211,7 +244,7 @@ def handle_site_yaml(site_yaml_path, additional_playbook_files, _ctx):
     site_yaml_real_dir = os.path.dirname(site_yaml_real_path)
     site_yaml_real_name = os.path.basename(site_yaml_real_path)
     site_yaml_new_dir = os.path.join(
-        _get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
+        get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
     shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
     return u'{0}'.format(site_yaml_final_path)
@@ -233,7 +266,7 @@ def handle_sources(data, site_yaml_abspath, _ctx):
     hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
     if isinstance(data, dict):
         data = handle_key_data(
-            data, _get_instance(_ctx).runtime_properties[WORKSPACE])
+            data, get_instance(_ctx).runtime_properties[WORKSPACE])
         if os.path.exists(hosts_abspath):
             _ctx.logger.error(
                 'Hosts data was provided but {0} already exists. '
@@ -292,7 +325,7 @@ def create_playbook_workspace(ctx):
     :return:
     """
 
-    _get_instance(ctx).runtime_properties[WORKSPACE] = mkdtemp()
+    get_instance(ctx).runtime_properties[WORKSPACE] = mkdtemp()
 
 
 def delete_playbook_workspace(ctx):
@@ -302,7 +335,7 @@ def delete_playbook_workspace(ctx):
     :return:
     """
 
-    directory = _get_instance(ctx).runtime_properties.get(WORKSPACE)
+    directory = get_instance(ctx).runtime_properties.get(WORKSPACE)
     if directory and os.path.exists(directory):
         shutil.rmtree(directory)
 
@@ -346,7 +379,7 @@ def get_source_config_from_ctx(_ctx,
             get_group_name_and_hostname(
                 _ctx, group_name, hostname)
         additional_node_groups = get_additional_node_groups(
-            _get_node(_ctx).name, _ctx.deployment.id)
+            get_node(_ctx).name, _ctx.deployment.id)
     if '-o StrictHostKeyChecking=no' not in \
             host_config.get('ansible_ssh_common_args', ''):
         _ctx.logger.warn(
@@ -446,7 +479,7 @@ def get_host_config_from_compute_node(_ctx):
 
 def handle_result(result, _ctx, ignore_failures=False, ignore_dark=False):
     _ctx.logger.debug('result: {0}'.format(result))
-    _get_instance(_ctx).runtime_properties['result'] = result
+    get_instance(_ctx).runtime_properties['result'] = result
     failures = result.get('failures')
     dark = result.get('dark')
     if failures and not ignore_failures:
@@ -488,7 +521,7 @@ def cleanup(ctx):
     :param ctx: Cloudify node instance which is could be an instance of
     RelationshipSubjectContext or CloudifyContext
     """
-    instance = _get_instance(ctx)
+    instance = get_instance(ctx)
     for key, _ in list(instance.runtime_properties.items()):
         del instance.runtime_properties[key]
 
@@ -510,9 +543,9 @@ def set_playbook_config_as_runtime_properties(_ctx, config):
             # check if key or its parent {dict value} in sensitive_keys
             hide = parent_hide or (key in sensitive_keys)
             value = data[key]
-            # handle dict value incase sensitive_keys was inside another key
+            # handle dict value in case sensitive_keys was inside another key
             if isinstance(value, dict):
-                # call _get_secure_value function recusivly
+                # call _get_secure_value function recursively
                 # to handle the dict value
                 inner_dict = _get_secure_values(value, sensitive_keys, hide)
                 data[key] = inner_dict
@@ -575,15 +608,15 @@ def create_playbook_venv(_ctx, packages_to_install):
        """
 
     if is_connected_to_internet():
-        if not _get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV):
+        if not get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV):
             deployment_dir = get_deployment_dir(_ctx.deployment.id)
             venv_path = mkdtemp(dir=deployment_dir)
             make_virtualenv(path=venv_path)
             install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
-            _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
+            get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
             install_packages_to_venv(venv_path, packages_to_install)
     else:
-        _get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
+        get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
         if packages_to_install:
             raise NonRecoverableError('Do not use extra_packages when'
                                       ' working on the plugin virtualenv.')
@@ -597,3 +630,388 @@ def is_connected_to_internet():
     except URLError:
         ctx.logger.debug("No Internet connection.")
         return False
+
+
+def execute_copy(script_path, ctx, process):
+    on_posix = 'posix' in sys.builtin_module_names
+
+    proxy = start_ctx_proxy(ctx, process)
+    env = _get_process_environment(process, proxy)
+    cwd = process.get('cwd')
+
+    command_prefix = process.get('command_prefix')
+    if command_prefix:
+        command = '{0} {1}'.format(command_prefix, script_path)
+    else:
+        command = script_path
+
+    args = process.get('args')
+    if args:
+        command = ' '.join([command] + args)
+
+    # Figure out logging.
+
+    log_stdout = process.get('log_stdout', True)
+    log_stderr = process.get('log_stderr', True)
+    stderr_to_stdout = process.get('stderr_to_stdout', False)
+
+    ctx.logger.debug('log_stdout=%r, log_stderr=%r, stderr_to_stdout=%r',
+                     log_stdout, log_stderr, stderr_to_stdout)
+
+    if log_stderr:
+        stderr_value = subprocess.STDOUT if stderr_to_stdout \
+            else subprocess.PIPE
+    else:
+        stderr_value = None
+
+    consume_stderr = stderr_value == subprocess.PIPE
+
+    process = subprocess.Popen(
+        args=command,
+        shell=True,
+        stdout=subprocess.PIPE if log_stdout else None,
+        stderr=stderr_value,
+        env=env,
+        cwd=cwd,
+        bufsize=1,
+        close_fds=on_posix)
+
+    pid = process.pid
+    ctx.logger.info('Process created, PID: {0}'.format(pid))
+
+    stdout_consumer = stderr_consumer = None
+
+    if log_stdout:
+        stdout_consumer = OutputConsumer(process.stdout, ctx.logger, '<out> ')
+        ctx.logger.debug('Started consumer thread for stdout')
+    if consume_stderr:
+        stderr_consumer = OutputConsumer(process.stderr, ctx.logger, '<err> ')
+        ctx.logger.debug('Started consumer thread for stderr')
+
+    log_counter = 0
+    while True:
+        process_ctx_request(proxy)
+        return_code = process.poll()
+        if return_code is not None:
+            break
+        time.sleep(POLL_LOOP_INTERVAL)
+
+        log_counter += 1
+        if log_counter == POLL_LOOP_LOG_ITERATIONS:
+            log_counter = 0
+            ctx.logger.info('Waiting for process {0} to end...'.format(pid))
+
+    ctx.logger.info('Execution done (PID={0}, return_code={1}): {2}'
+                    .format(pid, return_code, command))
+
+    try:
+        proxy.close()
+    except Exception:
+        ctx.logger.warning('Failed closing context proxy', exc_info=True)
+    else:
+        ctx.logger.debug("Context proxy closed")
+
+    for consumer, name in [(stdout_consumer, 'stdout'),
+                           (stderr_consumer, 'stderr')]:
+        if consumer:
+            ctx.logger.debug('Joining consumer thread for %s', name)
+            consumer.join()
+            ctx.logger.debug('Consumer thread for %s ended', name)
+        else:
+            ctx.logger.debug('Consumer thread for %s not created; not joining',
+                             name)
+
+    # happens when more than 1 ctx result command is used
+    if isinstance(ctx._return_value, RuntimeError):
+        raise NonRecoverableError(str(ctx._return_value))
+    elif return_code != 0:
+        if not (ctx.is_script_exception_defined and
+                isinstance(ctx._return_value, ScriptException)):
+            if log_stdout:
+                stdout = ''.join(stdout_consumer.output)
+            else:
+                stdout = process.stdout.read().decode('utf-8', 'replace')
+            if stderr_to_stdout:
+                stderr = None
+            elif log_stderr:
+                stderr = ''.join(stderr_consumer.output)
+            else:
+                stderr = process.stderr.read().decode('utf-8', 'replace')
+            raise ProcessException(command, return_code, stdout, stderr)
+
+    if log_stdout:
+        output = ''.join(stdout_consumer.output)
+    else:
+        output = process.stdout.read().decode('utf-8', 'replace')
+    return output
+
+
+def create_process_config(process, operation_kwargs):
+    env_vars = operation_kwargs.copy()
+    if 'ctx' in env_vars:
+        del env_vars['ctx']
+    env_vars.update(process.get('env', {}))
+    output_env_vars = {}
+    for k, v in env_vars.items():
+        k = str(k)
+        if isinstance(v, (dict, list, set, bool)):
+            envvar_value = json.dumps(v)
+            if IS_WINDOWS:
+                # the windows shell removes all double quotes - escape them
+                # to still be able to pass JSON in env vars to the shell
+                envvar_value = envvar_value.replace('"', '\\"')
+
+            output_env_vars[k] = envvar_value
+        else:
+            output_env_vars[k] = str(v)
+    process['env'] = output_env_vars
+    return process
+
+
+def process_execution(script_func, script_path, ctx, process=None):
+    ctx.is_script_exception_defined = ScriptException is not None
+
+    def abort_operation(message=None):
+        if ctx._return_value is not None:
+            ctx._return_value = ILLEGAL_CTX_OPERATION_ERROR
+            raise ctx._return_value
+        if ctx.is_script_exception_defined:
+            ctx._return_value = ScriptException(message)
+        else:
+            ctx._return_value = UNSUPPORTED_SCRIPT_FEATURE_ERROR
+            raise ctx._return_value
+        return ctx._return_value
+
+    def retry_operation(message=None, retry_after=None):
+        if ctx._return_value is not None:
+            ctx._return_value = ILLEGAL_CTX_OPERATION_ERROR
+            raise ctx._return_value
+        if ctx.is_script_exception_defined:
+            ctx._return_value = ScriptException(message, retry=True)
+            ctx.operation.retry(message=message, retry_after=retry_after)
+        else:
+            ctx._return_value = UNSUPPORTED_SCRIPT_FEATURE_ERROR
+            raise ctx._return_value
+        return ctx._return_value
+
+    ctx.abort_operation = abort_operation
+    ctx.retry_operation = retry_operation
+
+    def returns(value):
+        if ctx._return_value is not None:
+            ctx._return_value = ILLEGAL_CTX_OPERATION_ERROR
+            raise ctx._return_value
+        ctx._return_value = value
+    ctx.returns = returns
+
+    ctx._return_value = None
+
+    actual_result = script_func(script_path, ctx, process)
+    script_result = ctx._return_value
+    if (ctx.is_script_exception_defined and
+       isinstance(script_result, ScriptException)):
+        if script_result.retry:
+            return script_result
+        else:
+            raise NonRecoverableError(str(script_result))
+    else:
+        return actual_result
+
+
+def get_plays(string, node_name):
+    string_without_whitespace = '\n'.join(
+        string).replace("\n", "").replace("\t", "").replace(" ", "")
+    surrouding_elements = ',"plays":(.*),"stats":{"' + node_name
+    selected = re.search(surrouding_elements, string_without_whitespace)
+    try:
+        return json.loads(selected.group(1))
+    except (AttributeError, IndexError):
+        ctx.logger.info('Unable to parse result. '
+                        'Not storing result in runtime properties.')
+        return string_without_whitespace
+
+
+def get_facts(string):
+    new_string = []
+    for line in string.split('\n'):
+        if line.startswith('META'):
+            continue
+        new_string.append(line)
+    separater = '=>(.*)'
+    string_without_whitespace = '\n'.join(
+        new_string).replace("\n", "").replace("\t", "").replace(" ", "")
+    selected = re.search(separater, string_without_whitespace)
+    try:
+        return json.loads(selected.group(1))
+    except (AttributeError, IndexError):
+        ctx.logger.info('Unable to parse result. '
+                        'Not storing result in runtime properties.')
+        return selected
+
+
+def get_tasks_by_host(plays):
+    task_names = []
+    for play in plays:
+        for task in play['tasks']:
+            task_names.append(task['task']['name'])
+    return task_names
+
+
+def generate_steps_list(element):
+    task_list = []
+    if not isinstance(element, bytes):
+        return task_list
+    decoded_element = element.decode('utf-8')
+    if not isinstance(decoded_element, str):
+        return task_list
+    split_decoded_element = decoded_element.split('\n')
+    for line in split_decoded_element:
+        m = re.search('^' + CHECK_REG, line)
+        if m:
+            task_list.append(m.group(1))
+    return task_list
+
+
+def perform_dry_run_on_pexpect(child, regex=None, max_steps=None):
+    max_steps = max_steps or 1
+    regex = regex or CHECK_REG
+    steps = []
+    counter = 0
+    while True:
+        if max_steps == -1:
+            pass
+        elif counter >= max_steps:
+            break
+        ctx.logger.info('Before: {}'.format(child.before))
+        finished = False
+        try:
+            if child.expect(regex):
+                ctx.logger.info('After: {}'.format(child.after))
+                ctx.logger.info('Gottt here.')
+                finished = True
+        except EOF:
+            finished = True
+        else:
+            child.sendline(b'N')
+        finally:
+            ctx.logger.info('After: {}'.format(child.after))
+            new_steps = generate_steps_list(child.after)
+            for new_step in new_steps:
+                if new_step not in steps:
+                    steps.append(new_step.replace(' ', ''))
+        if finished:
+            break
+        counter += 1
+    return steps
+
+
+def process_block_tasks(block, tasks):
+    """
+
+    :param block: ansible.playbook.block.Block
+    :param tasks: list
+    :return:
+    """
+    for task in block.block:
+        if isinstance(task, type(block)):
+            process_block_tasks(task, tasks)
+        else:
+            if task.action == 'meta':
+                continue
+            tasks.append(task.name.replace(' ', ''))
+
+
+def process_block_tags(block, tasks, tags):
+    for task in block.block:
+        if isinstance(task, type(block)):
+            process_block_tasks(task, tasks)
+        else:
+            if task.action == 'meta':
+                continue
+            tasks.append(task.name.replace(' ', ''))
+            for tag in task.tags:
+                if tag not in tags:
+                    tags.append(tag)
+
+
+def get_tasks_from_playbook(playbook):
+    """ Get a list of task names
+
+    :param playbook: ansible.playbook.Playbook
+    :return: list
+    """
+    tasks = []
+    for play in playbook.get_plays():
+        for block in play.compile():
+            process_block_tasks(block, tasks)
+    return tasks
+
+
+def get_tags_from_playbook(playbook):
+    tasks = []
+    tags = []
+    for play in playbook.get_plays():
+        for block in play.compile():
+            process_block_tags(block, tasks, tags)
+    return tasks, tags
+
+
+def get_playbook_from_path(playbook_path):
+    """ Create ansible.playbook.Playbook object.
+
+    :param playbook_path: string
+    :return:
+    """
+    loader = DataLoader()
+    variable_manager = VariableManager(loader=loader)
+    return Playbook.load(
+        file_name=playbook_path,
+        variable_manager=variable_manager,
+        loader=loader)
+
+
+def get_available_steps(playbook_path):
+    return get_tags_from_playbook(get_playbook_from_path(playbook_path))
+
+
+def get_our_tags(all_tags, op_number, max_ops):
+    if not all_tags:
+        return [], []
+    for num, tag in enumerate(all_tags):
+        if tag == '':
+            all_tags.remove(num)
+    remaining_operations = max_ops - op_number
+    our_tags = deepcopy(all_tags)
+    remaining_tags = len(our_tags)
+    if remaining_tags > remaining_operations:
+        our_tags = our_tags[0:round(remaining_tags/remaining_operations)]
+    else:
+        our_tags = [our_tags[0]]
+    for tag in our_tags:
+        all_tags.remove(tag)
+    return our_tags, all_tags
+
+
+def get_playbook_args_tags(_node, _instance, playbook_path):
+
+    if AVAILABLE_TAGS not in _instance.runtime_properties:
+        tags = _node.properties.get('tags', [])
+        if tags:
+            _instance.runtime_properties[AVAILABLE_TAGS] = tags
+        elif _node.properties.get('auto_tags', False):
+            _, tags = get_available_steps(playbook_path)
+            _instance.runtime_properties[AVAILABLE_TAGS] = tags
+        else:
+            _instance.runtime_properties[AVAILABLE_TAGS] = tags
+    else:
+        tags = _instance.runtime_properties[AVAILABLE_TAGS]
+
+    if COMPLETED_TAGS in _instance.runtime_properties:
+        for tag in _instance.runtime_properties[COMPLETED_TAGS]:
+            if tag in tags:
+                tags.remove(tag)
+
+    return get_our_tags(
+        tags,
+        ctx.operation.retry_number,
+        ctx.operation.max_retries)

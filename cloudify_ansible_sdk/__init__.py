@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import sys
+import json
+from copy import deepcopy
+from pexpect import spawn
 from tempfile import NamedTemporaryFile
 
 
@@ -58,6 +60,8 @@ class AnsiblePlaybookFromFile(object):
                  site_yaml_path=None,
                  environment_variables=None,
                  additional_args=None,
+                 start_at_task=None,
+                 tags=None,
                  **kwargs):
 
         self.playbook = site_yaml_path or playbook_path
@@ -66,6 +70,7 @@ class AnsiblePlaybookFromFile(object):
         self.run_data = run_data or {}
         self.environment_variables = environment_variables or {}
         self.additional_args = additional_args or ''
+        self._tags = tags
         self._verbosity = verbosity
         self.logger = logger
 
@@ -78,9 +83,16 @@ class AnsiblePlaybookFromFile(object):
         # add known additional params to additional_args
         for field in DIRECT_PARAMS:
             if kwargs.get(field):
-                self.additional_args += "--{field} {value} ".format(
+                self.additional_args += '--{field}="{value}" '.format(
                     field=field.replace("_", "-"),
                     value=json.dumps(kwargs[field]))
+        if start_at_task:
+            self.update_additional_args({'start_at_task': start_at_task})
+
+    def update_additional_args(self, new_args):
+        for key, value in new_args.items():
+            self.additional_args += '--{field}="{value}" '.format(
+                field=key.replace("_", "-"), value=value)
 
     @property
     def env(self):
@@ -95,6 +107,16 @@ class AnsiblePlaybookFromFile(object):
         for i in range(1, self._verbosity):
             verbosity += 'v'
         return verbosity
+
+    @property
+    def tags(self):
+        if self._tags:
+            if isinstance(self._tags, list):
+                tags = ','.join(self._tags)
+            else:
+                tags = self._tags
+            return '--tags "{tags}"'.format(tags=tags)
+        return ''
 
     @property
     def options(self):
@@ -129,9 +151,31 @@ class AnsiblePlaybookFromFile(object):
             self.verbosity,
             '-i {0}'.format(self.sources),
             self.options,
+            self.playbook,
             self.additional_args,
-            self.playbook
+            self.tags,
+        ]
+
+    @property
+    def facts_args(self):
+        return [
+            self.verbosity,
+            '-i {0}'.format(self.sources),
+            self.options,
+            '-m setup all'
         ]
 
     def execute(self, process_execution_func, **kwargs):
+        self.logger.info('command: {}'.format(kwargs))
+        return process_execution_func(**kwargs)
+
+    def execute_with_step(self, exec_path, **kwargs):
+        kwargs = deepcopy(kwargs)
+        kwargs['args'].insert(0, exec_path)
+        kwargs['args'].append('--step')  # Specify list tasks flag.
+        self.logger.info('command: {}'.format(kwargs))
+        return spawn(' '.join(kwargs['args']))
+
+    def get_facts(self, process_execution_func, **kwargs):
+        self.logger.info('command: {}'.format(kwargs))
         return process_execution_func(**kwargs)

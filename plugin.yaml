@@ -138,6 +138,18 @@ dsl_definitions:
         A boolean value, `true` or `false` whether
         to assume the user privileges.
       default: false
+    tags:
+      type: list
+      description: >
+        A list of tags, in order of desired execution. If these tags are provided, they will be called, and auto_tags will be ignored.
+      default: []
+    auto_tags:
+      type: boolean
+      description: >
+        If set to "true", the plugin will read the playbook and generate a list of tags to execute.
+        This requires that the playbook is written in such a way that the specified tags will produce the desired result.
+        This value is ignored if tags are provided.
+      default: false
 
   playbook_inputs: &playbook_inputs
     ansible_playbook_executable_path:
@@ -180,6 +192,10 @@ dsl_definitions:
       default: { get_attribute: [SELF, ssh_extra_args] }
     timeout:
       default: { get_attribute: [SELF, timeout] }
+    tags:
+      default: { get_property: [ SELF, tags ] }
+    auto_tags:
+      default: { get_property: [ SELF, auto_tags ] }
 
 
 node_types:
@@ -205,6 +221,10 @@ node_types:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: ansible.cloudify_ansible.tasks.set_playbook_config
+          inputs:
+            <<: *playbook_inputs
+        poststart:
+          implementation: ansible.cloudify_ansible.tasks.store_facts
           inputs:
             <<: *playbook_inputs
       ansible:
@@ -303,6 +323,10 @@ relationships:
               default: { get_attribute: [SOURCE, ssh_extra_args] }
             timeout:
               default: { get_attribute: [SOURCE, timeout] }
+            tags:
+              default: { get_property: [ SOURCE, tags ] }
+            auto_tags:
+              default: { get_property: [ SOURCE, auto_tags ] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
 

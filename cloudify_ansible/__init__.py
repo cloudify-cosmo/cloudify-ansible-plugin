@@ -15,6 +15,7 @@
 import os
 
 from cloudify import ctx as ctx_from_import
+from cloudify.exceptions import OperationRetry
 
 from cloudify_common_sdk.resource_downloader import get_shared_resource
 from cloudify_common_sdk.resource_downloader import unzip_archive
@@ -24,15 +25,20 @@ from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 from cloudify_ansible_sdk import DIRECT_PARAMS
 from cloudify_ansible import constants
 from cloudify_ansible.utils import (
+    get_node,
+    get_facts,
+    get_plays,
+    get_our_tags,
+    get_instance,
+    handle_sources,
+    handle_site_yaml,
+    get_tasks_by_host,
+    get_available_steps,
+    create_playbook_venv,
     create_playbook_workspace,
     delete_playbook_workspace,
-    create_playbook_venv,
-    handle_site_yaml,
-    handle_sources,
-    get_remerged_config_sources,
     get_source_config_from_ctx,
-    _get_instance,
-    _get_node
+    get_remerged_config_sources,
 )
 
 
@@ -72,6 +78,7 @@ def ansible_playbook_node(func):
                 remerge_sources=False,
                 playbook_source_path=None,
                 extra_packages=None,
+                start_at_task=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -91,6 +98,7 @@ def ansible_playbook_node(func):
         :param remerge_sources: update sources on target node
         :param extra_packages: list of packages to install to ansible playbook
          controller env.
+        :param start_at_task: The name of the task to start at.
         :param kwargs:
         :return:
         """
@@ -105,11 +113,12 @@ def ansible_playbook_node(func):
                 sources = get_source_config_from_ctx(ctx)
 
         # store sources in node runtime_properties
-        _get_instance(ctx).runtime_properties['sources'] = sources
-        _get_instance(ctx).update()
+        _instance = get_instance(ctx)
+        _instance.runtime_properties['sources'] = sources
+        _instance.update()
 
         try:
-            extra_packages = extra_packages or _get_node(ctx).properties.get(
+            extra_packages = extra_packages or get_node(ctx).properties.get(
                 'extra_packages') or []
             create_playbook_venv(ctx,
                                  packages_to_install=extra_packages)
@@ -138,6 +147,8 @@ def ansible_playbook_node(func):
                 # here will handle the bundled ansible files
                 playbook_path = handle_site_yaml(
                     playbook_path, additional_playbook_files, ctx)
+
+
             playbook_args = {
                 'playbook_path': playbook_path,
                 'sources': handle_sources(sources, playbook_path, ctx),
@@ -145,6 +156,7 @@ def ansible_playbook_node(func):
                 'additional_args': additional_args or '',
                 'logger': ctx.logger
             }
+
             # copy additional params from kwargs
             for field in DIRECT_PARAMS:
                 if kwargs.get(field):
@@ -152,6 +164,7 @@ def ansible_playbook_node(func):
 
             playbook_args.update(**kwargs)
             func(playbook_args, ansible_env_vars, ctx)
+
         finally:
             if not save_playbook:
                 delete_playbook_workspace(ctx)
