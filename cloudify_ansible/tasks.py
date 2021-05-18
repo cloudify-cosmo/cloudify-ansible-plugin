@@ -90,10 +90,10 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     _node = utils.get_node(_ctx)
     _instance = utils.get_instance(_ctx)
 
-    playbook_tags, tags = utils.get_playbook_args_tags(
+    tags_to_apply, remaining_tags = utils.get_playbook_args_tags(
         _node, _instance, playbook_args['playbook_path'])
 
-    playbook_args['tags'] = playbook_tags
+    playbook_args['tags'] = tags_to_apply
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
@@ -132,17 +132,21 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
 
     if constants.COMPLETED_TAGS not in _instance.runtime_properties:
         _instance.runtime_properties[constants.COMPLETED_TAGS] = \
-            playbook_tags
+            tags_to_apply
     else:
         _instance.runtime_properties[constants.COMPLETED_TAGS].extend(
-            playbook_tags)
-    _instance.runtime_properties[constants.AVAILABLE_TAGS] = tags
-    if tags:
+            tags_to_apply)
+    _instance.runtime_properties[constants.AVAILABLE_TAGS] = remaining_tags
+    if remaining_tags:
         raise OperationRetry(
             'Waiting to perform all tags: {}'.format(
                 _instance.runtime_properties[
                     constants.AVAILABLE_TAGS]))
 
+    # This operation can be called from poststart,
+    # However, if someone calls run from establish, we will collect facts
+    # before we apply the playbook. # So this will make ensure that we get some
+    # postestablish action.
     if 'establish' in _ctx.operation.name.split('.')[-1]:
         _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
 
