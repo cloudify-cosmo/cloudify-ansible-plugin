@@ -95,7 +95,7 @@ class AnsibleSDKTest(AnsibleTestBase):
         self.assertIn('--extra-vars', p.process_args[2])
         self.assertEqual('', p.process_args[-2])
         self.assertIn('ansible-examples/lamp_simple/site.yml',
-                      p.process_args[4])
+                      p.process_args[3])
 
     def test_execute(self):
         p = AnsiblePlaybookFromFile(
