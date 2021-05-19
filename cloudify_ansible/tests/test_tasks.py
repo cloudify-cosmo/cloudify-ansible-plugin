@@ -137,6 +137,7 @@ class TestPluginTasks(AnsibleTestBase):
     def test_ansible_playbook(self, foo):
         with patch('cloudify_ansible.create_playbook_venv'):
             foo.return_value = ('output', 'error', 0)
+            current_ctx.set(ctx)
             run(
                 self.playbook_path,
                 self.hosts_path,
@@ -146,6 +147,7 @@ class TestPluginTasks(AnsibleTestBase):
     def test_ansible_playbook_failed_sdk(self, foo):
         foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
             "We are failed!")
+        current_ctx.set(ctx)
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaisesRegexp(NonRecoverableError,
                                          "We are failed!"):
@@ -157,6 +159,7 @@ class TestPluginTasks(AnsibleTestBase):
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
     def test_ansible_playbook_failed(self, foo):
         foo.side_effect = ProcessException('Unable to run command', -1)
+        current_ctx.set(ctx)
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(NonRecoverableError):
                 run(
@@ -168,6 +171,7 @@ class TestPluginTasks(AnsibleTestBase):
     def test_ansible_playbook_retry(self, foo):
         foo.side_effect = ProcessException(
             'One or more hosts are unreachable.', 4)
+        current_ctx.set(ctx)
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(OperationRetry):
                 run(
@@ -180,6 +184,7 @@ class TestPluginTasks(AnsibleTestBase):
         foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
             "We are failed!"
         )
+        current_ctx.set(ctx)
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(NonRecoverableError):
                 run(

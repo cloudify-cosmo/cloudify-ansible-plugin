@@ -13,13 +13,14 @@
 # limitations under the License.
 from mock import Mock, patch, mock_open
 from cloudify_ansible import (
+    constants,
     ansible_playbook_node
 )
 
 from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
-from cloudify_ansible_sdk._compat import PY2
 
+from cloudify_ansible_sdk._compat import PY2
 from cloudify_ansible_sdk.tests import AnsibleTestBase
 
 NODE_PROPS = {
@@ -108,7 +109,9 @@ class TestDecorator(AnsibleTestBase):
                 'logger': relationship_ctx.logger,
                 'additional_args': ''
             }, {
-                'ANSIBLE_HOST_KEY_CHECKING': 'False'
+                constants.OPTION_HOST_CHECKING: "False",
+                constants.OPTION_TASK_FAILED_ATTRIBUTE: "False",
+                constants.OPTION_STDOUT_FORMAT: "json"
             },
             relationship_ctx)
 
@@ -145,6 +148,8 @@ class TestDecorator(AnsibleTestBase):
                 'additional_args': '',
                 'group_name': "name_of_group"
             }, {
-                'ANSIBLE_HOST_KEY_CHECKING': 'False'
+                constants.OPTION_HOST_CHECKING: "False",
+                constants.OPTION_TASK_FAILED_ATTRIBUTE: "False",
+                constants.OPTION_STDOUT_FORMAT: "json"
             },
             relationship_ctx)

@@ -67,28 +67,28 @@ class UtilsTests(unittest.TestCase):
     def test_get_instance_instance(self):
         _ctx = self._instance_ctx()
 
-        instance = utils._get_instance(_ctx)
+        instance = utils.get_instance(_ctx)
         self.assertEqual(instance.runtime_properties,
                          {'a': 'b', 'c': 'd'})
 
     def test_get_instance_relationship(self):
         _ctx = self._relationship_ctx()
 
-        instance = utils._get_instance(_ctx)
+        instance = utils.get_instance(_ctx)
         self.assertEqual(instance.runtime_properties,
                          {'e': 'n', 'a': 'm'})
 
     def test_get_node_instance(self):
         _ctx = self._instance_ctx()
 
-        node = utils._get_node(_ctx)
+        node = utils.get_node(_ctx)
         self.assertEqual(node.properties,
                          {'d': 'c', 'b': 'a'})
 
     def test_get_node_relationship(self):
         _ctx = self._relationship_ctx()
 
-        node = utils._get_node(_ctx)
+        node = utils.get_node(_ctx)
         self.assertEqual(node.properties,
                          {'r': 'c', 's': 'o'})
 

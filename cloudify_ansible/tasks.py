@@ -16,12 +16,12 @@
 from cloudify.decorators import operation
 from cloudify.exceptions import (
     NonRecoverableError,
+    RecoverableError,
     OperationRetry
 )
 
 from script_runner.tasks import (
     execute,
-    process_execution,
     ProcessException
 )
 
@@ -86,26 +86,33 @@ def secure_log_playbook_args(_ctx, args, **_):
 
 @operation(resumable=True)
 @ansible_playbook_node
-def run(playbook_args, ansible_env_vars, _ctx, **_):
-    secure_log_playbook_args(_ctx, playbook_args)
-    try:
-        playbook = AnsiblePlaybookFromFile(**playbook_args)
-        utils.assign_environ(ansible_env_vars)
-        process = {}
-        process['env'] = ansible_env_vars
-        process['args'] = playbook.process_args
-        # check if ansible_playbook_executable_path was provided
-        # if not provided default to "ansible-playbook" which will use the
-        # executable included in the temporary virtual env for the deployment.
-        script_path = playbook_args.get("ansible_playbook_executable_path") or\
-            utils.get_executable_path(
-            executable="ansible-playbook",
-            venv=utils._get_instance(_ctx).runtime_properties[
-                constants.PLAYBOOK_VENV])
+def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
+    _node = utils.get_node(_ctx)
+    _instance = utils.get_instance(_ctx)
 
-        # Prepare the script which need to be run
+    tags_to_apply, remaining_tags = utils.get_playbook_args_tags(
+        _node, _instance, playbook_args['playbook_path'])
+
+    playbook_args['tags'] = tags_to_apply
+
+    secure_log_playbook_args(_ctx, playbook_args)
+    playbook = AnsiblePlaybookFromFile(**playbook_args)
+    # check if ansible_playbook_executable_path was provided
+    # if not provided default to "ansible-playbook" which will use the
+    # executable included in the temporary virtual env for the deployment.
+    script_path = playbook_args.get("ansible_playbook_executable_path") or \
+        utils.get_executable_path(
+            executable="ansible-playbook",
+            venv=utils.get_instance(
+                _ctx).runtime_properties[constants.PLAYBOOK_VENV])
+    utils.assign_environ(ansible_env_vars)
+    process = dict()
+    process['env'] = ansible_env_vars
+    process['args'] = playbook.process_args
+
+    try:
         playbook.execute(
-            process_execution,
+            utils.process_execution,
             script_func=execute,
             script_path=script_path,
             ctx=_ctx,
@@ -120,6 +127,70 @@ def run(playbook_args, ansible_env_vars, _ctx, **_):
         if process_error.exit_code not in SUCCESS_CODES:
             raise NonRecoverableError(
                 'One or more hosts failed.')
+        else:
+            raise RecoverableError('Retrying...')
+
+    if constants.COMPLETED_TAGS not in _instance.runtime_properties:
+        _instance.runtime_properties[constants.COMPLETED_TAGS] = \
+            tags_to_apply
+    else:
+        _instance.runtime_properties[constants.COMPLETED_TAGS].extend(
+            tags_to_apply)
+    _instance.runtime_properties[constants.AVAILABLE_TAGS] = remaining_tags
+    if remaining_tags:
+        raise OperationRetry(
+            'Waiting to perform all tags: {}'.format(
+                _instance.runtime_properties[
+                    constants.AVAILABLE_TAGS]))
+
+    # This operation can be called from poststart,
+    # However, if someone calls run from establish, we will collect facts
+    # before we apply the playbook. # So this will make ensure that we get some
+    # postestablish action.
+    if 'establish' in _ctx.operation.name.split('.')[-1]:
+        _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
+
+
+def _store_facts(playbook, ansible_env_vars, _ctx, **_):
+    utils.assign_environ(ansible_env_vars)
+    process = dict()
+    process['env'] = ansible_env_vars
+    process['args'] = playbook.facts_args
+    try:
+        facts = playbook.get_facts(
+            utils.process_execution,
+            script_func=utils.execute_copy,
+            script_path=utils.get_executable_path(
+                executable="ansible",
+                venv=utils.get_instance(
+                    _ctx).runtime_properties[constants.PLAYBOOK_VENV]),
+            ctx=_ctx,
+            process=process
+        )
+    except CloudifyAnsibleSDKError as sdk_error:
+        raise NonRecoverableError(sdk_error)
+    except ProcessException as process_error:
+        if process_error.exit_code in UNREACHABLE_CODES:
+            raise OperationRetry(
+                'One or more hosts are unreachable.')
+        if process_error.exit_code not in SUCCESS_CODES:
+            raise NonRecoverableError(
+                'One or more hosts failed.')
+        else:
+            raise RecoverableError('Retrying...')
+    _node = utils.get_node(_ctx)
+    _instance = utils.get_instance(_ctx)
+    facts = utils.get_facts(facts)
+    if _node.properties.get('store_facts', True):
+        _instance.runtime_properties['facts'] = facts
+
+
+@operation(resumable=True)
+@ansible_playbook_node
+def store_facts(playbook_args, ansible_env_vars, _ctx, **kwargs):
+    secure_log_playbook_args(_ctx, playbook_args)
+    playbook = AnsiblePlaybookFromFile(**playbook_args)
+    _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
 
 
 @operation(resumable=True)
