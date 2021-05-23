@@ -21,6 +21,8 @@ from cloudify_common_sdk.resource_downloader import unzip_archive
 from cloudify_common_sdk.resource_downloader import get_shared_resource
 from cloudify_common_sdk.resource_downloader import TAR_FILE_EXTENSTIONS
 
+from cloudify.exceptions import NonRecoverableError
+
 from cloudify_ansible_sdk import DIRECT_PARAMS
 from cloudify_ansible import constants
 from cloudify_ansible.utils import (
@@ -72,7 +74,6 @@ def ansible_playbook_node(func):
                 remerge_sources=False,
                 playbook_source_path=None,
                 extra_packages=None,
-                start_at_task=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -156,7 +157,17 @@ def ansible_playbook_node(func):
                     playbook_args[field] = kwargs[field]
 
             playbook_args.update(**kwargs)
-            func(playbook_args, ansible_env_vars, ctx)
+            try:
+                func(playbook_args, ansible_env_vars, ctx)
+            except NonRecoverableError as e:
+                node = get_node(ctx)
+                if 'poststart' in ctx.operation.name and \
+                        not node.properties.get('sources'):
+                    ctx.logger.error(
+                        'No sources property was provided,'
+                        ' so skipping storing facts.')
+                    return
+                raise e
 
         finally:
             if not save_playbook:
