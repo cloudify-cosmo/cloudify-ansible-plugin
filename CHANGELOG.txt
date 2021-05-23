@@ -91,3 +91,5 @@
 2.11.0:
   - RD-469: Send JSON event to event log during execution.
   - RD-1610: Step through Ansible Tags.
+2.11.1:
+  - RD-2429: Permit no source on store facts.
