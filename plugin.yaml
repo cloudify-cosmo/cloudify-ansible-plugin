@@ -155,6 +155,11 @@ dsl_definitions:
       default: 3
       description: >
         Total number of attempts to execute the playbook if exit code represents unreachable hosts\failure.
+    store_facts:
+      type: boolean
+      default: true
+      description: >
+        Store ansible facts under runtime properties.
 
   playbook_inputs: &playbook_inputs
     ansible_playbook_executable_path:
@@ -203,7 +208,9 @@ dsl_definitions:
       default: { get_property: [ SELF, auto_tags ] }
     number_of_attempts:
        default: { get_property: [ SELF, retry_number ] }
-
+    store_facts:
+       default: { get_property: [ SELF, retry_number ] }
+       
 node_types:
 
   cloudify.nodes.ansible.Executor:
