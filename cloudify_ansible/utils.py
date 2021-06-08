@@ -983,16 +983,17 @@ def get_playbook_args_tags(_node, _instance, playbook_path):
         ctx.operation.max_retries)
 
 
-def raise_if_retry_is_not_allowed(actual_retry_number, allowed_attempts_number):
+def raise_if_retry_is_not_allowed(actual_retry_number,
+                                  allowed_attempts_number):
     """
     Raise NonRecoverableError if the playbook failed more than the number of
     attempts that the user allowed.
     """
     # actual_retry_number starts from 0.
-    actual_attempts = actual_retry_number+1
+    actual_attempts = actual_retry_number + 1
     if actual_attempts >= allowed_attempts_number:
-        raise NonRecoverableError('Number of attempts: {actual_attempts}'
-                                  ' is greater or equal than retry_number '
-                                  'allowed:{allowed_attempts}'.format(
-            actual_attempts=actual_attempts,
-            allowed_attempts=allowed_attempts_number))
+        raise NonRecoverableError(
+            'Number of attempts: {actual_attempts} is greater or equal'
+            ' than retry_number allowed:{allowed_attempts}'.format(
+                actual_attempts=actual_attempts,
+                allowed_attempts=allowed_attempts_number))

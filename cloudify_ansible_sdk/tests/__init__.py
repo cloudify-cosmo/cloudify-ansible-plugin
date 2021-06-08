@@ -91,3 +91,7 @@ class AnsibleTestBase(unittest.TestCase):
             'processed': {},
             'failures': {}
         }
+
+    @property
+    def number_of_attempts(self):
+        return 3
