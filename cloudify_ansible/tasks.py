@@ -122,12 +122,18 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         raise NonRecoverableError(sdk_error)
     except ProcessException as process_error:
         if process_error.exit_code in UNREACHABLE_CODES:
+            utils.raise_if_retry_is_not_allowed(
+                _ctx.operation.retry_number,
+                playbook_args.get(constants.NUMBER_OF_ATTEMPTS))
             raise OperationRetry(
                 'One or more hosts are unreachable.')
         if process_error.exit_code not in SUCCESS_CODES:
             raise NonRecoverableError(
                 'One or more hosts failed.')
         else:
+            utils.raise_if_retry_is_not_allowed(
+                _ctx.operation.retry_number,
+                playbook_args.get(constants.NUMBER_OF_ATTEMPTS))
             raise RecoverableError('Retrying...')
 
     if constants.COMPLETED_TAGS not in _instance.runtime_properties:

@@ -177,6 +177,20 @@ class TestPluginTasks(AnsibleTestBase):
                 run(
                     self.playbook_path,
                     self.hosts_path,
+                    number_of_attempts=self.number_of_attempts,
+                    ctx=ctx)
+
+    @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    def test_ansible_playbook_retry_not_allowed(self, foo):
+        foo.side_effect = ProcessException(
+            'One or more hosts are unreachable.', 4)
+        current_ctx.set(ctx)
+        with patch('cloudify_ansible.create_playbook_venv'):
+            with self.assertRaises(NonRecoverableError):
+                run(
+                    self.playbook_path,
+                    self.hosts_path,
+                    number_of_attempts=1,
                     ctx=ctx)
 
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')

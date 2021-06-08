@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.11.1.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.12.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.11.1'
+    package_version: '2.12.0'
 
 dsl_definitions:
 
@@ -150,6 +150,16 @@ dsl_definitions:
         This requires that the playbook is written in such a way that the specified tags will produce the desired result.
         This value is ignored if tags are provided.
       default: false
+    number_of_attempts:
+      type: integer
+      default: 3
+      description: >
+        Total number of attempts to execute the playbook if exit code represents unreachable hosts\failure.
+    store_facts:
+      type: boolean
+      default: true
+      description: >
+        Store ansible facts under runtime properties.
 
   playbook_inputs: &playbook_inputs
     ansible_playbook_executable_path:
@@ -196,8 +206,11 @@ dsl_definitions:
       default: { get_property: [ SELF, tags ] }
     auto_tags:
       default: { get_property: [ SELF, auto_tags ] }
-
-
+    number_of_attempts:
+       default: { get_property: [ SELF, retry_number ] }
+    store_facts:
+       default: { get_property: [ SELF, retry_number ] }
+       
 node_types:
 
   cloudify.nodes.ansible.Executor:
