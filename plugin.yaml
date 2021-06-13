@@ -207,9 +207,9 @@ dsl_definitions:
     auto_tags:
       default: { get_property: [ SELF, auto_tags ] }
     number_of_attempts:
-       default: { get_property: [ SELF, retry_number ] }
+       default: { get_property: [ SELF, number_of_attempts ] }
     store_facts:
-       default: { get_property: [ SELF, retry_number ] }
+       default: { get_property: [ SELF, store_facts ] }
        
 node_types:
 
