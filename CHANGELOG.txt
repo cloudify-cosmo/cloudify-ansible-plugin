@@ -95,3 +95,5 @@
   - RD-2429: Permit no source on store facts.
 2.12.0:
   - Add number_of_attempts property for playbooks executions.
+2.12.1:
+  - Install Ansible in deployment venv from wheel URL.
