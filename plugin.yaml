@@ -2,9 +2,9 @@ plugins:
 
   ansible:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.12.1.zip
+    source: https://github.com/cloudify-cosmo/cloudify-ansible-plugin/archive/2.13.0.zip
     package_name: cloudify-ansible-plugin
-    package_version: '2.12.1'
+    package_version: '2.13.0'
 
 dsl_definitions:
 
@@ -21,6 +21,13 @@ dsl_definitions:
       default: []
       description: >
         List of python packages to install on controller virtual env before running the playbook.
+        If the manager has no internet connection this feature cannot be used.
+    galaxy_collection:
+      # uncomment on 5+
+      # type: list
+      default: []
+      description: >
+        List of Ansible galaxy collections to install on controller virtual env before running the playbook.
         If the manager has no internet connection this feature cannot be used.
     playbook_source_path:
       type: string
@@ -166,6 +173,8 @@ dsl_definitions:
       default: { get_property: [SELF, ansible_playbook_executable_path] }
     extra_packages:
       default: { get_property: [ SELF, extra_packages ] }
+    galaxy_collection:
+      default: { get_property: [ SELF, galaxy_collection ] }
     playbook_source_path:
       default: { get_property: [SELF, playbook_source_path] }
     playbook_path:
@@ -299,7 +308,9 @@ relationships:
             ansible_playbook_executable_path:
               default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
             extra_packages:
-              default: { get_attribute: [SOURCE, extra_packages] }
+              default: { get_property: [ SELF, extra_packages ] }
+            galaxy_collection:
+              default: { get_property: [ SELF, galaxy_collection ] }
             playbook_source_path:
               default: { get_attribute: [SOURCE, playbook_source_path] }
             playbook_path:

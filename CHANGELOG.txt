@@ -97,3 +97,5 @@
   - Add number_of_attempts property for playbooks executions.
 2.12.1:
   - Install Ansible in deployment venv from wheel URL.
+2.13.0:
+  - RD-3031 Add Galaxy Collections Install.
