@@ -22,7 +22,7 @@ dsl_definitions:
       description: >
         List of python packages to install on controller virtual env before running the playbook.
         If the manager has no internet connection this feature cannot be used.
-    galaxy_collection:
+    galaxy_collections:
       # uncomment on 5+
       # type: list
       default: []
@@ -173,8 +173,8 @@ dsl_definitions:
       default: { get_property: [SELF, ansible_playbook_executable_path] }
     extra_packages:
       default: { get_property: [ SELF, extra_packages ] }
-    galaxy_collection:
-      default: { get_property: [ SELF, galaxy_collection ] }
+    galaxy_collections:
+      default: { get_property: [ SELF, galaxy_collections ] }
     playbook_source_path:
       default: { get_property: [SELF, playbook_source_path] }
     playbook_path:
@@ -309,8 +309,8 @@ relationships:
               default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
             extra_packages:
               default: { get_property: [ SELF, extra_packages ] }
-            galaxy_collection:
-              default: { get_property: [ SELF, galaxy_collection ] }
+            galaxy_collections:
+              default: { get_property: [ SELF, galaxy_collections ] }
             playbook_source_path:
               default: { get_attribute: [SOURCE, playbook_source_path] }
             playbook_path:

@@ -74,6 +74,7 @@ def ansible_playbook_node(func):
                 remerge_sources=False,
                 playbook_source_path=None,
                 extra_packages=None,
+                galaxy_collections=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -93,6 +94,8 @@ def ansible_playbook_node(func):
         :param remerge_sources: update sources on target node
         :param extra_packages: list of packages to install to ansible playbook
          controller env.
+        :param galaxy_collections: list of ansible galaxy collections to
+         install to controller env.
         :param start_at_task: The name of the task to start at.
         :param kwargs:
         :return:
@@ -115,8 +118,12 @@ def ansible_playbook_node(func):
         try:
             extra_packages = extra_packages or get_node(ctx).properties.get(
                 'extra_packages') or []
+            galaxy_collections = \
+                galaxy_collections or get_node(ctx).properties.get(
+                    'galaxy_collections') or []
             create_playbook_venv(ctx,
-                                 packages_to_install=extra_packages)
+                                 packages_to_install=extra_packages,
+                                 collections_to_install=galaxy_collections)
             create_playbook_workspace(ctx)
             # check if source path is provided [full path/URL]
             if playbook_source_path:
