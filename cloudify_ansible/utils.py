@@ -586,6 +586,26 @@ def install_packages_to_venv(venv, packages_list):
                                       "{err}".format(err=e))
 
 
+def install_collections_to_venv(venv, collections_list):
+    # Force reinstall in playbook venv in order to make sure
+    # they being installed on specified environment .
+    if collections_list:
+        ctx.logger.debug("venv = {path}".format(path=venv))
+        command = [get_executable_path('ansible-galaxy', venv=venv),
+                   'collection', 'install', '--force'] + collections_list
+        ctx.logger.debug("cmd:{command}".format(command=command))
+        ctx.logger.info("Installing {packages} on playbook`s venv.".format(
+            packages=collections_list))
+        try:
+            runner.run(command=command,
+                       cwd=venv,
+                       execution_env={'PYTHONPATH': ''})
+        except CommandExecutionException as e:
+            raise NonRecoverableError("Can't install galaxy_collections on"
+                                      " playbook`s venv. Error message: "
+                                      "{err}".format(err=e))
+
+
 def get_executable_path(executable, venv):
     """
     :param executable: the name of the executable
@@ -594,12 +614,16 @@ def get_executable_path(executable, venv):
     return '{0}/bin/{1}'.format(venv, executable) if venv else executable
 
 
-def create_playbook_venv(_ctx, packages_to_install):
+def create_playbook_venv(_ctx,
+                         packages_to_install=None,
+                         collections_to_install=None):
     """
         Handle creation of virtual environments for running playbooks.
         The virtual environments will be created at the deployment directory.
        :param _ctx: cloudify context.
        :param packages_to_install: list of python packages to install
+        inside venv.
+       :param collections_to_install: list of galaxy collections to install
         inside venv.
        """
 
@@ -611,9 +635,10 @@ def create_playbook_venv(_ctx, packages_to_install):
             install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
             get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
             install_packages_to_venv(venv_path, packages_to_install)
+            install_collections_to_venv(venv_path, collections_to_install)
     else:
         get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
-        if packages_to_install:
+        if packages_to_install or collections_to_install:
             raise NonRecoverableError('Do not use extra_packages when'
                                       ' working on the plugin virtualenv.')
 

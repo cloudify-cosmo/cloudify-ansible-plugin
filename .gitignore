@@ -62,3 +62,5 @@ workspace
 Library/
 *.log
 .vagrant/
+cover/
+coverage.xml
