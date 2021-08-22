@@ -202,15 +202,15 @@ dsl_definitions:
     start_at_task:
       default: { get_property: [SELF, start_at_task] }
     scp_extra_args:
-      default: { get_attribute: [SELF, scp_extra_args] }
+      default: { get_property: [SELF, scp_extra_args] }
     sftp_extra_args:
-      default: { get_attribute: [SELF, sftp_extra_args] }
+      default: { get_property: [SELF, sftp_extra_args] }
     ssh_common_args:
-      default: { get_attribute: [SELF, ssh_common_args] }
+      default: { get_property: [SELF, ssh_common_args] }
     ssh_extra_args:
-      default: { get_attribute: [SELF, ssh_extra_args] }
+      default: { get_property: [SELF, ssh_extra_args] }
     timeout:
-      default: { get_attribute: [SELF, timeout] }
+      default: { get_property: [SELF, timeout] }
     tags:
       default: { get_property: [ SELF, tags ] }
     auto_tags:
@@ -219,7 +219,7 @@ dsl_definitions:
        default: { get_property: [ SELF, number_of_attempts ] }
     store_facts:
        default: { get_property: [ SELF, store_facts ] }
-       
+
 node_types:
 
   cloudify.nodes.ansible.Executor:
@@ -308,9 +308,9 @@ relationships:
             ansible_playbook_executable_path:
               default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
             extra_packages:
-              default: { get_property: [ SELF, extra_packages ] }
+              default: { get_attribute: [ SOURCE, extra_packages ] }
             galaxy_collections:
-              default: { get_property: [ SELF, galaxy_collections ] }
+              default: { get_attribute: [ SOURCE, galaxy_collections ] }
             playbook_source_path:
               default: { get_attribute: [SOURCE, playbook_source_path] }
             playbook_path:
@@ -348,9 +348,9 @@ relationships:
             timeout:
               default: { get_attribute: [SOURCE, timeout] }
             tags:
-              default: { get_property: [ SOURCE, tags ] }
+              default: { get_attribute: [ SOURCE, tags ] }
             auto_tags:
-              default: { get_property: [ SOURCE, auto_tags ] }
+              default: { get_attribute: [ SOURCE, auto_tags ] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
 
