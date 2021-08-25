@@ -105,7 +105,7 @@ commands:
           command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
       - attach_workspace:
           at: workspace
-      - run: ecosystem-test validate-plugin-version
+      - run: ecosystem-test validate_plugin_version
 
   validate_version:
     steps:
