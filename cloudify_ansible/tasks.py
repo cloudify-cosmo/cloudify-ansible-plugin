@@ -114,6 +114,9 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process['args'] = playbook.process_args
 
     if not log_stdout:
+        _ctx.logger.warn(
+            'The parameter log_stdout is set to False, '
+            'you will not see logs for this execution from Ansible.')
         process['log_stdout'] = False
 
     try:
@@ -168,7 +171,11 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
             **kwargs)
 
 
-def _store_facts(playbook, ansible_env_vars, _ctx, log_stdout=None, **_):
+def _store_facts(playbook,
+                 ansible_env_vars,
+                 _ctx,
+                 log_stdout=None,
+                 **_):
 
     _node = utils.get_node(_ctx)
     _instance = utils.get_instance(_ctx)
@@ -180,6 +187,9 @@ def _store_facts(playbook, ansible_env_vars, _ctx, log_stdout=None, **_):
     process['env'] = ansible_env_vars
     process['args'] = playbook.facts_args
     if not log_stdout:
+        _ctx.logger.warn(
+            'The parameter log_stdout is set to False, '
+            'you will not see logs for this execution from Ansible.')
         process['log_stdout'] = False
 
     try:
