@@ -158,6 +158,10 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
 
 
 def _store_facts(playbook, ansible_env_vars, _ctx, **_):
+    _node = utils.get_node(_ctx)
+    _instance = utils.get_instance(_ctx)
+    if not _node.properties.get('store_facts', True):
+        return
     utils.assign_environ(ansible_env_vars)
     process = dict()
     process['env'] = ansible_env_vars
@@ -184,11 +188,8 @@ def _store_facts(playbook, ansible_env_vars, _ctx, **_):
                 'One or more hosts failed.')
         else:
             raise RecoverableError('Retrying...')
-    _node = utils.get_node(_ctx)
-    _instance = utils.get_instance(_ctx)
-    if _node.properties.get('store_facts', True):
-        facts = utils.get_facts(facts)
-        _instance.runtime_properties['facts'] = facts
+    facts = utils.get_facts(facts)
+    _instance.runtime_properties['facts'] = facts
 
 
 @operation(resumable=True)
