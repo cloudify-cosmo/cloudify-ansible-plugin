@@ -113,11 +113,11 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process['env'] = ansible_env_vars
     process['args'] = playbook.process_args
 
-    if not log_stdout:
-        _ctx.logger.warn(
-            'The parameter log_stdout is set to False, '
-            'you will not see logs for this execution from Ansible.')
-        process['log_stdout'] = False
+    # if not log_stdout:
+    #     _ctx.logger.warn(
+    #         'The parameter log_stdout is set to False, '
+    #         'you will not see logs for this execution from Ansible.')
+    #     process['log_stdout'] = False
 
     try:
         playbook.execute(
