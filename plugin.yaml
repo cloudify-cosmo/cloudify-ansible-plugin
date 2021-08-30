@@ -93,6 +93,10 @@ dsl_definitions:
       default: 2
       description: >
         Debug level
+    log_stdout:
+      type: boolean
+      description: Whether to dump output to execution event log. Set to false to speed up long executions.
+      default: true
     additional_args:
       type: string
       description: >

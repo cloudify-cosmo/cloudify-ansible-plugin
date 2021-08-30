@@ -110,6 +110,12 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process['env'] = ansible_env_vars
     process['args'] = playbook.process_args
 
+    log_stdout = kwargs.get(
+        'log_stdout',
+        _ctx.node.properties.get('log_stdout', True))
+    if not log_stdout:
+        process['log_stdout'] = False
+
     try:
         playbook.execute(
             utils.process_execution,
@@ -157,7 +163,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
 
 
-def _store_facts(playbook, ansible_env_vars, _ctx, **_):
+def _store_facts(playbook, ansible_env_vars, _ctx, **kwargs):
     _node = utils.get_node(_ctx)
     _instance = utils.get_instance(_ctx)
     if not _node.properties.get('store_facts', True):
@@ -166,6 +172,13 @@ def _store_facts(playbook, ansible_env_vars, _ctx, **_):
     process = dict()
     process['env'] = ansible_env_vars
     process['args'] = playbook.facts_args
+
+    log_stdout = kwargs.get(
+        'log_stdout',
+        _node.properties.get('log_stdout', True))
+    if not log_stdout:
+        process['log_stdout'] = False
+
     try:
         facts = playbook.get_facts(
             utils.process_execution,
