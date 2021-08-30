@@ -94,6 +94,9 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         _node, _instance, playbook_args['playbook_path'])
 
     playbook_args['tags'] = tags_to_apply
+    log_stdout = playbook_args.pop(
+        'log_stdout',
+        _node.properties.get('log_stdout', True))
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
@@ -110,9 +113,6 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process['env'] = ansible_env_vars
     process['args'] = playbook.process_args
 
-    log_stdout = playbook_args.get(
-        'log_stdout',
-        _ctx.node.properties.get('log_stdout', True))
     if not log_stdout:
         process['log_stdout'] = False
 
@@ -174,12 +174,11 @@ def _store_facts(playbook, ansible_env_vars, _ctx, log_stdout=None, **_):
     _instance = utils.get_instance(_ctx)
     if not _node.properties.get('store_facts', True):
         return
+    log_stdout = log_stdout or _node.properties.get('log_stdout', True)
     utils.assign_environ(ansible_env_vars)
     process = dict()
     process['env'] = ansible_env_vars
     process['args'] = playbook.facts_args
-
-    log_stdout = log_stdout or _node.properties.get('log_stdout', True)
     if not log_stdout:
         process['log_stdout'] = False
 
@@ -213,8 +212,8 @@ def _store_facts(playbook, ansible_env_vars, _ctx, log_stdout=None, **_):
 @ansible_playbook_node
 def store_facts(playbook_args, ansible_env_vars, _ctx, **kwargs):
     secure_log_playbook_args(_ctx, playbook_args)
+    log_stdout = playbook_args.pop('log_stdout', True)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
-    log_stdout = playbook_args.get('log_stdout', False)
     _store_facts(
         playbook,
         ansible_env_vars,
