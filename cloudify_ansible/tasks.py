@@ -186,8 +186,8 @@ def _store_facts(playbook, ansible_env_vars, _ctx, **_):
             raise RecoverableError('Retrying...')
     _node = utils.get_node(_ctx)
     _instance = utils.get_instance(_ctx)
-    facts = utils.get_facts(facts)
     if _node.properties.get('store_facts', True):
+        facts = utils.get_facts(facts)
         _instance.runtime_properties['facts'] = facts
 
 
