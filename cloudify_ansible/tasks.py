@@ -94,6 +94,9 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         _node, _instance, playbook_args['playbook_path'])
 
     playbook_args['tags'] = tags_to_apply
+    log_stdout = playbook_args.pop(
+        'log_stdout',
+        _node.properties.get('log_stdout', True))
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
@@ -154,14 +157,35 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     # before we apply the playbook. # So this will make ensure that we get some
     # postestablish action.
     if 'establish' in _ctx.operation.name.split('.')[-1]:
-        _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
+        _store_facts(
+            playbook,
+            ansible_env_vars,
+            _ctx,
+            log_stdout=log_stdout,
+            **kwargs)
 
 
-def _store_facts(playbook, ansible_env_vars, _ctx, **_):
+def _store_facts(playbook,
+                 ansible_env_vars,
+                 _ctx,
+                 log_stdout=None,
+                 **_):
+
+    _node = utils.get_node(_ctx)
+    _instance = utils.get_instance(_ctx)
+    if not _node.properties.get('store_facts', True):
+        return
+    log_stdout = log_stdout or _node.properties.get('log_stdout', True)
     utils.assign_environ(ansible_env_vars)
     process = dict()
     process['env'] = ansible_env_vars
     process['args'] = playbook.facts_args
+    if not log_stdout:
+        _ctx.logger.warn(
+            'The parameter log_stdout is set to False, '
+            'you will not see logs for this execution from Ansible.')
+        process['log_stdout'] = False
+
     try:
         facts = playbook.get_facts(
             utils.process_execution,
@@ -184,19 +208,22 @@ def _store_facts(playbook, ansible_env_vars, _ctx, **_):
                 'One or more hosts failed.')
         else:
             raise RecoverableError('Retrying...')
-    _node = utils.get_node(_ctx)
-    _instance = utils.get_instance(_ctx)
     facts = utils.get_facts(facts)
-    if _node.properties.get('store_facts', True):
-        _instance.runtime_properties['facts'] = facts
+    _instance.runtime_properties['facts'] = facts
 
 
 @operation(resumable=True)
 @ansible_playbook_node
 def store_facts(playbook_args, ansible_env_vars, _ctx, **kwargs):
     secure_log_playbook_args(_ctx, playbook_args)
+    log_stdout = playbook_args.pop('log_stdout', True)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
-    _store_facts(playbook, ansible_env_vars, _ctx, **kwargs)
+    _store_facts(
+        playbook,
+        ansible_env_vars,
+        _ctx,
+        log_stdout=log_stdout,
+        **kwargs)
 
 
 @operation(resumable=True)

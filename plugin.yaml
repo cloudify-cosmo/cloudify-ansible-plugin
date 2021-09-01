@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.0'
+    package_version: '2.13.1'
 
 dsl_definitions:
 
@@ -93,6 +93,10 @@ dsl_definitions:
       default: 2
       description: >
         Debug level
+    log_stdout:
+      type: boolean
+      description: Whether to dump output to execution event log. Set to false to speed up long executions.
+      default: true
     additional_args:
       type: string
       description: >
