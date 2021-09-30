@@ -23,11 +23,13 @@ PY2 = sys.version_info[0] == 2
 if PY2:
     text_type = unicode
     from urllib2 import urlopen, URLError
+    from StringIO import StringIO
 else:
     text_type = str
     from urllib.request import urlopen
     from urllib.error import URLError
+    from io import StringIO
 
 __all__ = [
-    'PY2', 'text_type', 'urlopen', 'URLError'
+    'PY2', 'text_type', 'urlopen', 'URLError', 'StringIO'
 ]

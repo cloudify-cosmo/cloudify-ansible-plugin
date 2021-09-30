@@ -16,36 +16,29 @@ import os
 import re
 import sys
 import json
-import time
 import yaml
 import errno
 import shutil
-import subprocess
 from uuid import uuid1
 from copy import deepcopy
 from tempfile import mkdtemp
-
 
 from cloudify import ctx
 from ansible.playbook import Playbook
 from cloudify.manager import get_rest_client
 from ansible.vars.manager import VariableManager
 from ansible.parsing.dataloader import DataLoader
-from cloudify.utils import LocalCommandRunner, OutputConsumer
 from cloudify_common_sdk.utils import get_deployment_dir
 from cloudify_rest_client.constants import VisibilityState
-from cloudify_ansible_sdk._compat import text_type, urlopen, URLError
+from cloudify_common_sdk.processes import general_executor
+from cloudify.utils import LocalCommandRunner
+from cloudify_ansible_sdk._compat import (
+    text_type, urlopen, URLError)
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException,
                                  CommandExecutionException)
 from script_runner.tasks import (
-    start_ctx_proxy,
-    ProcessException,
-    POLL_LOOP_INTERVAL,
-    process_ctx_request,
-    POLL_LOOP_LOG_ITERATIONS,
-    _get_process_environment,
     ILLEGAL_CTX_OPERATION_ERROR,
     UNSUPPORTED_SCRIPT_FEATURE_ERROR
 )
@@ -61,6 +54,7 @@ from cloudify_ansible.constants import (
     HOSTS
 )
 from cloudify_ansible_sdk.sources import AnsibleSource
+
 
 runner = LocalCommandRunner()
 
@@ -653,129 +647,6 @@ def is_connected_to_internet():
         return False
 
 
-def execute_copy(script_path, ctx, process):
-    """Copied entirely from script_runner, the only difference is
-    that the stdout is read in the return.
-
-    :param script_path:
-    :param ctx:
-    :param process:
-    :return: stdout string
-    """
-
-    on_posix = 'posix' in sys.builtin_module_names
-
-    proxy = start_ctx_proxy(ctx, process)
-    env = _get_process_environment(process, proxy)
-    cwd = process.get('cwd')
-
-    command_prefix = process.get('command_prefix')
-    if command_prefix:
-        command = '{0} {1}'.format(command_prefix, script_path)
-    else:
-        command = script_path
-
-    args = process.get('args')
-    if args:
-        command = ' '.join([command] + args)
-
-    # Figure out logging.
-
-    log_stdout = process.get('log_stdout', True)
-    log_stderr = process.get('log_stderr', True)
-    stderr_to_stdout = process.get('stderr_to_stdout', False)
-
-    ctx.logger.debug('log_stdout=%r, log_stderr=%r, stderr_to_stdout=%r',
-                     log_stdout, log_stderr, stderr_to_stdout)
-
-    if log_stderr:
-        stderr_value = subprocess.STDOUT if stderr_to_stdout \
-            else subprocess.PIPE
-    else:
-        stderr_value = None
-
-    consume_stderr = stderr_value == subprocess.PIPE
-
-    process = subprocess.Popen(
-        args=command,
-        shell=True,
-        stdout=subprocess.PIPE if log_stdout else None,
-        stderr=stderr_value,
-        env=env,
-        cwd=cwd,
-        bufsize=1,
-        close_fds=on_posix)
-
-    pid = process.pid
-    ctx.logger.info('Process created, PID: {0}'.format(pid))
-
-    stdout_consumer = stderr_consumer = None
-
-    if log_stdout:
-        stdout_consumer = OutputConsumer(process.stdout, ctx.logger, '<out> ')
-        ctx.logger.debug('Started consumer thread for stdout')
-    if consume_stderr:
-        stderr_consumer = OutputConsumer(process.stderr, ctx.logger, '<err> ')
-        ctx.logger.debug('Started consumer thread for stderr')
-
-    log_counter = 0
-    while True:
-        process_ctx_request(proxy)
-        return_code = process.poll()
-        if return_code is not None:
-            break
-        time.sleep(POLL_LOOP_INTERVAL)
-
-        log_counter += 1
-        if log_counter == POLL_LOOP_LOG_ITERATIONS:
-            log_counter = 0
-            ctx.logger.info('Waiting for process {0} to end...'.format(pid))
-
-    ctx.logger.info('Execution done (PID={0}, return_code={1}): {2}'
-                    .format(pid, return_code, command))
-
-    try:
-        proxy.close()
-    except Exception:
-        ctx.logger.warning('Failed closing context proxy', exc_info=True)
-    else:
-        ctx.logger.debug("Context proxy closed")
-
-    for consumer, name in [(stdout_consumer, 'stdout'),
-                           (stderr_consumer, 'stderr')]:
-        if consumer:
-            ctx.logger.debug('Joining consumer thread for %s', name)
-            consumer.join()
-            ctx.logger.debug('Consumer thread for %s ended', name)
-        else:
-            ctx.logger.debug('Consumer thread for %s not created; not joining',
-                             name)
-
-    # happens when more than 1 ctx result command is used
-    if isinstance(ctx._return_value, RuntimeError):
-        raise NonRecoverableError(str(ctx._return_value))
-    elif return_code != 0:
-        if not ctx.is_script_exception_defined and isinstance(
-                ctx._return_value, ScriptException):
-            if log_stdout:
-                stdout = ''.join(stdout_consumer.output)
-            else:
-                stdout = process.stdout.read().decode('utf-8', 'replace')
-            if stderr_to_stdout:
-                stderr = None
-            elif log_stderr:
-                stderr = ''.join(stderr_consumer.output)
-            else:
-                stderr = process.stderr.read().decode('utf-8', 'replace')
-            raise ProcessException(command, return_code, stdout, stderr)
-
-    if log_stdout:
-        output = ''.join(stdout_consumer.output)
-    else:
-        output = process.stdout.read().decode('utf-8', 'replace')
-    return output
-
-
 def process_execution(script_func, script_path, ctx, process=None):
     """Entirely lifted from the script runner, the only difference is
     we return the return value of the script_func, instead of the return
@@ -850,8 +721,8 @@ def get_plays(string, node_name):
     """
     string_without_whitespace = '\n'.join(
         string).replace("\n", "").replace("\t", "").replace(" ", "")
-    surrouding_elements = ',"plays":(.*),"stats":{"' + node_name
-    selected = re.search(surrouding_elements, string_without_whitespace)
+    surrounding_elements = ',"plays":(.*),"stats":{"' + node_name
+    selected = re.search(surrounding_elements, string_without_whitespace)
     try:
         return json.loads(selected.group(1))
     except (AttributeError, IndexError):
@@ -870,21 +741,25 @@ def get_facts(string):
     :param string:
     :return:
     """
+    # ctx.logger.info('TRYING THIS')
+    # ctx.logger.info(string)
     new_string = []
     for line in string.split('\n'):
         if line.startswith('META'):
             continue
+        line = line.replace('META: ran handlers', '')
         new_string.append(line)
     separater = '=>(.*)'
     string_without_whitespace = '\n'.join(
         new_string).replace("\n", "").replace("\t", "").replace(" ", "")
     selected = re.search(separater, string_without_whitespace)
     try:
-        return json.loads(selected.group(1))
-    except (AttributeError, IndexError):
-        ctx.logger.error('Unable to parse result. '
-                         'Not storing result in runtime properties.')
-        return selected
+        return json.loads(selected.group(1))['ansible_facts']
+    except (AttributeError, IndexError, KeyError) as e:
+        ctx.logger.error(
+            'Unable to parse result. '
+            'Not storing result in runtime properties. Error: {}'.format(e))
+    return selected
 
 
 def get_tasks_by_host(plays):
@@ -1022,3 +897,6 @@ def raise_if_retry_is_not_allowed(actual_retry_number,
             ' than retry_number allowed:{allowed_attempts}'.format(
                 actual_attempts=actual_attempts,
                 allowed_attempts=allowed_attempts_number))
+
+
+execute_copy = general_executor
