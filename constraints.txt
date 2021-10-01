@@ -3,4 +3,3 @@ hvac
 ipaddr
 netaddr
 cryptography==3.3.2
-https://github.com/cloudify-incubator/cloudify-utilities-plugins-sdk/archive/refs/heads/RD-3275-General-Executor.zip

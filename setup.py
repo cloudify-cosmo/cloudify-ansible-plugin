@@ -45,7 +45,7 @@ setup(
     zip_safe=False,
     install_requires=[
         "cloudify-common>=4.5.5",
-        "cloudify-utilities-plugins-sdk>=0.0.31",  # Shared Resource Downloader
+        "cloudify-utilities-plugins-sdk>=0.0.39",  # Shared Resource Downloader
         "ansible==2.9.5",
         "pexpect==4.8.0"
     ]
