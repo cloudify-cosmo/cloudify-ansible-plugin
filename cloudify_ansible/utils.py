@@ -30,7 +30,6 @@ from ansible.vars.manager import VariableManager
 from ansible.parsing.dataloader import DataLoader
 from cloudify_common_sdk.utils import get_deployment_dir
 from cloudify_rest_client.constants import VisibilityState
-from cloudify_common_sdk.processes import general_executor
 from cloudify.utils import LocalCommandRunner
 from cloudify_ansible_sdk._compat import (
     text_type, urlopen, URLError)
@@ -897,6 +896,3 @@ def raise_if_retry_is_not_allowed(actual_retry_number,
             ' than retry_number allowed:{allowed_attempts}'.format(
                 actual_attempts=actual_attempts,
                 allowed_attempts=allowed_attempts_number))
-
-
-execute_copy = general_executor
