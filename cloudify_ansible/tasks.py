@@ -91,9 +91,6 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         _node, _instance, playbook_args['playbook_path'])
 
     playbook_args['tags'] = tags_to_apply
-    log_stdout = playbook_args.pop(
-        'log_stdout',
-        _node.properties.get('log_stdout', True))
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
@@ -109,6 +106,14 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process = dict()
     process['env'] = ansible_env_vars
     process['args'] = playbook.process_args
+    log_stdout = playbook_args.pop(
+        'log_stdout',
+        _node.properties.get('log_stdout', True))
+    if not log_stdout:
+        _ctx.logger.warn(
+            'The parameter log_stdout is set to False, '
+            'you will not see logs for this execution from Ansible.')
+        process['log_stdout'] = False
 
     try:
         playbook.execute(
