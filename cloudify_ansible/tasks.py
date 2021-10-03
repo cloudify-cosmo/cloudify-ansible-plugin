@@ -14,26 +14,23 @@
 
 
 from cloudify.decorators import operation
+from script_runner.tasks import ProcessException
+from cloudify_common_sdk.processes import general_executor
 from cloudify.exceptions import (
-    NonRecoverableError,
+    OperationRetry,
     RecoverableError,
-    OperationRetry
+    NonRecoverableError
 )
 
-from script_runner.tasks import (
-    execute,
-    ProcessException
-)
-
-from cloudify_ansible_sdk import (
-    AnsiblePlaybookFromFile,
-    CloudifyAnsibleSDKError
-)
-from cloudify_ansible import (
+from . import (
     ansible_playbook_node,
     ansible_relationship_source,
     utils,
     constants
+)
+from cloudify_ansible_sdk import (
+    AnsiblePlaybookFromFile,
+    CloudifyAnsibleSDKError
 )
 
 UNREACHABLE_CODES = [None, 2, 4]
@@ -94,9 +91,6 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         _node, _instance, playbook_args['playbook_path'])
 
     playbook_args['tags'] = tags_to_apply
-    log_stdout = playbook_args.pop(
-        'log_stdout',
-        _node.properties.get('log_stdout', True))
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
@@ -112,11 +106,19 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     process = dict()
     process['env'] = ansible_env_vars
     process['args'] = playbook.process_args
+    log_stdout = playbook_args.pop(
+        'log_stdout',
+        _node.properties.get('log_stdout', True))
+    if not log_stdout:
+        _ctx.logger.warn(
+            'The parameter log_stdout is set to False, '
+            'you will not see logs for this execution from Ansible.')
+        process['log_stdout'] = False
 
     try:
         playbook.execute(
             utils.process_execution,
-            script_func=execute,
+            script_func=general_executor,
             script_path=script_path,
             ctx=_ctx,
             process=process
@@ -189,7 +191,7 @@ def _store_facts(playbook,
     try:
         facts = playbook.get_facts(
             utils.process_execution,
-            script_func=utils.execute_copy,
+            script_func=general_executor,
             script_path=utils.get_executable_path(
                 executable="ansible",
                 venv=utils.get_instance(
