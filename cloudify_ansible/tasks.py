@@ -238,3 +238,8 @@ def ansible_requires_host(new_sources_dict, _ctx, **_):
 @ansible_relationship_source
 def ansible_remove_host(new_sources_dict, _ctx, **_):
     utils.cleanup_sources_from_target(new_sources_dict, _ctx)
+
+
+@operation
+def precreate(ctx, **_):
+    ctx.logger.info('Checking Ansible plugin installation, doing nothing.')
