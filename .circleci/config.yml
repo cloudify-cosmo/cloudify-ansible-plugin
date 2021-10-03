@@ -208,7 +208,7 @@ commands:
           command: pip install -U pip===20.3.3
       - run:
           name: get wget
-          command: apt-get install -y wget
+          command: sudo apt-get install -y wget
       - run:
           name: install cloudify
           command: |
