@@ -259,6 +259,8 @@ def handle_sources(data, site_yaml_abspath, _ctx):
         was either provided or generated.
     """
 
+    if not site_yaml_abspath:
+        return
     hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
     if isinstance(data, dict):
         data = handle_key_data(
