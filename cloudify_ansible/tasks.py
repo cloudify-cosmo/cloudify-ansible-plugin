@@ -84,8 +84,8 @@ def secure_log_playbook_args(_ctx, args, **_):
 @operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
-    _node = utils.get_node(_ctx)
-    _instance = utils.get_instance(_ctx)
+    _node = utils.get_node()
+    _instance = utils.get_instance()
 
     tags_to_apply, remaining_tags = utils.get_playbook_args_tags(
         _node, _instance, playbook_args['playbook_path'])
@@ -241,5 +241,11 @@ def ansible_remove_host(new_sources_dict, _ctx, **_):
 
 
 @operation
+@ansible_playbook_node
 def precreate(ctx, **_):
-    ctx.logger.info('Checking Ansible plugin installation, doing nothing.')
+    ctx.logger.info('Checking Ansible installation.')
+    if not utils.get_instance().runtime_properties.get(
+            constants.PLAYBOOK_VENV):
+        ctx.logger.error('Ansible will need to be installed. '
+                         'This may cause problems if Ansible is installed in '
+                         'a relationship operation.')

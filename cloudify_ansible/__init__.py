@@ -124,7 +124,7 @@ def ansible_playbook_node(func):
             create_playbook_venv(ctx,
                                  packages_to_install=extra_packages,
                                  collections_to_install=galaxy_collections)
-            create_playbook_workspace(ctx)
+            create_playbook_workspace()
             # check if source path is provided [full path/URL]
             if playbook_source_path:
                 # here we will combine playbook_source_path with playbook_path
