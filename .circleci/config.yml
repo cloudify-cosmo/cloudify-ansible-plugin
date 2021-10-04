@@ -421,7 +421,7 @@ workflows:
       - build_bundle:
           filters:
             branches:
-              only: /master/
+              only: /([0-9\.]*\-build|master|dev)/
           requires:
             - wagon
             - rhel_wagon
