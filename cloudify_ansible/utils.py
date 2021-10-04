@@ -259,21 +259,21 @@ def handle_sources(data, site_yaml_abspath, _ctx):
         was either provided or generated.
     """
 
-    if not site_yaml_abspath:
-        return
-    hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
-    if isinstance(data, dict):
-        data = handle_key_data(
-            data, get_instance(_ctx).runtime_properties[WORKSPACE])
-        if os.path.exists(hosts_abspath):
-            _ctx.logger.error(
-                'Hosts data was provided but {0} already exists. '
-                'Overwriting existing file.'.format(hosts_abspath))
-        with open(hosts_abspath, 'w') as outfile:
-            yaml.safe_dump(data, outfile, default_flow_style=False)
-    elif isinstance(data, text_type):
-        hosts_abspath = handle_source_from_string(data, _ctx, hosts_abspath)
-    return hosts_abspath
+    if site_yaml_abspath:
+        hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
+        if isinstance(data, dict):
+            data = handle_key_data(
+                data, get_instance(_ctx).runtime_properties[WORKSPACE])
+            if os.path.exists(hosts_abspath):
+                _ctx.logger.error(
+                    'Hosts data was provided but {0} already exists. '
+                    'Overwriting existing file.'.format(hosts_abspath))
+            with open(hosts_abspath, 'w') as outfile:
+                yaml.safe_dump(data, outfile, default_flow_style=False)
+        elif isinstance(data, text_type):
+            hosts_abspath = handle_source_from_string(
+                data, _ctx, hosts_abspath)
+        return hosts_abspath
 
 
 def get_inventory_file(filepath, _ctx, new_inventory_path):
