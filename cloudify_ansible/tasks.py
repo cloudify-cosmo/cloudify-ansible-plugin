@@ -23,6 +23,7 @@ from cloudify.exceptions import (
 )
 
 from . import (
+    prepare_ansible_node,
     ansible_playbook_node,
     ansible_relationship_source,
     utils,
@@ -241,7 +242,7 @@ def ansible_remove_host(new_sources_dict, _ctx, **_):
 
 
 @operation
-@ansible_playbook_node
+@prepare_ansible_node
 def precreate(_, __, ctx=None, **___):
     ctx.logger.info('Checking Ansible installation.')
     if not utils.get_instance().runtime_properties.get(

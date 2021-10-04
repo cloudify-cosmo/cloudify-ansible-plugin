@@ -162,7 +162,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 "can't get blueprint for deployment {0}".format(deployment_id))
 
     if not isinstance(file_path, (text_type, bytes)):
-        ctx.logger.error(
+        raise NonRecoverableError(
             'The variable file_path {0} is a {1},'
             'expected a string.'.format(file_path, type(file_path)))
     if not getattr(_ctx, '_local', False):
@@ -198,7 +198,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                     relative_path=file_path)
     if os.path.exists(file_path):
         return file_path
-    ctx.logger.error(
+    raise NonRecoverableError(
         'File path {0} does not exist.'.format(file_path))
 
 
@@ -230,20 +230,15 @@ def handle_site_yaml(site_yaml_path, additional_playbook_files, _ctx):
     :return: The final absolute path on the system to the site.yaml.
     """
 
-    site_yaml_relative_path = handle_file_path(
-        site_yaml_path, additional_playbook_files, _ctx)
-    if not site_yaml_relative_path:
-        ctx.logger.error('There is no site YAML.')
-    else:
-        site_yaml_real_path = os.path.abspath(site_yaml_relative_path)
-        site_yaml_real_dir = os.path.dirname(site_yaml_real_path)
-        site_yaml_real_name = os.path.basename(site_yaml_real_path)
-        site_yaml_new_dir = os.path.join(
-            get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
-        shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
-        site_yaml_final_path = os.path.join(
-            site_yaml_new_dir, site_yaml_real_name)
-        return u'{0}'.format(site_yaml_final_path)
+    site_yaml_real_path = os.path.abspath(
+        handle_file_path(site_yaml_path, additional_playbook_files, _ctx))
+    site_yaml_real_dir = os.path.dirname(site_yaml_real_path)
+    site_yaml_real_name = os.path.basename(site_yaml_real_path)
+    site_yaml_new_dir = os.path.join(
+        get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
+    shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
+    site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
+    return u'{0}'.format(site_yaml_final_path)
 
 
 def handle_sources(data, site_yaml_abspath, _ctx):
@@ -259,21 +254,19 @@ def handle_sources(data, site_yaml_abspath, _ctx):
         was either provided or generated.
     """
 
-    if site_yaml_abspath:
-        hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
-        if isinstance(data, dict):
-            data = handle_key_data(
-                data, get_instance(_ctx).runtime_properties[WORKSPACE])
-            if os.path.exists(hosts_abspath):
-                _ctx.logger.error(
-                    'Hosts data was provided but {0} already exists. '
-                    'Overwriting existing file.'.format(hosts_abspath))
-            with open(hosts_abspath, 'w') as outfile:
-                yaml.safe_dump(data, outfile, default_flow_style=False)
-        elif isinstance(data, text_type):
-            hosts_abspath = handle_source_from_string(
-                data, _ctx, hosts_abspath)
-        return hosts_abspath
+    hosts_abspath = os.path.join(os.path.dirname(site_yaml_abspath), HOSTS)
+    if isinstance(data, dict):
+        data = handle_key_data(
+            data, get_instance(_ctx).runtime_properties[WORKSPACE])
+        if os.path.exists(hosts_abspath):
+            _ctx.logger.error(
+                'Hosts data was provided but {0} already exists. '
+                'Overwriting existing file.'.format(hosts_abspath))
+        with open(hosts_abspath, 'w') as outfile:
+            yaml.safe_dump(data, outfile, default_flow_style=False)
+    elif isinstance(data, text_type):
+        hosts_abspath = handle_source_from_string(data, _ctx, hosts_abspath)
+    return hosts_abspath
 
 
 def get_inventory_file(filepath, _ctx, new_inventory_path):
@@ -449,7 +442,7 @@ def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
 
     if not group_name and not hostname and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy:
-        ctx.logger.error(
+        raise NonRecoverableError(
             'No sources or group_name, or hostname was provided, '
             'and furthermore no compute node was provided '
             'to generate them from.'

@@ -116,15 +116,7 @@ def ansible_playbook_node(func):
         _instance.update()
 
         try:
-            extra_packages = extra_packages or get_node(ctx).properties.get(
-                'extra_packages') or []
-            galaxy_collections = \
-                galaxy_collections or get_node(ctx).properties.get(
-                    'galaxy_collections') or []
-            create_playbook_venv(ctx,
-                                 packages_to_install=extra_packages,
-                                 collections_to_install=galaxy_collections)
-            create_playbook_workspace()
+            handle_venv(ctx, extra_packages, galaxy_collections)
             # check if source path is provided [full path/URL]
             if playbook_source_path:
                 # here we will combine playbook_source_path with playbook_path
@@ -180,3 +172,27 @@ def ansible_playbook_node(func):
             if not save_playbook:
                 delete_playbook_workspace(ctx)
     return wrapper
+
+
+def prepare_ansible_node(func):
+    def wrapper(
+                ctx=ctx_from_import,
+                extra_packages=None,
+                galaxy_collections=None,
+                **kwargs):
+        handle_venv(ctx, extra_packages, galaxy_collections)
+        func(**kwargs)
+    return wrapper
+
+
+def handle_venv(ctx=None, extra_packages=None, galaxy_collections=None):
+    ctx = ctx or ctx_from_import
+    extra_packages = extra_packages or get_node(ctx).properties.get(
+        'extra_packages') or []
+    galaxy_collections = \
+        galaxy_collections or get_node(ctx).properties.get(
+            'galaxy_collections') or []
+    create_playbook_venv(ctx,
+                         packages_to_install=extra_packages,
+                         collections_to_install=galaxy_collections)
+    create_playbook_workspace()
