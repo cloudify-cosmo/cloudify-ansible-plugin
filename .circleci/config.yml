@@ -234,11 +234,11 @@ commands:
 
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials --bundle-path workspace/build/cloudify-plugins-bundle.tgz --yum-package python-netaddr --yum-package git
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es aws_access_key_id=aws_access_key_id -es aws_secret_access_key=aws_secret_access_key --bundle-path workspace/build/cloudify-plugins-bundle.tgz --yum-package python-netaddr --yum-package git
 
   run_hello_world_test:
     steps:
-      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/gcp.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
+      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
 
   release_plugin:
     steps:
