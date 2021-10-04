@@ -583,7 +583,6 @@ def install_packages_to_venv(venv, packages_list):
 def install_collections_to_venv(venv, collections_list):
     # Force reinstall in playbook venv in order to make sure
     # they being installed on specified environment .
-    ctx.logger.info('Break point 14.')
     if collections_list:
         ctx.logger.debug("venv = {path}".format(path=venv))
         command = [get_executable_path('ansible-galaxy', venv=venv),
@@ -591,17 +590,14 @@ def install_collections_to_venv(venv, collections_list):
         ctx.logger.debug("cmd:{command}".format(command=command))
         ctx.logger.info("Installing {packages} on playbook`s venv.".format(
             packages=collections_list))
-        ctx.logger.info('Break point 15.')
         try:
             runner.run(command=command,
                        cwd=venv,
                        execution_env={'PYTHONPATH': ''})
-            ctx.logger.info('Break point 16.')
         except CommandExecutionException as e:
             raise NonRecoverableError("Can't install galaxy_collections on"
                                       " playbook`s venv. Error message: "
                                       "{err}".format(err=e))
-    ctx.logger.info('Break point 17.')
 
 
 def get_executable_path(executable, venv):
@@ -624,28 +620,16 @@ def create_playbook_venv(_ctx,
        :param collections_to_install: list of galaxy collections to install
         inside venv.
        """
-    _ctx.logger.info('Break point 5.')
-
     if is_connected_to_internet():
-        _ctx.logger.info('Break point 6.')
         if not get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV):
-            _ctx.logger.info('Break point 7.')
             deployment_dir = get_deployment_dir(_ctx.deployment.id)
-            _ctx.logger.info('Break point 8.')
             venv_path = mkdtemp(dir=deployment_dir)
-            _ctx.logger.info('Break point 9.')
             make_virtualenv(path=venv_path)
-            _ctx.logger.info('Break point 10.')
             install_packages_to_venv(venv_path, [ANSIBLE_TO_INSTALL])
-            _ctx.logger.info('Break point 11.')
             get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
-            _ctx.logger.info('Break point 12.')
             install_packages_to_venv(venv_path, packages_to_install)
-            _ctx.logger.info('Break point 13.')
             install_collections_to_venv(venv_path, collections_to_install)
-            ctx.logger.info('Break point 18.')
     else:
-        ctx.logger.info('Break point 19.')
         get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
         if packages_to_install or collections_to_install:
             raise NonRecoverableError('Do not use extra_packages when'
