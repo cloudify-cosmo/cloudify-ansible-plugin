@@ -24,12 +24,14 @@ from ecosystem_tests.dorkl import (
 
 
 SECRETS_TO_CREATE = {
+    'aws_access_key_id': False,
+    'aws_secret_access_key': False,
     'gcp_credentials': True
 }
 
 prepare_test(secrets=SECRETS_TO_CREATE)
 
-blueprint_list = ['examples/blueprint-examples/hello-world-example/gcp.yaml']
+blueprint_list = ['examples/blueprint-examples/hello-world-example/aws.yaml']
 
 
 @pytest.fixture(scope='function', params=blueprint_list)
