@@ -238,7 +238,8 @@ commands:
 
   run_hello_world_test:
     steps:
-      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
+      # - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
+      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example --on-failure=uninstall-force --timeout=1800
 
   release_plugin:
     steps:
