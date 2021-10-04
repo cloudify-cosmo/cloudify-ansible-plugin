@@ -224,7 +224,7 @@ commands:
           command: docker images
       - run:
           name: start docker container
-          command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudify-manager-aio-x86_64
+          command: docker run --name cfy_manager -d --restart unless-stopped -v /sys/fs/cgroup:/sys/fs/cgroup:ro --tmpfs /run --tmpfs /run/lock --security-opt seccomp:unconfined --cap-add SYS_ADMIN --network host cloudify-manager-aio:latest
       - run:
           name: wait for starter
           command: docker exec -it cfy_manager cfy_manager wait-for-starter
