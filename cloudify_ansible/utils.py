@@ -442,7 +442,7 @@ def get_group_name_and_hostname(_ctx, group_name=None, hostname=None):
 
     if not group_name and not hostname and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy:
-        raise NonRecoverableError(
+        ctx.logger.error(
             'No sources or group_name, or hostname was provided, '
             'and furthermore no compute node was provided '
             'to generate them from.'
