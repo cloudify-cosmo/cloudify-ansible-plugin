@@ -179,6 +179,7 @@ def prepare_ansible_node(func):
                 extra_packages=None,
                 galaxy_collections=None,
                 **kwargs):
+        ctx.logger.info('Break point 1.')
         handle_venv(ctx, extra_packages, galaxy_collections)
         func(ctx, **kwargs)
     return wrapper
@@ -186,11 +187,14 @@ def prepare_ansible_node(func):
 
 def handle_venv(ctx=None, extra_packages=None, galaxy_collections=None):
     ctx = ctx or ctx_from_import
+    ctx.logger.info('Break point 2.')
     extra_packages = extra_packages or get_node(ctx).properties.get(
         'extra_packages') or []
+    ctx.logger.info('Break point 3.')
     galaxy_collections = \
         galaxy_collections or get_node(ctx).properties.get(
             'galaxy_collections') or []
+    ctx.logger.info('Break point 4.')
     create_playbook_venv(ctx,
                          packages_to_install=extra_packages,
                          collections_to_install=galaxy_collections)

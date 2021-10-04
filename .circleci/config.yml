@@ -215,10 +215,10 @@ commands:
             pip install -r test-requirements.txt
       - run:
           name: download manager docker image
-          command:  wget http://repository.cloudifysource.org/cloudify/6.2.0/ga-release/cloudify-manager-aio-docker-6.2.0-ga.tar
+          command:  wget http://repository.cloudifysource.org/cloudify/6.1.0/ga-release/cloudify-manager-aio-docker-6.1.0-ga.tar
       - run:
           name: download manager docker image
-          command:  docker load -i cloudify-manager-aio-docker-6.2.0-ga.tar
+          command:  docker load -i cloudify-manager-aio-docker-6.1.0-ga.tar
       - run:
           name: show images
           command: docker images
