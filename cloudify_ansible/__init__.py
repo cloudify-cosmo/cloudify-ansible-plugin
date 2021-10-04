@@ -181,7 +181,7 @@ def prepare_ansible_node(func):
                 galaxy_collections=None,
                 **kwargs):
         handle_venv(ctx, extra_packages, galaxy_collections)
-        func(**kwargs)
+        func(ctx, **kwargs)
     return wrapper
 
 
