@@ -175,8 +175,7 @@ def ansible_playbook_node(func):
 
 
 def prepare_ansible_node(func):
-    def wrapper(
-                ctx=ctx_from_import,
+    def wrapper(ctx=ctx_from_import,
                 extra_packages=None,
                 galaxy_collections=None,
                 **kwargs):
