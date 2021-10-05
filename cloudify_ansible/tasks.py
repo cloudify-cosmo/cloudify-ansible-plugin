@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 
 from cloudify.decorators import operation
 from script_runner.tasks import ProcessException
+from cloudify.utils import exception_to_error_cause
 from cloudify_common_sdk.processes import general_executor
 from cloudify.exceptions import (
     OperationRetry,
@@ -23,6 +25,7 @@ from cloudify.exceptions import (
 )
 
 from . import (
+    prepare_ansible_node,
     ansible_playbook_node,
     ansible_relationship_source,
     utils,
@@ -84,8 +87,8 @@ def secure_log_playbook_args(_ctx, args, **_):
 @operation(resumable=True)
 @ansible_playbook_node
 def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
-    _node = utils.get_node(_ctx)
-    _instance = utils.get_instance(_ctx)
+    _node = utils.get_node()
+    _instance = utils.get_instance()
 
     tags_to_apply, remaining_tags = utils.get_playbook_args_tags(
         _node, _instance, playbook_args['playbook_path'])
@@ -109,6 +112,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     log_stdout = playbook_args.pop(
         'log_stdout',
         _node.properties.get('log_stdout', True))
+    log_stdout = False
     if not log_stdout:
         _ctx.logger.warn(
             'The parameter log_stdout is set to False, '
@@ -126,21 +130,27 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     except CloudifyAnsibleSDKError as sdk_error:
         raise NonRecoverableError(sdk_error)
     except ProcessException as process_error:
+        _, _, tb = sys.exc_info()
         if process_error.exit_code in UNREACHABLE_CODES:
-            utils.raise_if_retry_is_not_allowed(
-                _ctx.operation.retry_number,
-                playbook_args.get(constants.NUMBER_OF_ATTEMPTS))
+            number = _ctx.operation.retry_number or 0
+            attempts = playbook_args.get(constants.NUMBER_OF_ATTEMPTS, 60)
+            _ctx.logger.error('{} {}'.format(number, attempts))
+            utils.raise_if_retry_is_not_allowed(number, attempts)
             raise OperationRetry(
-                'One or more hosts are unreachable.')
+                "One or more hosts are unreachable.",
+                causes=[exception_to_error_cause(process_error, tb)])
         if process_error.exit_code not in SUCCESS_CODES:
             raise NonRecoverableError(
-                'One or more hosts failed.')
+                "One or more hosts failed.",
+                causes=[exception_to_error_cause(process_error, tb)])
         else:
-            utils.raise_if_retry_is_not_allowed(
-                _ctx.operation.retry_number,
-                playbook_args.get(constants.NUMBER_OF_ATTEMPTS))
-            raise RecoverableError('Retrying...')
-
+            number = _ctx.operation.retry_number or 0
+            attempts = playbook_args.get(constants.NUMBER_OF_ATTEMPTS, 60)
+            _ctx.logger.error('{} {}'.format(number, attempts))
+            utils.raise_if_retry_is_not_allowed(number, attempts)
+            raise RecoverableError(
+                "Retrying...",
+                causes=[exception_to_error_cause(process_error, tb)])
     if constants.COMPLETED_TAGS not in _instance.runtime_properties:
         _instance.runtime_properties[constants.COMPLETED_TAGS] = \
             tags_to_apply
@@ -241,5 +251,11 @@ def ansible_remove_host(new_sources_dict, _ctx, **_):
 
 
 @operation
-def precreate(ctx, **_):
-    ctx.logger.info('Checking Ansible plugin installation, doing nothing.')
+@prepare_ansible_node
+def precreate(ctx=None, **_):
+    ctx.logger.info('Checking Ansible installation.')
+    if not utils.get_instance().runtime_properties.get(
+            constants.PLAYBOOK_VENV):
+        ctx.logger.error('Ansible will need to be installed. '
+                         'This may cause problems if Ansible is installed in '
+                         'a relationship operation.')

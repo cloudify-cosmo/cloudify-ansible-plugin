@@ -202,14 +202,16 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
         'File path {0} does not exist.'.format(file_path))
 
 
-def get_instance(_ctx):
+def get_instance(_ctx=None):
+    _ctx = _ctx or ctx
     if _ctx.type == RELATIONSHIP_INSTANCE:
         return _ctx.source.instance
     else:  # _ctx.type == NODE_INSTANCE
         return _ctx.instance
 
 
-def get_node(_ctx, target=False):
+def get_node(_ctx=None, target=False):
+    _ctx = _ctx or ctx
     if _ctx.type == RELATIONSHIP_INSTANCE:
         if target:
             return _ctx.target.node
@@ -307,13 +309,12 @@ def handle_source_from_string(filepath, _ctx, new_inventory_path):
     return new_inventory_path
 
 
-def create_playbook_workspace(ctx):
+def create_playbook_workspace(ctx=None):
     """ Create a temporary folder, so that we don't overwrite fields.
 
     :param ctx: The Cloudify context.
     :return:
     """
-
     get_instance(ctx).runtime_properties[WORKSPACE] = mkdtemp()
 
 
@@ -619,7 +620,6 @@ def create_playbook_venv(_ctx,
        :param collections_to_install: list of galaxy collections to install
         inside venv.
        """
-
     if is_connected_to_internet():
         if not get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV):
             deployment_dir = get_deployment_dir(_ctx.deployment.id)
