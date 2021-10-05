@@ -414,15 +414,15 @@ workflows:
       - wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master)/
       - rhel_wagon:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master)/
       - build_bundle:
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master)/
           requires:
             - wagon
             - rhel_wagon
@@ -431,7 +431,7 @@ workflows:
             - build_bundle
           filters:
             branches:
-              only: /([0-9\.]*\-build|master|dev)/
+              only: /([0-9\.]*\-build|master)/
       - release:
           filters:
             branches:
