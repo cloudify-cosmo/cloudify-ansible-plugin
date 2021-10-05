@@ -112,6 +112,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     log_stdout = playbook_args.pop(
         'log_stdout',
         _node.properties.get('log_stdout', True))
+    log_stdout = False
     if not log_stdout:
         _ctx.logger.warn(
             'The parameter log_stdout is set to False, '
