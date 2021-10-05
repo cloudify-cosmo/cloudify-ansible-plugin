@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 
 from cloudify.decorators import operation
 from script_runner.tasks import ProcessException
+from cloudify.utils import exception_to_error_cause
 from cloudify_common_sdk.processes import general_executor
 from cloudify.exceptions import (
     OperationRetry,
@@ -127,21 +129,25 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     except CloudifyAnsibleSDKError as sdk_error:
         raise NonRecoverableError(sdk_error)
     except ProcessException as process_error:
+        _, _, tb = sys.exc_info()
         if process_error.exit_code in UNREACHABLE_CODES:
             utils.raise_if_retry_is_not_allowed(
                 _ctx.operation.retry_number,
                 playbook_args.get(constants.NUMBER_OF_ATTEMPTS))
             raise OperationRetry(
-                'One or more hosts are unreachable.')
+                "One or more hosts are unreachable.",
+                causes=[exception_to_error_cause(process_error, tb)])
         if process_error.exit_code not in SUCCESS_CODES:
             raise NonRecoverableError(
-                'One or more hosts failed.')
+                "One or more hosts failed.",
+                causes=[exception_to_error_cause(process_error, tb)])
         else:
             utils.raise_if_retry_is_not_allowed(
-                _ctx.operation.retry_number,
+                _ctx.operation.retry_number or 1,
                 playbook_args.get(constants.NUMBER_OF_ATTEMPTS, 60))
-            raise RecoverableError('Retrying...')
-
+            raise RecoverableError(
+                "Retrying...",
+                causes=[exception_to_error_cause(process_error, tb)])
     if constants.COMPLETED_TAGS not in _instance.runtime_properties:
         _instance.runtime_properties[constants.COMPLETED_TAGS] = \
             tags_to_apply
