@@ -463,6 +463,9 @@ workflows:
             - rhel_wagon
       - integration_tests_py3:
           requires:
+            - wagon
+            - arch64_wagon
+            - rhel_wagon
             - build_bundle
           filters:
             branches:
@@ -472,6 +475,10 @@ workflows:
             branches:
               only: /master/
           requires:
+            - wagon
+            - arch64_wagon
+            - rhel_wagon
+            - build_bundle
             - validate_version
             - validate_documentation
             - integration_tests_py3
@@ -518,6 +525,9 @@ workflows:
       - integration_tests_py3:
           requires:
             - build_bundle
+            - wagon
+            - arch64_wagon
+            - rhel_wagon
           filters:
             branches:
               only: /([0-9\.]*\-build|master)/
