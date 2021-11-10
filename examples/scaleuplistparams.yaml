@@ -1,0 +1,15 @@
+node_sequence:
+  - playbook
+  - node
+scalable_entity_properties:
+  node:
+    - ip: 54.84.215.15
+      message: Goodbye cruel world
+    - ip: 52.3.111.211
+      message: Ill be back
+    - ip: 3.213.57.112
+      message: Did you miss me
+  playbook:
+    - {}
+    - {}
+    - {}

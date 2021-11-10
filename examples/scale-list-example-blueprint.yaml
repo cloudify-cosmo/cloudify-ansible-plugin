@@ -1,0 +1,90 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: Use ansible and scale up list together
+
+imports:
+  - https://cloudify.co/spec/cloudify/6.2.0/types.yaml
+  - plugin:cloudify-ansible-plugin
+  - plugin:cloudify-utilities-plugin
+
+inputs:
+
+  ip:
+    type: string
+
+  agent_user:
+    type: string
+    default: centos
+
+  private_key:
+    type: string
+    default: { get_secret: private-key }
+
+  message:
+    type: string
+    default: 'hello world'
+
+node_templates:
+
+  playbook:
+    type: cloudify.nodes.ansible.Playbook
+    properties:
+      playbook_path: simple-playbook.yaml
+      ansible_env_vars:
+        ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+        ANSIBLE_STDOUT_CALLBACK: dense
+      store_facts: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create: {}
+        configure: {}
+        poststart: {}
+    relationships:
+      - type: cloudify.ansible.relationships.run_on_host
+        target: node
+        source_interfaces:
+          cloudify.interfaces.relationship_lifecycle:
+            establish:
+              inputs:
+                run_data:
+                  helloworldmessage: { get_attribute: [ node, message ] }
+                log_stdout: false
+                store_facts: false
+                sources:
+                  vms:
+                    hosts:
+                      vm:
+                        ansible_host: { get_attribute: [ node, ip ] }
+                        ansible_user: { get_input: agent_user }
+                        ansible_ssh_private_key_file: { get_input: private_key }
+                        ansible_become: True
+                        ansible_ssh_common_args: -o StrictHostKeyChecking=no
+
+  node:
+    type: cloudify.nodes.Root
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: create_scaleuplist_node.py
+          executor: central_deployment_agent
+          inputs:
+            ip: { get_input: ip }
+            message: { get_input: message }
+
+
+groups:
+
+  scalable:
+    members:
+      - node
+      - playbook
+
+policies:
+
+  scalable_compute_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances: 1
+    targets: [scalable]
+
