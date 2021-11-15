@@ -66,7 +66,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: create_scaleuplist_node.py
+          implementation: examples/create_scaleuplist_node.py
           executor: central_deployment_agent
           inputs:
             ip: { get_input: ip }

@@ -3,11 +3,11 @@ node_sequence:
   - node
 scalable_entity_properties:
   node:
-    - ip: 54.84.215.15
+    - ip: 99.81.3.138
       message: Goodbye cruel world
-    - ip: 52.3.111.211
+    - ip: 63.33.247.167
       message: Ill be back
-    - ip: 3.213.57.112
+    - ip: 52.50.152.31
       message: Did you miss me
   playbook:
     - {}
