@@ -3,6 +3,7 @@ def _ansible_operation(ctx, playbook_source_path, playbook_path, operation,
     graph = ctx.graph_mode()
     sequence = graph.sequence()
     # Iterate over all node instances of type "cloudify.nodes.ansible.Playbook"
+    # or "cloudify.nodes.ansible.Executor"
     # and reload that playbook.
     operation_args = {
         'operation': operation,
@@ -19,6 +20,8 @@ def _ansible_operation(ctx, playbook_source_path, playbook_path, operation,
         if node_instance_ids and (node_instance.id not in node_instance_ids):
             continue
         if 'cloudify.nodes.ansible.Playbook' in \
+            node_instance.node.type_hierarchy or \
+            'cloudify.nodes.ansible.Executor' in \
                 node_instance.node.type_hierarchy:
             sequence.add(node_instance.execute_operation(**operation_args))
     return graph
