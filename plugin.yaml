@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.4'
+    package_version: '2.13.5'
 
 dsl_definitions:
 
@@ -239,6 +239,11 @@ node_types:
             <<: *playbook_inputs
         delete:
           implementation: ansible.cloudify_ansible.tasks.cleanup
+      ansible:
+        reload:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            <<: *playbook_inputs
 
   cloudify.nodes.ansible.Playbook:
     derived_from: cloudify.nodes.Root
