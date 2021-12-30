@@ -1,0 +1,48 @@
+---
+# This playbook will install mysql and create db user and give permissions.
+
+# - name: Install Mysql repository
+#   yum: name=http://dev.mysql.com/get/mysql-community-release-el7-7.noarch.rpm state=present
+
+- name: Install mariadb
+  yum: name=mariadb state=present
+
+- name: Install mariadb-server
+  yum: name=mariadb-server state=present
+
+- name: Install MySQL-python
+  yum: name=MySQL-python state=present
+
+- name: Install libselinux-python
+  yum: name=libselinux-python state=present
+
+- name: Install libsemanage-python
+  yum: name=libsemanage-python state=present
+
+- name: Configure SELinux to start mysql on any port
+  seboolean: name=mysql_connect_any state=true persistent=yes
+  when: sestatus.rc != 0
+
+- name: Create Mysql configuration file
+  template: src=my.cnf.j2 dest=/etc/my.cnf
+  notify:
+  - restart mariadb
+
+- name: Start mariadb.service
+  service: name=mariadb.service state=started enabled=yes
+
+# - name: insert iptables rule
+#   lineinfile: dest=/etc/sysconfig/iptables state=present regexp="{{ mysql_port }}"
+#               insertafter="^:OUTPUT " line="-A INPUT -p tcp  --dport {{ mysql_port }} -j  ACCEPT"
+#   notify: restart iptables
+
+- firewalld:
+    port: "{{ mysql_port }}/tcp"
+    permanent: yes
+    state: enabled
+
+- name: Create Application Database
+  mysql_db: name={{ dbname }} state=present
+
+- name: Create Application DB User
+  mysql_user: name={{ dbuser }} password={{ upassword }} priv=*.*:ALL host='%' state=present

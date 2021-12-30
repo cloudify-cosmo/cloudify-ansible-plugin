@@ -1,0 +1,27 @@
+<html>
+ <head>
+  <title>Ansible Application</title>
+ </head>
+ <body>
+ </br>
+  <a href=http://{{ ansible_default_ipv4.address }}/index.html>Homepage</a>
+ </br>
+<?php
+ Print "Hello, World! I am a web server configured using Ansible and I am : ";
+ echo exec('hostname');
+ Print  "</BR>";
+echo  "List of Databases: </BR>";
+        {% if 'dbservers' in groups %}
+            {% for host in groups['dbservers'] %}
+                    $link = mysqli_connect('{{ hostvars[host].ansible_default_ipv4.address }}', '{{ hostvars[host].dbuser }}', '{{ hostvars[host].upassword }}') or die(mysqli_connect_error($link));
+            {% endfor %}
+        {% elif db_config is defined %}
+                $link = mysqli_connect('{{ db_config['host'] }}', '{{ db_config.dbuser }}', '{{ db_config.dbpassword }}') or die(mysqli_connect_error($link));
+        {% endif %}
+        $res = mysqli_query($link, "SHOW DATABASES;");
+        while ($row = mysqli_fetch_assoc($res)) {
+                echo $row['Database'] . "\n";
+        }
+?>
+</body>
+</html>
