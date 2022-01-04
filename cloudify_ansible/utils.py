@@ -300,8 +300,11 @@ def get_inventory_file(filepath, _ctx, new_inventory_path):
 
 def handle_source_from_string(filepath, _ctx, new_inventory_path):
     inventory_file = get_inventory_file(filepath, _ctx, new_inventory_path)
-    if inventory_file != new_inventory_path:
-        shutil.copy2(inventory_file, new_inventory_path)
+    if inventory_file != new_inventory_path and new_inventory_path:
+        try:
+            shutil.copy2(inventory_file, new_inventory_path)
+        except TypeError:
+            inventory_file = None
     if inventory_file:
         return inventory_file
     else:
