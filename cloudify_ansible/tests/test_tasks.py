@@ -57,6 +57,14 @@ OP_CTX = {
     'name': 'cloudify.interfaces.lifecycle.'
 }
 
+work_dir = path.abspath(environ.get('CIRCLE_WORKING_DIRECTORY', curdir))
+blueprint_resources = {
+    path.join(
+        work_dir,
+        'examples/ansible-examples/'
+        'lamp_simple/hosts'): NamedTemporaryFile(delete=False).name
+}
+
 ctx = MockCloudifyContext(
     node_name='mock_node_name',
     node_id='node_id',
@@ -82,6 +90,7 @@ relationship_ctx = MockCloudifyContext(
     deployment_id='mock_deployment_id',
     source=ctx,
     target=compute_ctx)
+ctx._resources = blueprint_resources
 
 # Fix the mock ctx.
 setattr(ctx, '_local', True)

@@ -1,12 +1,3 @@
-[submodule "examples/ansible-examples"]
-	path = examples/ansible-examples
-	url = https://github.com/EarthmanT/ansible-examples.git
-[submodule "examples/clearwater-roles"]
-	path = examples/clearwater-roles
-	url = https://github.com/EarthmanT/clearwater-roles.git
-[submodule "examples/openvpn"]
-	path = examples/openvpn
-	url = https://github.com/EarthmanT/pi_openvpn.git
 [submodule "examples/blueprint-examples"]
 	path = examples/blueprint-examples
 	url = https://github.com/cloudify-community/blueprint-examples.git
