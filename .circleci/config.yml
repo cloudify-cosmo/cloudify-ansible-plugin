@@ -71,95 +71,6 @@ commands:
       # - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
       - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example --on-failure=uninstall-force --timeout=1800
 
-  release_plugin:
-    steps:
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
-      - run:
-          name: Set Python
-          command: |
-            if ! pyenv -v COMMAND &> /dev/null
-            then
-                echo "pyenv could not be found"
-                exit
-            else
-                pyenv global 3.6.5
-            fi
-      - run:
-          name: Download pip
-          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-      - run:
-          name: Install pip
-          command: sudo python get-pip.py
-      - run:
-          name: update pip
-          command: pip install -U pip===20.3.3
-      - run:
-          name: Install virtualenv
-          command: pip install --user virtualenv
-      - run:
-          name: Init virtualenv
-          command: virtualenv env
-      - run:
-          name: install tox
-          command: pip install --user pygithub pyyaml==3.10
-      - run:
-          name: upgrade setuptools
-          command: pip install --upgrade setuptools
-      - run:
-          name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - attach_workspace:
-          at: workspace
-      - run: ecosystem-tests package-release --name cloudify-ansible-plugin
-
-  merge_docs:
-    steps:
-      - attach_workspace:
-          at: workspace
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update --remote --recursive
-      - run:
-          name: Set Python
-          command: |
-            if ! pyenv -v COMMAND &> /dev/null
-            then
-                echo "pyenv could not be found"
-                exit
-            else
-                pyenv global 3.6.5
-            fi
-      - run:
-          name: Download pip
-          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-      - run:
-          name: Install pip
-          command: sudo python get-pip.py
-      - run:
-          name: Install virtualenv
-          command: pip install --user virtualenv
-      - run:
-          name: Init virtualenv
-          command: virtualenv env
-      - run:
-          name: install tox
-          command: pip install --user pygithub pyyaml==3.10
-      - run:
-          name: upgrade setuptools
-          command: pip install --upgrade setuptools
-      - run:
-          name: install local project
-          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
-      - attach_workspace:
-          at: workspace
-      - run: ecosystem-tests merge-docs
-
 jobs:
 
   integration_tests_py3:
@@ -171,18 +82,6 @@ jobs:
       - create_manager_container_py3
       - prepare_test_manager
       - run_hello_world_test
-
-  release:
-    executor: py36
-    steps:
-      - checkout
-      - release_plugin
-
-  merge_docs:
-    executor: py36
-    steps:
-      - checkout
-      - merge_docs
 
 workflows:
   version: 2
@@ -221,7 +120,7 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master)/
-      - release:
+      - releaseorb/release:
           filters:
             branches:
               only: /master/
@@ -233,12 +132,12 @@ workflows:
             - node/validate_version_job
             - node/validate_documentation_job
             - integration_tests_py3
-      - merge_docs:
+      - releaseorb/merge_docs_job:
           filters:
             branches:
               only: /master/
           requires:
-            - release
+            - releaseorb/release
             - node/validate_documentation_job
   nightly:
     triggers:
