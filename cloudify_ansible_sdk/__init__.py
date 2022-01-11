@@ -17,6 +17,7 @@ import sys
 import json
 from tempfile import NamedTemporaryFile
 
+from .constants import ansible_usage, ansible_playbook_usage
 
 DEPRECATED_KEYS = [
     'site_yaml_path',
@@ -64,7 +65,7 @@ class AnsiblePlaybookFromFile(object):
 
         self.playbook = site_yaml_path or playbook_path
         self.sources = sources
-        self.options_config = options_config or {}
+        self._options_config = options_config or {}
         self.run_data = run_data or {}
         self.environment_variables = environment_variables or {}
         self.additional_args = additional_args or ''
@@ -117,6 +118,10 @@ class AnsiblePlaybookFromFile(object):
         return ''
 
     @property
+    def options_config(self):
+        return self._options_config
+
+    @property
     def options(self):
         options_list = []
         if 'extra_vars' not in self.options_config:
@@ -145,6 +150,13 @@ class AnsiblePlaybookFromFile(object):
 
     @property
     def process_args(self):
+        for key in list(self.options_config.keys()):
+            key_usage = key.replace('_', '-')
+            if key_usage not in ansible_playbook_usage:
+                self.logger.debug(
+                    'Removing invalid flag from options_config: '
+                    '{flag}.'.format(flag=key))
+                del self._options_config[key]
         return [
             self.verbosity,
             '-i {0}'.format(self.sources),
@@ -156,6 +168,13 @@ class AnsiblePlaybookFromFile(object):
 
     @property
     def facts_args(self):
+        for key in list(self.options_config.keys()):
+            key_usage = key.replace('_', '-')
+            if key_usage not in ansible_usage:
+                self.logger.debug(
+                    'Removing invalid flag from options_config: '
+                    '{flag}.'.format(flag=key))
+                del self._options_config[key]
         return [
             self.verbosity,
             '-i {0}'.format(self.sources),
