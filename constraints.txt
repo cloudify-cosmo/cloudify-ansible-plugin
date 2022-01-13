@@ -3,3 +3,4 @@ hvac
 ipaddr
 netaddr
 cryptography==3.3.2
+psutil==5.8.0
