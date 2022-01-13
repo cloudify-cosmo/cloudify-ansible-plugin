@@ -112,7 +112,6 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     log_stdout = playbook_args.pop(
         'log_stdout',
         _node.properties.get('log_stdout', True))
-    log_stdout = False
     if not log_stdout:
         _ctx.logger.warn(
             'The parameter log_stdout is set to False, '
@@ -174,6 +173,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
             ansible_env_vars,
             _ctx,
             log_stdout=log_stdout,
+            playbook_args=playbook_args,
             **kwargs)
 
 
@@ -181,11 +181,13 @@ def _store_facts(playbook,
                  ansible_env_vars,
                  _ctx,
                  log_stdout=None,
+                 playbook_args=None,
                  **_):
-
+    playbook_args = playbook_args or {}
     _node = utils.get_node(_ctx)
     _instance = utils.get_instance(_ctx)
-    if not _node.properties.get('store_facts', True):
+    if not playbook_args.get('store_facts',
+                             _node.properties.get('store_facts', True)):
         return
     log_stdout = log_stdout or _node.properties.get('log_stdout', True)
     utils.assign_environ(ansible_env_vars)
@@ -235,6 +237,7 @@ def store_facts(playbook_args, ansible_env_vars, _ctx, **kwargs):
         ansible_env_vars,
         _ctx,
         log_stdout=log_stdout,
+        playbook_args=playbook_args,
         **kwargs)
 
 

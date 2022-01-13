@@ -109,3 +109,6 @@
   - Rerelease of 2.13.3 to distribute aarch64 wagon.
 2.13.5:
   - Add Executor node type reload support.
+2.13.6:
+ - RD-3926 Validate parameters for ansible and ansible-playbook commands.
+ - RD-3926 Fix store facts from kwargs
