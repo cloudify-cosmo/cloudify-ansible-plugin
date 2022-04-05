@@ -113,7 +113,7 @@ def ansible_playbook_node(func):
         # store sources in node runtime_properties
         _instance = get_instance(ctx)
         _instance.runtime_properties['sources'] = sources
-        _instance.update()
+        # _instance.update()
 
         try:
             handle_venv(ctx, extra_packages, galaxy_collections)

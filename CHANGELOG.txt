@@ -113,3 +113,4 @@
  - RD-3926 Validate parameters for ansible and ansible-playbook commands.
  - RD-3926 Fix store facts from kwargs
 2.13.7: Update utilities SDK for PYYAML 6
+2.13.8: Solve node instance version conflicts.
