@@ -1,5 +1,4 @@
-def _ansible_operation(ctx, playbook_source_path, playbook_path, operation,
-                       node_ids, node_instance_ids):
+def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
     graph = ctx.graph_mode()
     sequence = graph.sequence()
     # Iterate over all node instances of type "cloudify.nodes.ansible.Playbook"
@@ -7,10 +6,7 @@ def _ansible_operation(ctx, playbook_source_path, playbook_path, operation,
     # and reload that playbook.
     operation_args = {
         'operation': operation,
-        'kwargs': {
-            'playbook_source_path': playbook_source_path,
-            'playbook_path': playbook_path,
-        },
+        'kwargs': kwargs,
         'allow_kwargs_override': True,
     }
 
@@ -27,9 +23,9 @@ def _ansible_operation(ctx, playbook_source_path, playbook_path, operation,
     return graph
 
 
-def reload_playbook(ctx, playbook_source_path, playbook_path, node_ids,
-                    node_instance_ids):
-    _ansible_operation(ctx, playbook_source_path, playbook_path,
+def reload_playbook(ctx, node_ids, node_instance_ids, **kwargs):
+    _ansible_operation(ctx,
                        "ansible.reload",
                        node_ids,
-                       node_instance_ids).execute()
+                       node_instance_ids,
+                       **kwargs).execute()

@@ -370,19 +370,7 @@ workflows:
   reload_ansible_playbook:
     mapping: ansible.cloudify_ansible.workflows.reload_playbook
     parameters:
-      playbook_source_path:
-        type: string
-        default: ""
-        description: >
-          A full path/URL that contain playbook specified in playbook_path
-          or site_yaml_path.
-      playbook_path:
-        type: string
-        default: ""
-        description: >
-          A path to your `site.yaml` or `main.yaml` in your
-          Ansible Playbook relative to blueprint or playbook_source_path
-          if playbook_source_path is URL to archive File relative inside the archive.
+      <<: *playbook_config
       node_instance_ids:
         # uncomment on 5+
         # type: list
