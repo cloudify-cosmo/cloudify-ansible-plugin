@@ -1,4 +1,10 @@
 def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
+    # pop empty values
+    valid_kwargs = {}
+    for key in kwargs:
+        if kwargs[key]:
+            valid_kwargs[key] = kwargs[key]
+
     graph = ctx.graph_mode()
     sequence = graph.sequence()
     # Iterate over all node instances of type "cloudify.nodes.ansible.Playbook"
@@ -6,7 +12,7 @@ def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
     # and reload that playbook.
     operation_args = {
         'operation': operation,
-        'kwargs': kwargs,
+        'kwargs': valid_kwargs,
         'allow_kwargs_override': True,
     }
 

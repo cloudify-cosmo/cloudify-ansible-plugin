@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
 
 from cloudify import ctx as ctx_from_import
@@ -70,7 +69,6 @@ def ansible_playbook_node(func):
                 additional_args=None,
                 additional_playbook_files=None,
                 site_yaml_path=None,
-                save_playbook=False,
                 remerge_sources=False,
                 playbook_source_path=None,
                 extra_packages=None,
@@ -103,6 +101,7 @@ def ansible_playbook_node(func):
         playbook_path = playbook_path or site_yaml_path
         additional_playbook_files = additional_playbook_files or []
         ansible_env_vars = set_ansible_env_vars(ansible_env_vars)
+        _instance = get_instance(ctx)
         if not sources:
             if remerge_sources:
                 # add sources from source node to target node
@@ -111,9 +110,7 @@ def ansible_playbook_node(func):
                 sources = get_source_config_from_ctx(ctx)
 
         # store sources in node runtime_properties
-        _instance = get_instance(ctx)
         _instance.runtime_properties['sources'] = sources
-        # _instance.update()
 
         try:
             handle_venv(ctx, extra_packages, galaxy_collections)
@@ -167,10 +164,9 @@ def ansible_playbook_node(func):
                         ' so skipping storing facts.')
                     return
                 raise e
+        except NonRecoverableError as e:
+            raise e
 
-        finally:
-            if not save_playbook:
-                delete_playbook_workspace(ctx)
     return wrapper
 
 
