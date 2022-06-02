@@ -114,3 +114,4 @@
  - RD-3926 Fix store facts from kwargs
 2.13.7: Update utilities SDK for PYYAML 6
 2.13.8: Solve node instance version conflicts.
+2.13.9: RD-4902 provide parameters for Ansible reload workflow
