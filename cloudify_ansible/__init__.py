@@ -31,7 +31,6 @@ from cloudify_ansible.utils import (
     handle_site_yaml,
     create_playbook_venv,
     create_playbook_workspace,
-    delete_playbook_workspace,
     get_source_config_from_ctx,
     get_remerged_config_sources,
 )
