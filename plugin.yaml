@@ -369,7 +369,7 @@ workflows:
   reload_ansible_playbook:
     mapping: ansible.cloudify_ansible.workflows.reload_playbook
     parameters:
-      <<: *playbook_inputs
+      <<: *playbook_config
       node_instance_ids:
         # uncomment on 5+
         # type: list
