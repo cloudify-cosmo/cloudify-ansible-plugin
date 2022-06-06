@@ -1,0 +1,401 @@
+plugins:
+
+  ansible:
+    executor: central_deployment_agent
+    package_name: cloudify-ansible-plugin
+    package_version: '2.13.9'
+
+dsl_definitions:
+
+  playbook_config: &playbook_config
+    ansible_playbook_executable_path:
+      type: string
+      default: ""
+      description: >
+        A full path to your ansible_playbook executable if user don't want to
+        use the included version of executable in the plugin
+    extra_packages:
+      type: list
+      default: []
+      description: >
+        List of python packages to install on controller virtual env before running the playbook.
+        If the manager has no internet connection this feature cannot be used.
+    galaxy_collections:
+      type: list
+      default: []
+      description: >
+        List of Ansible galaxy collections to install on controller virtual env before running the playbook.
+        If the manager has no internet connection this feature cannot be used.
+    playbook_source_path:
+      type: string
+      default: ""
+      description: >
+        A full path/URL that contain playbook specified in playbook_path
+        or site_yaml_path.
+    playbook_path:
+      type: string
+      default: ""
+      description: >
+        A path to your `site.yaml` or `main.yaml` in your
+        Ansible Playbook relative to blueprint or playbook_source_path
+        if playbook_source_path is URL to archive File relative inside the archive.
+    site_yaml_path:
+      type: string
+      default: ""
+      description: >
+        DEPRECATED.
+        A path to your `site.yaml` or `main.yaml` in your
+        Ansible Playbook relative to blueprint or playbook_source_path
+        if playbook_source_path is URL to archive File relative inside the archive.
+    additional_playbook_files:
+      type: list
+      default: []
+      description: >
+        A list of string paths blueprint resources that you
+        would like to download to the playbook directory.
+        If you use this variable, you must list all of the paths
+        that you expect to download.
+    sources:
+      type: string
+      default: ""
+      description: >
+        Your Inventory sources. Either YAML or a path to a file.
+        If not provided the inventory will be take from the `sources`
+        runtime property.
+    run_data:
+      default: {}
+      description: >
+        Variable values.
+    sensitive_keys:
+      type: list
+      description: keys that you want us to obscure
+      default:
+        - ansible_password
+    options_config:
+      default: {}
+      description: >
+        Command-line options, such as `tags` or `skip_tags`.
+    ansible_env_vars:
+      default:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+        # On Ansible 2.8.x "INVALID_TASK_ATTRIBUTE_FAILED" default value has
+        # been changed to "True" which cause failure when run playbook
+        ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
+        ANSIBLE_STDOUT_CALLBACK: json
+      description: >
+        A dictionary of environment variables to set.
+    debug_level:
+      type: integer
+      default: 2
+      description: >
+        Debug level
+    log_stdout:
+      type: boolean
+      description: Whether to dump output to execution event log. Set to false to speed up long executions.
+      default: true
+    additional_args:
+      type: string
+      description: >
+        Additional args that you want to use, for example, '-c local'.
+      default: ''
+    start_at_task:
+      type: string
+      description: >
+        Start the playbook at the task matching this name
+      default: ''
+    scp_extra_args:
+      type: string
+      description: >
+        Specify extra arguments to pass to scp only (e.g. -l)
+      default: ''
+    sftp_extra_args:
+      type: string
+      description: >
+        Specify extra arguments to pass to sftp only (e.g. -f, -l)
+      default: ''
+    ssh_common_args:
+      type: string
+      description: >
+        Specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)
+      default: ''
+    ssh_extra_args:
+      type: string
+      description: >
+        Specify extra arguments to pass to ssh only (e.g. -R)
+      default: ''
+    timeout:
+      type: string
+      description: >
+        Override the connection timeout in seconds (default=10)
+      default: 10
+    save_playbook:
+      type: boolean
+      description: >
+        Save playbook after action
+      default: false
+    remerge_sources:
+      type: boolean
+      description: >
+        update sources on target node
+      default: false
+    ansible_become:
+      type: boolean
+      description: >
+        A boolean value, `true` or `false` whether
+        to assume the user privileges.
+      default: false
+    tags:
+      type: list
+      description: >
+        A list of tags, in order of desired execution. If these tags are provided, they will be called, and auto_tags will be ignored.
+      default: []
+    auto_tags:
+      type: boolean
+      description: >
+        If set to "true", the plugin will read the playbook and generate a list of tags to execute.
+        This requires that the playbook is written in such a way that the specified tags will produce the desired result.
+        This value is ignored if tags are provided.
+      default: false
+    number_of_attempts:
+      type: integer
+      default: 3
+      description: >
+        Total number of attempts to execute the playbook if exit code represents unreachable hosts\failure.
+    store_facts:
+      type: boolean
+      default: true
+      description: >
+        Store ansible facts under runtime properties.
+
+  playbook_inputs: &playbook_inputs
+    ansible_playbook_executable_path:
+      default: { get_property: [SELF, ansible_playbook_executable_path] }
+    extra_packages:
+      default: { get_property: [ SELF, extra_packages ] }
+    galaxy_collections:
+      default: { get_property: [ SELF, galaxy_collections ] }
+    playbook_source_path:
+      default: { get_property: [SELF, playbook_source_path] }
+    playbook_path:
+      default: { get_property: [SELF, playbook_path] }
+    site_yaml_path:
+      default: { get_property: [SELF, site_yaml_path] }
+    save_playbook:
+      default: { get_property: [SELF, save_playbook] }
+    remerge_sources:
+      default: { get_property: [SELF, remerge_sources] }
+    sources:
+      default: { get_property: [SELF, sources] }
+    run_data:
+      default: { get_property: [SELF, run_data] }
+    sensitive_keys:
+      default: { get_property: [SELF, sensitive_keys] }
+    options_config:
+      default: { get_property: [SELF, options_config] }
+    ansible_env_vars:
+      default: { get_property: [SELF, ansible_env_vars] }
+    debug_level:
+      default: { get_property: [SELF, debug_level] }
+    additional_args:
+      default: { get_property: [SELF, additional_args] }
+    start_at_task:
+      default: { get_property: [SELF, start_at_task] }
+    scp_extra_args:
+      default: { get_property: [SELF, scp_extra_args] }
+    sftp_extra_args:
+      default: { get_property: [SELF, sftp_extra_args] }
+    ssh_common_args:
+      default: { get_property: [SELF, ssh_common_args] }
+    ssh_extra_args:
+      default: { get_property: [SELF, ssh_extra_args] }
+    timeout:
+      default: { get_property: [SELF, timeout] }
+    tags:
+      default: { get_property: [ SELF, tags ] }
+    auto_tags:
+      default: { get_property: [ SELF, auto_tags ] }
+    number_of_attempts:
+       default: { get_property: [ SELF, number_of_attempts ] }
+    store_facts:
+       default: { get_property: [ SELF, store_facts ] }
+
+node_types:
+
+  cloudify.nodes.ansible.Executor:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *playbook_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        precreate:
+          implementation: ansible.cloudify_ansible.tasks.precreate
+        start:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            <<: *playbook_inputs
+        delete:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
+      ansible:
+        reload:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            <<: *playbook_inputs
+
+  cloudify.nodes.ansible.Playbook:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *playbook_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        precreate:
+          implementation: ansible.cloudify_ansible.tasks.precreate
+        configure:
+          implementation: ansible.cloudify_ansible.tasks.set_playbook_config
+          inputs:
+            <<: *playbook_inputs
+        poststart:
+          implementation: ansible.cloudify_ansible.tasks.store_facts
+          inputs:
+            <<: *playbook_inputs
+      ansible:
+        reload:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            <<: *playbook_inputs
+
+relationships:
+
+  cloudify.ansible.relationships.connected_to_host:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: ansible.cloudify_ansible.tasks.ansible_requires_host
+          inputs:
+            group_name:
+              default: ""
+              description: >
+                Ansible node group name
+            hostname:
+              default: ""
+              description: >
+                Hostname
+            host_config:
+              default: {}
+              description: >
+                Host configuration:
+                  ansible_host: The hostname or IP address of the host to SSH
+                    into.
+                  ansible_user: The username to SSH with.
+                  ansible_ssh_private_key_file: The private key file to SSH
+                    with.
+                  ansible_become: A boolean value, `true` or `false` whether
+                    to assume the user privileges.
+                  ansible_ssh_common_args: Additional arguments to the SSH
+                    command, by default: '-o StrictHostKeyChecking=no'
+
+        unlink:
+          implementation: ansible.cloudify_ansible.tasks.ansible_remove_host
+          inputs:
+            group_name:
+              default: ""
+              description: >
+                Ansible node group name
+            hostname:
+              default: ""
+              description: >
+                Hostname
+
+  cloudify.ansible.relationships.run_on_host:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish:
+          implementation: ansible.cloudify_ansible.tasks.run
+          inputs:
+            ansible_playbook_executable_path:
+              default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
+            extra_packages:
+              default: { get_attribute: [ SOURCE, extra_packages ] }
+            galaxy_collections:
+              default: { get_attribute: [ SOURCE, galaxy_collections ] }
+            playbook_source_path:
+              default: { get_attribute: [SOURCE, playbook_source_path] }
+            playbook_path:
+              default: { get_attribute: [SOURCE, playbook_path] }
+            site_yaml_path:
+              default: { get_attribute: [SOURCE, site_yaml_path] }
+            save_playbook:
+              default: { get_attribute: [SOURCE, save_playbook] }
+            remerge_sources:
+              default: { get_attribute: [SOURCE, remerge_sources] }
+            sources:
+              default: { get_attribute: [SOURCE, sources] }
+            run_data:
+              default: { get_attribute: [SOURCE, run_data] }
+            sensitive_keys:
+              default: { get_attribute: [SOURCE, sensitive_keys] }
+            options_config:
+              default: { get_attribute: [SOURCE, options_config] }
+            ansible_env_vars:
+              default: { get_attribute: [SOURCE, ansible_env_vars] }
+            debug_level:
+              default: { get_attribute: [SOURCE, debug_level] }
+            additional_args:
+              default: { get_attribute: [SOURCE, additional_args] }
+            start_at_task:
+              default: { get_attribute: [SOURCE, start_at_task] }
+            scp_extra_args:
+              default: { get_attribute: [SOURCE, scp_extra_args] }
+            sftp_extra_args:
+              default: { get_attribute: [SOURCE, sftp_extra_args] }
+            ssh_common_args:
+              default: { get_attribute: [SOURCE, ssh_common_args] }
+            ssh_extra_args:
+              default: { get_attribute: [SOURCE, ssh_extra_args] }
+            timeout:
+              default: { get_attribute: [SOURCE, timeout] }
+            tags:
+              default: { get_attribute: [ SOURCE, tags ] }
+            auto_tags:
+              default: { get_attribute: [ SOURCE, auto_tags ] }
+        unlink:
+          implementation: ansible.cloudify_ansible.tasks.cleanup
+
+workflows:
+  reload_ansible_playbook:
+    mapping: ansible.cloudify_ansible.workflows.reload_playbook
+    parameters:
+      playbook_source_path:
+        type: string
+        default: ""
+        description: >
+          A full path/URL that contain playbook specified in playbook_path
+          or site_yaml_path.
+      playbook_path:
+        type: string
+        default: ""
+        description: >
+          A path to your `site.yaml` or `main.yaml` in your
+          Ansible Playbook relative to blueprint or playbook_source_path
+          if playbook_source_path is URL to archive File relative inside the archive.
+      node_instance_ids:
+        type: Node_Instance_Ids
+        default: []
+        description: |
+          List of node instance ID's to reload for.
+      node_ids:
+        type: Node_Ids
+        default: []
+        description: |
+          List of node templates to reload for.
+
+blueprint_labels:
+  obj-type:
+    values:
+      - ansible
+
+labels:
+  obj-type:
+    values:
+      - ansible
