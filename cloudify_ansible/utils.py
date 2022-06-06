@@ -28,7 +28,7 @@ from ansible.playbook import Playbook
 from cloudify.manager import get_rest_client
 from ansible.vars.manager import VariableManager
 from ansible.parsing.dataloader import DataLoader
-from cloudify_common_sdk.utils import get_deployment_dir
+from cloudify_common_sdk.utils import get_deployment_dir, get_node_instance_dir
 from cloudify_rest_client.constants import VisibilityState
 from cloudify.utils import LocalCommandRunner
 from cloudify_ansible_sdk._compat import (
@@ -93,6 +93,8 @@ def handle_key_data(_data, workspace_dir):
             if not is_file_path:
                 private_key_file = os.path.join(workspace_dir, str(uuid1()))
                 with open(private_key_file, 'w') as outfile:
+                    if isinstance(existing_dict[key], (dict, list)):
+                        existing_dict[key] = json.dumps(existing_dict[key])
                     outfile.write(existing_dict[key])
                 os.chmod(private_key_file, 0o600)
                 existing_dict[key] = private_key_file
@@ -322,7 +324,8 @@ def create_playbook_workspace(ctx=None):
     :param ctx: The Cloudify context.
     :return:
     """
-    get_instance(ctx).runtime_properties[WORKSPACE] = mkdtemp()
+    get_instance(ctx).runtime_properties[WORKSPACE] = \
+        mkdtemp(dir=get_node_instance_dir())
 
 
 def delete_playbook_workspace(ctx):
@@ -360,6 +363,12 @@ def get_source_config_from_ctx(_ctx,
     if _ctx.type == NODE_INSTANCE and \
             'cloudify.nodes.Compute' not in _ctx.node.type_hierarchy and \
             _ctx.instance.runtime_properties.get(SOURCES):
+        if isinstance(_ctx.instance.runtime_properties[SOURCES], text_type):
+            if os.path.exists(_ctx.instance.runtime_properties[SOURCES]):
+                return _ctx.instance.runtime_properties[SOURCES]
+            else:
+                return _ctx.download_resource(
+                    _ctx.instance.runtime_properties[SOURCES])
         return AnsibleSource(_ctx.instance.runtime_properties[SOURCES]).config
     elif _ctx.type == RELATIONSHIP_INSTANCE:
         host_config = host_config or \

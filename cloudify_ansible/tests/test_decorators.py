@@ -79,7 +79,8 @@ class TestDecorator(AnsibleTestBase):
             target=compute_ctx)
         return relationship_ctx
 
-    def test_ansible_playbook_node(self):
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
+    def test_ansible_playbook_node(self, *_):
         # without remerge
         relationship_ctx = self._get_ctx()
         current_ctx.set(relationship_ctx)
@@ -115,7 +116,8 @@ class TestDecorator(AnsibleTestBase):
             },
             relationship_ctx)
 
-    def test_ansible_playbook_node_remerge(self):
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
+    def test_ansible_playbook_node_remerge(self, *_):
         # remerge
         relationship_ctx = self._get_ctx()
         current_ctx.set(relationship_ctx)
