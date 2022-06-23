@@ -1,3 +1,15 @@
+from cloudify import ctx
+
+PLAYBOOK_ARGS_PROPS = [
+    'ansible_playbook_executable_path', 'extra_packages', 'galaxy_collections',
+    'playbook_source_path', 'playbook_path', 'site_yaml_path', 'save_playbook',
+    'remerge_sources', 'sources', 'run_data', 'sensitive_keys', 'store_facts',
+    'options_config', 'ansible_env_vars', 'debug_level', 'additional_args',
+    'start_at_task', 'scp_extra_args', 'sftp_extra_args', 'ssh_common_args',
+    'ssh_extra_args', 'timeout', 'auto_tags', 'number_of_attempts', 'tags',
+]
+
+
 def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
     # pop empty values
     valid_kwargs = {}
@@ -25,8 +37,22 @@ def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
             node_instance.node.type_hierarchy or \
             'cloudify.nodes.ansible.Executor' in \
                 node_instance.node.type_hierarchy:
+            add_previous_parameters(operation_args, node_instance)
             sequence.add(node_instance.execute_operation(**operation_args))
     return graph
+
+
+def add_previous_parameters(operation_args, node_instance):
+    kwargs = operation_args.get('**1wargs')
+    ctx.logger.info('kwargs: {}'.format(kwargs))
+
+    for possible_key in PLAYBOOK_ARGS_PROPS:
+        if not kwargs.get(possible_key) and \
+                possible_key in node_instance.runtime_properties:
+            kwargs[possible_key] = \
+                node_instance.runtime_properties[possible_key]
+    operation_args['kwargs'] = kwargs
+    ctx.logger.info('**2kwargs: {}'.format(kwargs))
 
 
 def reload_playbook(ctx, node_ids, node_instance_ids, **kwargs):
