@@ -37,22 +37,24 @@ def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
             node_instance.node.type_hierarchy or \
             'cloudify.nodes.ansible.Executor' in \
                 node_instance.node.type_hierarchy:
-            add_previous_parameters(operation_args, node_instance)
+            add_previous_parameters(ctx, operation_args, node_instance)
             sequence.add(node_instance.execute_operation(**operation_args))
     return graph
 
 
-def add_previous_parameters(operation_args, node_instance):
-    kwargs = operation_args.get('**1wargs')
-    ctx.logger.info('kwargs: {}'.format(kwargs))
+def add_previous_parameters(ctx, operation_args, node_instance):
+    ctx.logger.info('operation_args: {}'.format(operation_args))
+    kwargs = operation_args.get('kwargs')
+    ctx.logger.info('** 1kwargs: {}'.format(kwargs))
 
     for possible_key in PLAYBOOK_ARGS_PROPS:
+        ctx.logger.info('**possible_key: {}'.format(possible_key))
         if not kwargs.get(possible_key) and \
                 possible_key in node_instance.runtime_properties:
             kwargs[possible_key] = \
                 node_instance.runtime_properties[possible_key]
     operation_args['kwargs'] = kwargs
-    ctx.logger.info('**2kwargs: {}'.format(kwargs))
+    ctx.logger.info('** 2kwargs: {}'.format(kwargs))
 
 
 def reload_playbook(ctx, node_ids, node_instance_ids, **kwargs):
