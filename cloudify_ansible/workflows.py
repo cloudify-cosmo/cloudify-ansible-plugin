@@ -1,4 +1,3 @@
-from cloudify import ctx
 
 PLAYBOOK_ARGS_PROPS = [
     'ansible_playbook_executable_path', 'extra_packages', 'galaxy_collections',
@@ -48,11 +47,12 @@ def add_previous_parameters(ctx, operation_args, node_instance):
     ctx.logger.info('** 1kwargs: {}'.format(kwargs))
 
     for possible_key in PLAYBOOK_ARGS_PROPS:
-        ctx.logger.info('**possible_key: {}'.format(possible_key))
         if not kwargs.get(possible_key) and \
-                possible_key in node_instance.runtime_properties:
+                possible_key in \
+                node_instance._node_instance.runtime_properties:
+            ctx.logger.info('** possible_key: {}'.format(possible_key))
             kwargs[possible_key] = \
-                node_instance.runtime_properties[possible_key]
+                node_instance._node_instance.runtime_properties[possible_key]
     operation_args['kwargs'] = kwargs
     ctx.logger.info('** 2kwargs: {}'.format(kwargs))
 
