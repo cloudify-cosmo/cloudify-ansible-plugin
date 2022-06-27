@@ -42,19 +42,13 @@ def _ansible_operation(ctx, operation, node_ids, node_instance_ids, **kwargs):
 
 
 def add_previous_parameters(ctx, operation_args, node_instance):
-    ctx.logger.info('operation_args: {}'.format(operation_args))
     kwargs = operation_args.get('kwargs')
-    ctx.logger.info('** 1kwargs: {}'.format(kwargs))
-
     for possible_key in PLAYBOOK_ARGS_PROPS:
         if not kwargs.get(possible_key) and \
-                possible_key in \
-                node_instance._node_instance.runtime_properties:
-            ctx.logger.info('** possible_key: {}'.format(possible_key))
+                possible_key in node_instance.node.properties and \
+                node_instance.node.properties.get(possible_key, None):
             kwargs[possible_key] = \
-                node_instance._node_instance.runtime_properties[possible_key]
-    operation_args['kwargs'] = kwargs
-    ctx.logger.info('** 2kwargs: {}'.format(kwargs))
+                node_instance.node.properties.get(possible_key)
 
 
 def reload_playbook(ctx, node_ids, node_instance_ids, **kwargs):
