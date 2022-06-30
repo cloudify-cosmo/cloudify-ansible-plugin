@@ -118,3 +118,4 @@
   - RD-4902 provide parameters for Ansible reload workflow
   - Add v2_plugin.yaml
   - Add Node_Instance_Ids and Node_Ids type.
+  - RD-5076 combine previous parameters with new parameters
