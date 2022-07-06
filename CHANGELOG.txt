@@ -119,3 +119,4 @@
   - Add v2_plugin.yaml
   - Add Node_Instance_Ids and Node_Ids type.
   - RD-5076 combine previous parameters with new parameters
+2.13.10: Adjust V2 Plugin YAML invalid-types.
