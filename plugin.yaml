@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.10'
+    package_version: '2.13.11'
 
 dsl_definitions:
 
@@ -130,7 +130,7 @@ dsl_definitions:
     timeout:
       type: string
       description: Override the connection timeout in seconds (default=10)
-      default: 10
+      default: '10'
     save_playbook:
       type: boolean
       description: >

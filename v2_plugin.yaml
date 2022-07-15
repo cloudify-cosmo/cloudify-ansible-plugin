@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.10'
+    package_version: '2.13.11'
 
 dsl_definitions:
 
@@ -127,7 +127,7 @@ dsl_definitions:
       type: string
       description: >
         Override the connection timeout in seconds (default=10)
-      default: 10
+      default: '10'
     save_playbook:
       type: boolean
       description: >
@@ -381,13 +381,11 @@ workflows:
           if playbook_source_path is URL to archive File relative inside the archive.
       node_instance_ids:
         type: list
-        item_type: node_instance
         default: []
         description: |
           List of node instance ID's to reload for.
       node_ids:
         type: list
-        item_type: node_id
         default: []
         description: |
           List of node templates to reload for.
