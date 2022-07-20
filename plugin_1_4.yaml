@@ -15,15 +15,13 @@ dsl_definitions:
         A full path to your ansible_playbook executable if user don't want to
         use the included version of executable in the plugin
     extra_packages:
-      # uncomment on 5+
-      # type: list
+      type: list
       default: []
       description: >
         List of python packages to install on controller virtual env before running the playbook.
         If the manager has no internet connection this feature cannot be used.
     galaxy_collections:
-      # uncomment on 5+
-      # type: list
+      type: list
       default: []
       description: >
         List of Ansible galaxy collections to install on controller virtual env before running the playbook.
@@ -50,8 +48,7 @@ dsl_definitions:
         Ansible Playbook relative to blueprint or playbook_source_path
         if playbook_source_path is URL to archive File relative inside the archive.
     additional_playbook_files:
-      # uncomment on 5+
-      # type: list
+      type: list
       default: []
       description: >
         A list of string paths blueprint resources that you
@@ -70,8 +67,7 @@ dsl_definitions:
       description: >
         Variable values.
     sensitive_keys:
-      # uncomment on 5+
-      # type: list
+      type: list
       description: keys that you want us to obscure
       default:
         - ansible_password
@@ -129,7 +125,8 @@ dsl_definitions:
       default: ''
     timeout:
       type: string
-      description: Override the connection timeout in seconds (default=10)
+      description: >
+        Override the connection timeout in seconds (default=10)
       default: '10'
     save_playbook:
       type: boolean
@@ -368,17 +365,41 @@ relationships:
 workflows:
   reload_ansible_playbook:
     mapping: ansible.cloudify_ansible.workflows.reload_playbook
+    availability_rules:
+      node_instances_active: ['all', 'partial']
     parameters:
-      <<: *playbook_config
+      playbook_source_path:
+        type: string
+        default: ""
+        description: >
+          A full path/URL that contain playbook specified in playbook_path
+          or site_yaml_path.
+      playbook_path:
+        type: string
+        default: ""
+        description: >
+          A path to your `site.yaml` or `main.yaml` in your
+          Ansible Playbook relative to blueprint or playbook_source_path
+          if playbook_source_path is URL to archive File relative inside the archive.
       node_instance_ids:
-        # uncomment on 5+
-        # type: list
+        type: list
+        item_type: node_instance
         default: []
         description: |
           List of node instance ID's to reload for.
       node_ids:
-        # uncomment on 5+
-        # type: list
+        type: list
+        item_type: node_id
         default: []
         description: |
           List of node templates to reload for.
+
+blueprint_labels:
+  obj-type:
+    values:
+      - ansible
+
+labels:
+  obj-type:
+    values:
+      - ansible
