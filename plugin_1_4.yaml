@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.12'
+    package_version: '2.13.13'
 
 dsl_definitions:
 
@@ -368,19 +368,7 @@ workflows:
     availability_rules:
       node_instances_active: ['all', 'partial']
     parameters:
-      playbook_source_path:
-        type: string
-        default: ""
-        description: >
-          A full path/URL that contain playbook specified in playbook_path
-          or site_yaml_path.
-      playbook_path:
-        type: string
-        default: ""
-        description: >
-          A path to your `site.yaml` or `main.yaml` in your
-          Ansible Playbook relative to blueprint or playbook_source_path
-          if playbook_source_path is URL to archive File relative inside the archive.
+      <<: *playbook_config
       node_instance_ids:
         type: list
         item_type: node_instance
