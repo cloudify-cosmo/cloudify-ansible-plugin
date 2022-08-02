@@ -123,3 +123,4 @@
 2.13.11: Correct default value for timeout.
 2.13.12: Release DSL 1_4 yaml and redhat 8 wagon.
 2.13.13: RD-4902 Align workflow parameters.
+2.13.14: RD-5426 Add Custom facts path handling.
