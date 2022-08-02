@@ -175,12 +175,16 @@ class AnsiblePlaybookFromFile(object):
                     'Removing invalid flag from options_config: '
                     '{flag}.'.format(flag=key))
                 del self._options_config[key]
+        fact = []
+        if 'ANSIBLE_FACT_PATH' in self.env:
+            fact.append('-a "fact_path={0}"'.format(self.env.get(
+                'ANSIBLE_FACT_PATH')))
         return [
             self.verbosity,
             '-i {0}'.format(self.sources),
             self.options,
             '-m setup all'
-        ]
+        ] + fact
 
     @staticmethod
     def execute(process_execution_func, **kwargs):

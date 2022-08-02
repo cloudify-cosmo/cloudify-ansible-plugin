@@ -766,7 +766,7 @@ def get_facts(string):
         new_string.append(line)
     separater = '=>(.*)'
     string_without_whitespace = '\n'.join(
-        new_string).replace("\n", "").replace("\t", "").replace(" ", "")
+        new_string).replace("\n", "").replace("\t", "")
     selected = re.search(separater, string_without_whitespace)
     try:
         return json.loads(selected.group(1))['ansible_facts']
