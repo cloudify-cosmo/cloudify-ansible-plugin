@@ -589,7 +589,7 @@ def install_packages_to_venv(venv, packages_list):
         try:
             runner.run(command=command,
                        cwd=venv,
-                       execution_env={'PYTHONPATH': ''})
+                       execution_env={'LANG': 'en_US.UTF-8', 'PYTHONPATH': ''})
         except CommandExecutionException as e:
             raise NonRecoverableError("Can't install extra_package on"
                                       " playbook`s venv. Error message: "
@@ -609,7 +609,7 @@ def install_collections_to_venv(venv, collections_list):
         try:
             runner.run(command=command,
                        cwd=venv,
-                       execution_env={'PYTHONPATH': ''})
+                       execution_env={'LANG': 'en_US.UTF-8', 'PYTHONPATH': ''})
         except CommandExecutionException as e:
             raise NonRecoverableError("Can't install galaxy_collections on"
                                       " playbook`s venv. Error message: "
