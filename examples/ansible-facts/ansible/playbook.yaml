@@ -1,0 +1,20 @@
+- hosts: all
+  connection: local
+
+  tasks:
+
+    - name: "Set fact: output dictionary"
+      set_fact:
+        output_dict:
+          just_a_test: "my value from ansible gathered fact !!"
+
+    - name: "Creates facts directory if it doesn't exist"
+      file:
+        path: "{{ lookup('ansible.builtin.env', 'ANSIBLE_FACT_PATH') }}"
+        state: directory
+
+    - name: "Insert custom fact file"
+      copy:
+        content: "{{ output_dict | to_nice_json }}"
+        dest: "{{ lookup('ansible.builtin.env', 'ANSIBLE_FACT_PATH') }}/custom.fact"
+        mode: 0644
