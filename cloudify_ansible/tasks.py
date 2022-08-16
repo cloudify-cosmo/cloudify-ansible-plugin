@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import sys
 
 from cloudify.decorators import operation
@@ -94,6 +94,13 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         _node, _instance, playbook_args['playbook_path'])
 
     playbook_args['tags'] = tags_to_apply
+    playbook_args['environment_variables'] = {
+        'REST_HOST': os.environ.get('REST_HOST'),
+        'REST_PORT': os.environ.get('REST_PORT'),
+        'LOCAL_REST_CERT_FILE': os.environ.get('LOCAL_REST_CERT_FILE'),
+        'CTX_NODE_INSTANCE_ID': _instance.id,
+    }
+    os.environ['CTX_NODE_INSTANCE_ID'] = _instance.id
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
@@ -232,6 +239,14 @@ def store_facts(playbook_args, ansible_env_vars, _ctx, **kwargs):
     secure_log_playbook_args(_ctx, playbook_args)
     log_stdout = playbook_args.pop('log_stdout', True)
     playbook = AnsiblePlaybookFromFile(**playbook_args)
+    _instance = utils.get_instance()
+    playbook_args['environment_variables'] = {
+        'REST_HOST': os.environ.get('REST_HOST'),
+        'REST_PORT': os.environ.get('REST_PORT'),
+        'LOCAL_REST_CERT_FILE': os.environ.get('LOCAL_REST_CERT_FILE'),
+        'CTX_NODE_INSTANCE_ID': _instance.id,
+    }
+    os.environ['CTX_NODE_INSTANCE_ID'] = _instance.id
     _store_facts(
         playbook,
         ansible_env_vars,
