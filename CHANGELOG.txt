@@ -126,3 +126,4 @@
 2.13.14: RD-5426 Add Custom facts path handling.
 2.13.15: Handle ascii characters while setting up ansible venv.
 2.13.16: Add environment variables that will support Cloudify Ansible Module.
+2.13.17: Deprecate incorrect relationship names.

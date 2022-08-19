@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.16'
+    package_version: '2.13.17'
 
 dsl_definitions:
 
@@ -265,7 +265,7 @@ node_types:
 
 relationships:
 
-  cloudify.ansible.relationships.connected_to_host:
+  cloudify.relationships.ansible.connected_to_host:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -306,7 +306,7 @@ relationships:
               description: >
                 Hostname
 
-  cloudify.ansible.relationships.run_on_host:
+  cloudify.relationships.ansible.run_on_host:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
@@ -361,6 +361,12 @@ relationships:
               default: { get_attribute: [ SOURCE, auto_tags ] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
+
+  cloudify.ansible.relationships.connected_to_host:
+    derived_from: cloudify.relationships.ansible.connected_to_host
+
+  cloudify.ansible.relationships.run_on_host:
+    derived_from: cloudify.relationships.ansible.run_on_host
 
 workflows:
   reload_ansible_playbook:
