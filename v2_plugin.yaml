@@ -3,11 +3,34 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '2.13.17'
+    package_version: '3.0.0'
 
 dsl_definitions:
 
+  ansible_install_config: &install_config
+    use_existing_resource:
+      type: boolean
+      description: If true, use an existing ansible installation rather than installing it
+      default: false
+    installation_source:
+      type: string
+      default: 'https://cloudify-release-eu.s3.eu-west-1.amazonaws.com/cloudify/wagons/cloudify-ansible-plugin/ansible-2.9.5-py3-none-any.whl'
+      description: Location to download the Ansible executable binary from. Ignored if 'use_existing' is true.
+    extra_packages:
+      default: []
+      description: List of plugins to download and install.
+    galaxy_collections:
+      default: []
+      description: >
+        List of python packages to install on controller virtual env before running the playbook.
+        If the manager has no internet connection this feature cannot be used.
+
   playbook_config: &playbook_config
+    ansible_external_pyenv:
+      type: string
+      default: ""
+      description: >
+        Ansible pyenv with previously installed ansible and extra packages
     ansible_playbook_executable_path:
       type: string
       default: ""
@@ -221,14 +244,25 @@ dsl_definitions:
 
 node_types:
 
+  cloudify.nodes.ansible.Ansible:
+    derived_from: cloudify.nodes.SoftwareComponent
+    properties:
+      <<: *install_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: ansible.cloudify_ansible.tasks.install
+        delete:
+          implementation: ansible.cloudify_ansible.tasks.uninstall
+
   cloudify.nodes.ansible.Executor:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *playbook_config
     interfaces:
       cloudify.interfaces.lifecycle:
-        precreate:
-          implementation: ansible.cloudify_ansible.tasks.precreate
+        configure:
+          implementation: ansible.cloudify_ansible.tasks.configure
         start:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
@@ -247,9 +281,9 @@ node_types:
       <<: *playbook_config
     interfaces:
       cloudify.interfaces.lifecycle:
-        precreate:
-          implementation: ansible.cloudify_ansible.tasks.precreate
         configure:
+          implementation: ansible.cloudify_ansible.tasks.configure
+        start:
           implementation: ansible.cloudify_ansible.tasks.set_playbook_config
           inputs:
             <<: *playbook_inputs
@@ -362,11 +396,15 @@ relationships:
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
 
-  cloudify.ansible.relationships.connected_to_host:
-    derived_from: cloudify.relationships.ansible.connected_to_host
-
-  cloudify.ansible.relationships.run_on_host:
-    derived_from: cloudify.relationships.ansible.run_on_host
+  cloudify.relationships.ansible.using_ansible_environment:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: ansible.cloudify_ansible.tasks.set_pyenv
+          inputs:
+            playbook_venv:
+              default: { get_attribute: [ TARGET, playbook_venv ] }
 
 workflows:
   reload_ansible_playbook:
@@ -383,6 +421,18 @@ workflows:
         default: []
         description: |
           List of node templates to reload for.
+
+  update_playbook_venv:
+    mapping: ansible.cloudify_ansible.workflows.update_playbook_venv
+    parameters:
+      extra_packages:
+        default: []
+        description: |
+          List of python packages to be installed in venv
+      galaxy_collections:
+        default: []
+        description: |
+          List of ansible galaxy collections to be installed
 
 blueprint_labels:
   obj-type:

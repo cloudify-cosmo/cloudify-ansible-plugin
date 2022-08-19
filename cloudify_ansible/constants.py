@@ -23,10 +23,10 @@ KEY = 'ansible_ssh_private_key_file'
 BECOME = 'ansible_become'
 SSH_COMMON = 'ansible_ssh_common_args'
 PLAYBOOK_VENV = 'playbook_venv'
-ANSIBLE_TO_INSTALL = \
-    'https://cloudify-release-eu.s3.eu-west-1.amazonaws.com/' \
-    'cloudify/wagons/cloudify-ansible-plugin/' \
-    'ansible-2.9.5-py3-none-any.whl'
+LOCAL_VENV = 'local_venv'
+INSTALLED_PACKAGES = 'installed_ansible_pyenv_packages'
+INSTALLED_COLLECTIONS = 'installed_galaxy_collections'
+ANSIBLE_TO_INSTALL = 'ansible==4.10.0'
 OPTION_HOST_CHECKING = 'ANSIBLE_HOST_KEY_CHECKING'
 OPTION_TASK_FAILED_ATTRIBUTE = 'ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED'
 OPTION_STDOUT_FORMAT = 'ANSIBLE_STDOUT_CALLBACK'

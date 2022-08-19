@@ -31,6 +31,8 @@ from cloudify_ansible.utils import (
     handle_site_yaml,
     create_playbook_venv,
     create_playbook_workspace,
+    install_extra_packages,
+    install_galaxy_collections,
     get_source_config_from_ctx,
     get_remerged_config_sources,
 )
@@ -186,7 +188,7 @@ def handle_venv(ctx=None, extra_packages=None, galaxy_collections=None):
     galaxy_collections = \
         galaxy_collections or get_node(ctx).properties.get(
             'galaxy_collections') or []
-    create_playbook_venv(ctx,
-                         packages_to_install=extra_packages,
-                         collections_to_install=galaxy_collections)
-    create_playbook_workspace()
+    create_playbook_venv(ctx)
+    create_playbook_workspace(ctx)
+    install_extra_packages(ctx, extra_packages)
+    install_galaxy_collections(ctx, galaxy_collections)
