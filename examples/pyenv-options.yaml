@@ -1,0 +1,70 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - https://cloudify.co/spec/cloudify/6.3.2/types.yaml
+  - plugin:cloudify-ansible-plugin
+
+dsl_definitions:
+  sources: &sources
+    vms:
+      hosts:
+        master:
+          ansible_host: localhost
+          ansible_connection: local
+
+node_templates:
+
+  ansible:
+    type: cloudify.nodes.ansible.Ansible
+    properties:
+      extra_packages:
+        - whatever
+      galaxy_collections:
+        - community.general
+
+  shared_venv_by_relationship_collection:
+    type: cloudify.nodes.ansible.Executor
+    properties:
+      playbook_path: local/filesize.yml
+      galaxy_collections:
+        - community.general
+      sources: *sources
+    relationships:
+      - type: cloudify.ansible.relationships.using_ansible_environment
+        target: ansible
+
+  shared_env_by_relationship:
+    type: cloudify.nodes.ansible.Executor
+    properties:
+      playbook_path: local/filesize.yml
+      sources: *sources
+    relationships:
+      - type: cloudify.ansible.relationships.using_ansible_environment
+        target: ansible
+
+  shared_env_by_property:
+    type: cloudify.nodes.ansible.Executor
+    properties:
+      ansible_external_pyenv: { get_attribute: [ansible, playbook_venv ]}
+      playbook_path: local/filesize.yml
+      galaxy_collections:
+        - community.general
+      sources: *sources
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: ansible
+
+  local_env_coll:
+    type: cloudify.nodes.ansible.Executor
+    properties:
+      playbook_path: local/filesize.yml
+      galaxy_collections:
+        - community.general
+      sources: *sources
+
+  ansible_playbook_executable_path:
+    type: cloudify.nodes.ansible.Executor
+    properties:
+      ansible_playbook_executable_path: { concat: [{ get_attribute: [ansible, playbook_venv ]}, '/bin/ansible-playbook']}
+      playbook_path: local/filesize.yml
+      sources: *sources

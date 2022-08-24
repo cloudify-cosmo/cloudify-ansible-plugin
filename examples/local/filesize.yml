@@ -1,0 +1,8 @@
+---
+- name: create 1K test file in /tmp/test_file path
+  hosts: master
+  tasks:
+    - name: create file
+      community.general.filesize:
+        path: /tmp/test_file
+        size: 1K
