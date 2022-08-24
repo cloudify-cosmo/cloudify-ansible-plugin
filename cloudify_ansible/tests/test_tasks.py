@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import environ, curdir, path, remove
-from mock import patch
 import shutil
-from tempfile import mkdtemp, NamedTemporaryFile
+from mock import patch
 from unittest import skipUnless
+from os import environ, curdir, path, remove
+from tempfile import mkdtemp, NamedTemporaryFile
 
 
 from cloudify.exceptions import (NonRecoverableError,
@@ -144,7 +144,8 @@ class TestPluginTasks(AnsibleTestBase):
 
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
-    def test_ansible_playbook(self, foo, *_):
+    def test_ansible_playbook(self, foo, mock_dir, *_):
+        mock_dir.return_value = mkdtemp()
         with patch('cloudify_ansible.create_playbook_venv'):
             foo.return_value = ('output', 'error', 0)
             current_ctx.set(ctx)
@@ -152,14 +153,15 @@ class TestPluginTasks(AnsibleTestBase):
                 self.playbook_path,
                 self.hosts_path,
                 ctx=ctx)
+        shutil.rmtree(mock_dir())
 
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
-    def test_ansible_playbook_failed_sdk(self, foo, mock_node_dir, *_):
+    def test_ansible_playbook_failed_sdk(self, foo, mock_dir, *_):
         foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
             "We are failed!")
         current_ctx.set(ctx)
-        mock_node_dir.return_value = mkdtemp()
+        mock_dir.return_value = mkdtemp()
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaisesRegexp(NonRecoverableError,
                                          "We are failed!"):
@@ -167,10 +169,12 @@ class TestPluginTasks(AnsibleTestBase):
                     self.playbook_path,
                     self.hosts_path,
                     ctx=ctx)
+        shutil.rmtree(mock_dir())
 
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
-    def test_ansible_playbook_failed(self, foo, mock_node_dir, *_):
+    def test_ansible_playbook_failed(self, foo, mock_dir, *_):
+        mock_dir.return_value = mkdtemp()
         foo.side_effect = ProcessException('Unable to run command', -1)
         current_ctx.set(ctx)
         with patch('cloudify_ansible.create_playbook_venv'):
@@ -179,10 +183,12 @@ class TestPluginTasks(AnsibleTestBase):
                     self.playbook_path,
                     self.hosts_path,
                     ctx=ctx)
+        shutil.rmtree(mock_dir())
 
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
-    def test_ansible_playbook_retry(self, foo, *_):
+    def test_ansible_playbook_retry(self, foo, mock_dir, *_):
+        mock_dir.return_value = mkdtemp()
         foo.side_effect = ProcessException(
             'One or more hosts are unreachable.', 4)
         current_ctx.set(ctx)
@@ -193,10 +199,12 @@ class TestPluginTasks(AnsibleTestBase):
                     self.hosts_path,
                     number_of_attempts=self.number_of_attempts,
                     ctx=ctx)
+        shutil.rmtree(mock_dir())
 
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
-    def test_ansible_playbook_retry_not_allowed(self, foo, *_):
+    def test_ansible_playbook_retry_not_allowed(self, foo, mock_dir, *_):
+        mock_dir.return_value = mkdtemp()
         foo.side_effect = ProcessException(
             'One or more hosts are unreachable.', 4)
         current_ctx.set(ctx)
@@ -207,10 +215,12 @@ class TestPluginTasks(AnsibleTestBase):
                     self.hosts_path,
                     number_of_attempts=1,
                     ctx=ctx)
+        shutil.rmtree(mock_dir())
 
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
-    def test_ansible_playbook_with_dict_sources(self, foo, *_):
+    def test_ansible_playbook_with_dict_sources(self, foo, mock_dir, *_):
+        mock_dir.return_value = mkdtemp()
         foo.side_effect = cloudify_ansible_sdk.CloudifyAnsibleSDKError(
             "We are failed!"
         )
@@ -221,6 +231,7 @@ class TestPluginTasks(AnsibleTestBase):
                     self.playbook_path,
                     mock_sources_dict,
                     ctx=ctx)
+        shutil.rmtree(mock_dir())
 
     @skipUnless(
         environ.get('TEST_ZPLAYS', False),
