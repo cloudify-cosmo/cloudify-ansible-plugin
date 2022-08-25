@@ -130,6 +130,7 @@
 3.0.0:
   - Change Ansible venv handling
   - upgrade Ansible version to 4.10.0
+  - add roles installation to work directory
   - add Ansible node for ansible binary installation and creation of shared pyenv (EaaS)
   - add property to use external pyenv for ansible
   - move precreate install operations to configure to allow copying pyenv from Ansible node in relationship

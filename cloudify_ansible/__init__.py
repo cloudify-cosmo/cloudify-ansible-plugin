@@ -33,6 +33,7 @@ from cloudify_ansible.utils import (
     create_playbook_workspace,
     install_extra_packages,
     install_galaxy_collections,
+    install_roles,
     get_source_config_from_ctx,
     get_remerged_config_sources,
 )
@@ -74,6 +75,7 @@ def ansible_playbook_node(func):
                 playbook_source_path=None,
                 extra_packages=None,
                 galaxy_collections=None,
+                roles=None,
                 **kwargs):
         """Prepare the arguments to send to AnsiblePlaybookFromFile.
 
@@ -95,6 +97,7 @@ def ansible_playbook_node(func):
          controller env.
         :param galaxy_collections: list of ansible galaxy collections to
          install to controller env.
+        :param roles: list of roles to install to working directory
         :param start_at_task: The name of the task to start at.
         :param kwargs:
         :return:
@@ -114,7 +117,7 @@ def ansible_playbook_node(func):
         _instance.runtime_properties['sources'] = sources
 
         try:
-            handle_venv(ctx, extra_packages, galaxy_collections)
+            handle_venv(ctx, extra_packages, galaxy_collections, roles)
             # check if source path is provided [full path/URL]
             if playbook_source_path:
                 # here we will combine playbook_source_path with playbook_path
@@ -175,13 +178,17 @@ def prepare_ansible_node(func):
     def wrapper(ctx=ctx_from_import,
                 extra_packages=None,
                 galaxy_collections=None,
+                roles=None,
                 **kwargs):
-        handle_venv(ctx, extra_packages, galaxy_collections)
+        handle_venv(ctx, extra_packages, galaxy_collections, roles)
         func(ctx, **kwargs)
     return wrapper
 
 
-def handle_venv(ctx=None, extra_packages=None, galaxy_collections=None):
+def handle_venv(ctx=None,
+                extra_packages=None,
+                galaxy_collections=None,
+                roles=None):
     ctx = ctx or ctx_from_import
     extra_packages = extra_packages or get_node(ctx).properties.get(
         'extra_packages') or []
@@ -192,3 +199,4 @@ def handle_venv(ctx=None, extra_packages=None, galaxy_collections=None):
     create_playbook_workspace(ctx)
     install_extra_packages(ctx, extra_packages)
     install_galaxy_collections(ctx, galaxy_collections)
+    install_roles(ctx, roles)
