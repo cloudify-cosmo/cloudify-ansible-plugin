@@ -145,7 +145,10 @@ def _get_collections_location(_ctx=None):
              or runtime_properties.get('galaxy_collections')):
         return runtime_properties.get(WORKSPACE)
     return os.path.join(runtime_properties.get(PLAYBOOK_VENV),
-                        'lib/python3.6/site-packages')
+                        'lib',
+                        'python' + sys.version[:3],
+                        'site-packages'
+                        )
 
 
 def handle_file_path(file_path, additional_playbook_files, _ctx):
@@ -619,9 +622,7 @@ def is_local_venv():
 
 def set_installed_packages(venv):
     installed_packages = runner.run([get_executable_path('pip', venv=venv),
-                                     'freeze'])
-    installed_packages = installed_packages.split('\n')
-
+                                     'freeze']).std_out
     ctx.instance.runtime_properties[INSTALLED_PACKAGES] = installed_packages
 
 
@@ -747,7 +748,8 @@ def install_galaxy_collections(_ctx,
                                         collections_location)
     else:
         if collections_to_install:
-            raise NonRecoverableError('Do not use galaxy_collections when'
+            raise NonRecoverableError('No internet connection.'
+                                      'Do not use galaxy_collections when'
                                       ' working on the plugin virtualenv.')
 
 
@@ -771,7 +773,8 @@ def install_extra_packages(_ctx,
             install_packages_to_venv(venv_path, packages_to_install)
     else:
         if packages_to_install:
-            raise NonRecoverableError('Do not use extra_packages when'
+            raise NonRecoverableError('No internet connection.'
+                                      'Do not use extra_packages when'
                                       ' working on the plugin virtualenv.')
 
 

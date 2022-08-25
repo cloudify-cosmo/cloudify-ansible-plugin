@@ -30,7 +30,7 @@ node_templates:
         - community.general
       sources: *sources
     relationships:
-      - type: cloudify.ansible.relationships.using_ansible_environment
+      - type: cloudify.relationships.ansible.using_ansible_environment
         target: ansible
 
   shared_env_by_relationship:
@@ -39,7 +39,7 @@ node_templates:
       playbook_path: local/filesize.yml
       sources: *sources
     relationships:
-      - type: cloudify.ansible.relationships.using_ansible_environment
+      - type: cloudify.relationships.ansible.using_ansible_environment
         target: ansible
 
   shared_env_by_property:

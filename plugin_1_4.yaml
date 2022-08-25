@@ -14,7 +14,7 @@ dsl_definitions:
       default: false
     installation_source:
       type: string
-      default: 'https://cloudify-release-eu.s3.eu-west-1.amazonaws.com/cloudify/wagons/cloudify-ansible-plugin/ansible-2.9.5-py3-none-any.whl'
+      default: 'ansible==4.10.0'
       description: Location to download the Ansible executable binary from. Ignored if 'use_existing' is true.
     extra_packages:
       default: []
