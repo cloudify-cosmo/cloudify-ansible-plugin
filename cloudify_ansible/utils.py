@@ -49,6 +49,7 @@ from cloudify_ansible.constants import (
     BP_INCLUDES_PATH,
     INSTALLED_PACKAGES,
     INSTALLED_COLLECTIONS,
+    INSTALLED_ROLES,
     LOCAL_VENV,
     PLAYBOOK_VENV,
     WORKSPACE,
@@ -149,6 +150,15 @@ def _get_collections_location(_ctx=None):
                         'python' + sys.version[:3],
                         'site-packages'
                         )
+
+
+def _get_roles_location(_ctx=None):
+    _ctx = _ctx or ctx
+    runtime_properties = get_instance(ctx).runtime_properties
+    roles_location = os.paht.join(runtime_properties.get(WORKSPACE), 'roles')
+    if not os.path.exists(roles_location):
+        os.mkdir(roles_location)
+    return roles_location
 
 
 def handle_file_path(file_path, additional_playbook_files, _ctx):
@@ -342,6 +352,7 @@ def create_ansible_cfg(ctx):
     with open(ansible_cfg_file, 'w') as f:
         f.write("[defaults]\n")
         f.write("collections_path={}\n".format(collections_location))
+        f.write("roles={}\n".format(workspace_dir))
 
 
 def create_playbook_workspace(ctx=None):
@@ -686,6 +697,43 @@ def install_collections_to_venv(venv, collections_list, collections_dir):
                                       "{err}".format(err=e))
 
 
+def install_roles_to_venv(venv, roles_list, roles_dir):
+    # Force reinstall in playbook venv in order to make sure
+    # they being installed on specified environment .
+    if roles_list:
+        ctx.logger.debug("venv = {path}".format(path=venv))
+        command = [get_executable_path('ansible-galaxy', venv=venv),
+                   'install',
+                   '--force',
+                   '-p',
+                   roles_dir] + roles_list
+        ctx.logger.debug("cmd:{command}".format(command=command))
+        ctx.logger.info("Installing {packages} in location {location}.".format(
+            packages=roles_list,
+            location=roles_dir))
+        get_command = [get_executable_path('ansible-galaxy', venv=venv),
+                       'list',
+                       '-p',
+                       roles_dir]
+        try:
+            runner.run(command=command,
+                       cwd=venv,
+                       execution_env={'LANG': 'en_US.UTF-8', 'PYTHONPATH': ''})
+            installed_roles = \
+                runner.run(command=get_command,
+                           cwd=venv,
+                           execution_env={
+                               'LANG': 'en_US.UTF-8',
+                               'PYTHONPATH': ''}
+                           )
+            get_instance(ctx).runtime_properties[INSTALLED_ROLES] = \
+                installed_roles.std_out
+        except CommandExecutionException as e:
+            raise NonRecoverableError("Can't install roles on"
+                                      " playbook`s venv. Error message: "
+                                      "{err}".format(err=e))
+
+
 def get_executable_path(executable, venv):
     """
     :param executable: the name of the executable
@@ -730,8 +778,6 @@ def install_galaxy_collections(_ctx,
         Handle creation of virtual environments for running playbooks.
         The virtual environments will be created at the deployment directory.
        :param _ctx: cloudify context.
-       :param packages_to_install: list of python packages to install
-        inside venv.
        :param collections_to_install: list of galaxy collections to install
         inside venv.
        """
@@ -750,6 +796,32 @@ def install_galaxy_collections(_ctx,
         if collections_to_install:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use galaxy_collections when'
+                                      ' working on the plugin virtualenv.')
+
+
+def install_roles(_ctx,
+                  roles_to_install=None):
+    """
+        Handle creation of virtual environments for running playbooks.
+        The virtual environments will be created at the deployment directory.
+       :param _ctx: cloudify context.
+       :param roles_to_install: list of roles to install
+       """
+
+    if is_connected_to_internet():
+        if roles_to_install:
+            venv_path = get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
+            roles_location = _get_roles_location(_ctx)
+            _ctx.logger.info("Installing roles {} to path {}".format(
+                str(roles_to_install),
+                roles_location))
+            install_roles_to_venv(venv_path,
+                                  roles_to_install,
+                                  roles_location)
+    else:
+        if roles_to_install:
+            raise NonRecoverableError('No internet connection.'
+                                      'Do not use roles when'
                                       ' working on the plugin virtualenv.')
 
 
