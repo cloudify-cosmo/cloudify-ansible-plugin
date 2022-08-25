@@ -155,7 +155,7 @@ def _get_collections_location(_ctx=None):
 def _get_roles_location(_ctx=None):
     _ctx = _ctx or ctx
     runtime_properties = get_instance(ctx).runtime_properties
-    roles_location = os.paht.join(runtime_properties.get(WORKSPACE), 'roles')
+    roles_location = os.path.join(runtime_properties.get(WORKSPACE), 'roles')
     if not os.path.exists(roles_location):
         os.mkdir(roles_location)
     return roles_location
@@ -782,8 +782,8 @@ def install_galaxy_collections(_ctx,
         inside venv.
        """
 
-    if is_connected_to_internet():
-        if collections_to_install:
+    if collections_to_install:
+        if is_connected_to_internet():
             venv_path = get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
             collections_location = _get_collections_location(_ctx)
             _ctx.logger.info("Installing collections {} to path {}".format(
@@ -792,8 +792,7 @@ def install_galaxy_collections(_ctx,
             install_collections_to_venv(venv_path,
                                         collections_to_install,
                                         collections_location)
-    else:
-        if collections_to_install:
+        else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use galaxy_collections when'
                                       ' working on the plugin virtualenv.')
@@ -808,9 +807,10 @@ def install_roles(_ctx,
        :param roles_to_install: list of roles to install
        """
 
-    if is_connected_to_internet():
-        if roles_to_install:
-            venv_path = get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
+    if roles_to_install:
+        if is_connected_to_internet():
+            venv_path =\
+                get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
             roles_location = _get_roles_location(_ctx)
             _ctx.logger.info("Installing roles {} to path {}".format(
                 str(roles_to_install),
@@ -818,8 +818,7 @@ def install_roles(_ctx,
             install_roles_to_venv(venv_path,
                                   roles_to_install,
                                   roles_location)
-    else:
-        if roles_to_install:
+        else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use roles when'
                                       ' working on the plugin virtualenv.')
@@ -835,16 +834,18 @@ def install_extra_packages(_ctx,
         inside venv.
        """
 
-    if is_connected_to_internet():
-        if packages_to_install and is_local_venv():
-            venv_path = \
-                get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV)
-            _ctx.logger.info("Installing extra_packages {} to path {}".format(
-                str(packages_to_install),
-                venv_path))
-            install_packages_to_venv(venv_path, packages_to_install)
-    else:
-        if packages_to_install:
+    if packages_to_install:
+        if is_connected_to_internet():
+            if is_local_venv():
+                venv_path = \
+                    get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV)
+                _ctx.logger.info(
+                    "Installing extra_packages {} to path {}".format(
+                        str(packages_to_install),
+                        venv_path)
+                )
+                install_packages_to_venv(venv_path, packages_to_install)
+        else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use extra_packages when'
                                       ' working on the plugin virtualenv.')

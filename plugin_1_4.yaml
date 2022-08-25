@@ -17,11 +17,13 @@ dsl_definitions:
       default: 'ansible==4.10.0'
       description: Location to download the Ansible executable binary from. Ignored if 'use_existing' is true.
     extra_packages:
+      type: list
       default: []
       description:  >
         List of python packages to install on controller virtual env before running the playbook.
         If the manager has no internet connection this feature cannot be used.
     galaxy_collections:
+      type: list
       default: []
       description: >
         List of Ansible galaxy collections to install on controller virtual env before running the playbook.
@@ -50,6 +52,12 @@ dsl_definitions:
       default: []
       description: >
         List of Ansible galaxy collections to install on controller virtual env before running the playbook.
+        If the manager has no internet connection this feature cannot be used.
+    roles:
+      type: list
+      default: []
+      description: >
+        List of roles to install on controller virtual env before running the playbook.
         If the manager has no internet connection this feature cannot be used.
     playbook_source_path:
       type: string
@@ -199,6 +207,8 @@ dsl_definitions:
       default: { get_property: [ SELF, extra_packages ] }
     galaxy_collections:
       default: { get_property: [ SELF, galaxy_collections ] }
+    roles:
+      default: { get_property: [ SELF, roles ] }
     playbook_source_path:
       default: { get_property: [SELF, playbook_source_path] }
     playbook_path:
