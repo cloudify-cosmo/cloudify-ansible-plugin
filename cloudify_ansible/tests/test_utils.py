@@ -186,7 +186,7 @@ class UtilsTests(unittest.TestCase):
         self.assertEqual(p0, output[0][0])
 
     def test_create_playbook_venv(self):
-        with patch('cloudify_ansible.utils.subprocess'):
+        with patch('cloudify_ansible.utils.set_installed_packages'):
             with patch('cloudify_ansible.utils.get_deployment_dir'):
                 with patch('cloudify_ansible.utils.mkdtemp',
                            return_value=os.path.join(

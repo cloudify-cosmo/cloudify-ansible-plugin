@@ -19,7 +19,6 @@ import json
 import yaml
 import errno
 import shutil
-import subprocess
 from uuid import uuid1
 from copy import deepcopy
 from tempfile import mkdtemp
@@ -619,11 +618,8 @@ def is_local_venv():
 
 
 def set_installed_packages(venv):
-    installed_packages = subprocess.run([get_executable_path('pip', venv=venv),
-                                         'freeze'],
-                                        universal_newlines=True,
-                                        check=True,
-                                        stdout=subprocess.PIPE).stdout
+    installed_packages = runner.run([get_executable_path('pip', venv=venv),
+                                     'freeze'])
     installed_packages = installed_packages.split('\n')
 
     ctx.instance.runtime_properties[INSTALLED_PACKAGES] = installed_packages
