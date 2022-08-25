@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
 import sys
 
 from cloudify.decorators import operation
 from script_runner.tasks import ProcessException
 from cloudify.utils import exception_to_error_cause
 from cloudify_common_sdk.processes import general_executor
+from cloudify_common_sdk.filters import (
+    obfuscate_passwords,
+    OBFUSCATION_KEYWORDS)
 from cloudify.exceptions import (
     OperationRetry,
     RecoverableError,
@@ -80,7 +84,17 @@ def secure_log_playbook_args(_ctx, args, **_):
                     key, '*' * len(value) if hide else value)
         return log_message
 
-    log_message = _log(args, args.get("sensitive_keys", {}))
+    sensitive_keys = args.get("sensitive_keys", [])
+    sensitive_keys.extend(OBFUSCATION_KEYWORDS)
+    re_string_elem = '|'.join(sensitive_keys)
+    re_str = r'(("*)(' + repr(re_string_elem)[1:-1] + \
+             r')("*)(:|=)\s*("*))[^\n",]*'
+    obfuscation_re = re.compile(re_str, flags=re.IGNORECASE | re.MULTILINE)
+
+    _logger = args.pop('logger', None)
+    log_message = obfuscate_passwords(args, obfuscation_re)
+    if _logger:
+        args['logger'] = _logger
     _ctx.logger.debug("playbook_args: \n {0}".format(log_message))
 
 
@@ -274,7 +288,17 @@ def ansible_remove_host(new_sources_dict, _ctx, **_):
 
 @operation
 @prepare_ansible_node
+def precreate(ctx=None, **_):
+    _configure(ctx, **_)
+
+
+@operation
+@prepare_ansible_node
 def configure(ctx=None, **_):
+    _configure(ctx, **_)
+
+
+def _configure(ctx=None, **_):
     ctx.logger.info('Checking Ansible installation.')
     if not utils.get_instance().runtime_properties.get(
             constants.PLAYBOOK_VENV):

@@ -73,18 +73,15 @@ class AnsiblePlaybookFromFile(object):
         self._verbosity = verbosity
         self.logger = logger
 
-        for deprecated_key in DEPRECATED_KEYS:
-            if deprecated_key in kwargs:
+        for k, v in kwargs.items():
+            if k in DEPRECATED_KEYS:
                 self.logger.error(
-                    'This key been deprecated: {0} {1}'.format(
-                        deprecated_key, kwargs[deprecated_key]))
+                    'This key been deprecated: {0} {1}'.format(k, kwargs[k]))
+            if k in DIRECT_PARAMS:
+                # add known additional params to additional_args
+                self.additional_args += '--{key}="{value}" '.format(
+                    key=k.replace("_", "-"), value=json.dumps(kwargs[k]))
 
-        # add known additional params to additional_args
-        for field in DIRECT_PARAMS:
-            if kwargs.get(field):
-                self.additional_args += '--{field}="{value}" '.format(
-                    field=field.replace("_", "-"),
-                    value=json.dumps(kwargs[field]))
         if start_at_task:
             self.update_additional_args({'start_at_task': start_at_task})
 
