@@ -444,10 +444,12 @@ workflows:
     mapping: ansible.cloudify_ansible.workflows.update_playbook_venv
     parameters:
       extra_packages:
+        type: list
         default: []
         description: |
           List of python packages to be installed in venv
       galaxy_collections:
+        type: list
         default: []
         description: |
           List of ansible galaxy collections to be installed
