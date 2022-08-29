@@ -286,8 +286,8 @@ node_types:
       <<: *playbook_config
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
-          implementation: ansible.cloudify_ansible.tasks.configure
+        precreate:
+          implementation: ansible.cloudify_ansible.tasks.precreate
         start:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
@@ -429,7 +429,7 @@ relationships:
 
   cloudify.relationships.ansible.using_ansible_environment:
     derived_from: cloudify.relationships.connected_to
-    source_interfaces:
+    target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
           implementation: ansible.cloudify_ansible.tasks.set_pyenv
