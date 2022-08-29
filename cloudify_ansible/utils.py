@@ -152,10 +152,10 @@ def _get_collections_location(_ctx=None):
                         )
 
 
-def _get_roles_location(_ctx=None):
-    _ctx = _ctx or ctx
-    runtime_properties = get_instance(ctx).runtime_properties
-    roles_location = os.path.join(runtime_properties.get(WORKSPACE), 'roles')
+def _get_roles_location(instance):
+    roles_location = os.path.join(
+        instance.runtime_properties.get(WORKSPACE),
+        'roles')
     if not os.path.exists(roles_location):
         os.mkdir(roles_location)
     return roles_location
@@ -743,16 +743,17 @@ def get_executable_path(executable, venv):
 
 
 def install_new_pyenv_condition(_ctx):
-    if get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV):
+    instance = get_instance(_ctx)
+    if instance.runtime_properties.get(PLAYBOOK_VENV):
         _ctx.logger.info(
             "Using installed pyenv: {}"
             .format(
-                get_instance(_ctx).runtime_properties.get(PLAYBOOK_VENV)
+                instance.runtime_properties.get(PLAYBOOK_VENV)
             )
         )
         return False
     if _ctx.node.properties.get('ansible_external_pyenv'):
-        get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = \
+        instance.runtime_properties[PLAYBOOK_VENV] = \
             _ctx.node.properties.get('ansible_external_pyenv')
         _ctx.logger.info(
             "Using installed pyenv: {}"
@@ -811,7 +812,7 @@ def install_roles(_ctx,
         if is_connected_to_internet():
             venv_path =\
                 get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
-            roles_location = _get_roles_location(_ctx)
+            roles_location = _get_roles_location(get_instance(_ctx))
             _ctx.logger.info("Installing roles {} to path {}".format(
                 str(roles_to_install),
                 roles_location))
