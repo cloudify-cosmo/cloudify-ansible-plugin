@@ -138,9 +138,8 @@ def _get_tenant_name(_ctx=None):
     return _ctx.tenant_name
 
 
-def _get_collections_location(_ctx=None):
-    _ctx = _ctx or ctx
-    runtime_properties = get_instance(ctx).runtime_properties
+def _get_collections_location(instance):
+    runtime_properties = instance.runtime_properties
     if not is_local_venv() and \
             (get_node(ctx).properties.get('galaxy_collections')
              or runtime_properties.get('galaxy_collections')):
@@ -345,24 +344,23 @@ def handle_source_from_string(filepath, _ctx, new_inventory_path):
     return new_inventory_path
 
 
-def create_ansible_cfg(ctx):
-    workspace_dir = get_instance(ctx).runtime_properties.get(WORKSPACE)
-    collections_location = _get_collections_location(ctx)
+def create_playbook_workspace(ctx):
+    """ Create a temporary folder, so that we don't overwrite fields.
+        :param ctx: The Cloudify context.
+        :return:
+    """
+    instance = get_instance(ctx)
+    if WORKSPACE not in instance.runtime_properties:
+        workspace_dir = mkdtemp(dir=get_node_instance_dir())
+        instance.runtime_properties[WORKSPACE] = workspace_dir
+    else:
+        workspace_dir = instance.runtime_properties.get(WORKSPACE)
+    collections_location = _get_collections_location(instance)
     ansible_cfg_file = os.path.join(workspace_dir, 'ansible.cfg')
     with open(ansible_cfg_file, 'w') as f:
         f.write("[defaults]\n")
         f.write("collections_path={}\n".format(collections_location))
         f.write("roles={}\n".format(workspace_dir))
-
-
-def create_playbook_workspace(ctx=None):
-    """ Create a temporary folder, so that we don't overwrite fields.
-    :param ctx: The Cloudify context.
-    :return:
-    """
-    get_instance(ctx).runtime_properties[WORKSPACE] = \
-        mkdtemp(dir=get_node_instance_dir())
-    create_ansible_cfg(ctx)
 
 
 def delete_temp_folder(directory):
@@ -784,9 +782,10 @@ def install_galaxy_collections(_ctx,
        """
 
     if collections_to_install:
+        instance = get_instance(ctx)
         if is_connected_to_internet():
-            venv_path = get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
-            collections_location = _get_collections_location(_ctx)
+            venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
+            collections_location = _get_collections_location(instance)
             _ctx.logger.info("Installing collections {} to path {}".format(
                 str(collections_to_install),
                 collections_location))
@@ -810,9 +809,9 @@ def install_roles(_ctx,
 
     if roles_to_install:
         if is_connected_to_internet():
-            venv_path =\
-                get_instance(ctx).runtime_properties.get(PLAYBOOK_VENV)
-            roles_location = _get_roles_location(get_instance(_ctx))
+            instance = get_instance(_ctx)
+            venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
+            roles_location = _get_roles_location(instance)
             _ctx.logger.info("Installing roles {} to path {}".format(
                 str(roles_to_install),
                 roles_location))
@@ -858,7 +857,7 @@ def create_playbook_venv(_ctx):
         The virtual environments will be created at the deployment directory.
        :param _ctx: cloudify context.
        """
-
+    instance = get_instance(_ctx)
     if is_connected_to_internet():
         if install_new_pyenv_condition(_ctx):
             _ctx.logger.info("Installing new python venv")
@@ -871,11 +870,11 @@ def create_playbook_venv(_ctx):
                     _ctx.node.properties['installation_source']
                 ]
             install_packages_to_venv(venv_path, ansible_to_install)
-            get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = venv_path
-            get_instance(_ctx).runtime_properties[LOCAL_VENV] = True
+            instance.runtime_properties[PLAYBOOK_VENV] = venv_path
+            instance.runtime_properties[LOCAL_VENV] = True
 
     else:
-        get_instance(_ctx).runtime_properties[PLAYBOOK_VENV] = ''
+        instance.runtime_properties[PLAYBOOK_VENV] = ''
 
 
 def is_connected_to_internet():
