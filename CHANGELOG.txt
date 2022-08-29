@@ -134,4 +134,4 @@
   - add Ansible node for ansible binary installation and creation of shared pyenv (EaaS)
   - add property to use external pyenv for ansible
   - suppress password reporting.
-
+  - add ansible module path and cloudify runtime property ansible module default.

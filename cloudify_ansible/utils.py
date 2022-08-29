@@ -26,35 +26,39 @@ from tempfile import mkdtemp
 from cloudify import ctx
 from ansible.playbook import Playbook
 from cloudify.manager import get_rest_client
+from cloudify.utils import LocalCommandRunner
 from ansible.vars.manager import VariableManager
 from ansible.parsing.dataloader import DataLoader
-from cloudify_common_sdk.utils import get_deployment_dir, get_node_instance_dir
 from cloudify_rest_client.constants import VisibilityState
-from cloudify.utils import LocalCommandRunner
 from cloudify_ansible_sdk._compat import (
     text_type, urlopen, URLError)
-from cloudify.exceptions import (NonRecoverableError,
-                                 OperationRetry,
-                                 HttpException,
-                                 CommandExecutionException)
+from cloudify_common_sdk.utils import (
+    get_deployment_dir,
+    get_node_instance_dir)
 from script_runner.tasks import (
     ILLEGAL_CTX_OPERATION_ERROR,
     UNSUPPORTED_SCRIPT_FEATURE_ERROR
 )
+from cloudify.exceptions import (NonRecoverableError,
+                                 OperationRetry,
+                                 HttpException,
+                                 CommandExecutionException)
 
 from cloudify_ansible.constants import (
+    HOSTS,
+    SOURCES,
+    WORKSPACE,
+    LOCAL_VENV,
+    MODULE_NAME,
+    MODULE_PATH,
+    PLAYBOOK_VENV,
     COMPLETED_TAGS,
     AVAILABLE_TAGS,
-    ANSIBLE_TO_INSTALL,
+    INSTALLED_ROLES,
     BP_INCLUDES_PATH,
+    ANSIBLE_TO_INSTALL,
     INSTALLED_PACKAGES,
     INSTALLED_COLLECTIONS,
-    INSTALLED_ROLES,
-    LOCAL_VENV,
-    PLAYBOOK_VENV,
-    WORKSPACE,
-    SOURCES,
-    HOSTS
 )
 from cloudify_ansible_sdk.sources import AnsibleSource
 
@@ -635,7 +639,8 @@ def is_local_venv():
 def set_installed_packages(venv):
     installed_packages = runner.run([get_executable_path('pip', venv=venv),
                                      'freeze']).std_out
-    ctx.instance.runtime_properties[INSTALLED_PACKAGES] = installed_packages
+    get_instance(ctx).runtime_properties[INSTALLED_PACKAGES] = \
+        installed_packages
 
 
 def install_packages_to_venv(venv, packages_list):
@@ -744,6 +749,7 @@ def get_executable_path(executable, venv):
 
 
 def install_new_pyenv_condition(_ctx):
+    node = get_node(_ctx)
     instance = get_instance(_ctx)
     if instance.runtime_properties.get(PLAYBOOK_VENV):
         _ctx.logger.info(
@@ -753,21 +759,21 @@ def install_new_pyenv_condition(_ctx):
             )
         )
         return False
-    if _ctx.node.properties.get('ansible_external_pyenv'):
+    if node.properties.get('ansible_external_pyenv'):
         instance.runtime_properties[PLAYBOOK_VENV] = \
-            _ctx.node.properties.get('ansible_external_pyenv')
+            node.properties.get('ansible_external_pyenv')
         _ctx.logger.info(
             "Using installed pyenv: {}"
             .format(
-                _ctx.node.properties.get('ansible_external_pyenv')
+                node.properties.get('ansible_external_pyenv')
             )
         )
         return False
-    if _ctx.node.properties.get('ansible_external_executable_path'):
+    if node.properties.get('ansible_external_executable_path'):
         _ctx.logger.info(
             "Using installed executable path: {}"
             .format(
-                _ctx.node.properties.get('ansible_external_executable_path')
+                node.properties.get('ansible_external_executable_path')
             )
         )
         return False
@@ -854,12 +860,31 @@ def install_extra_packages(_ctx,
                                       ' working on the plugin virtualenv.')
 
 
+def setup_modules(_ctx, module_path=None):
+    ctx_instance = get_instance(_ctx)
+    deployment_dir = get_deployment_dir(_ctx.deployment.id)
+    if not module_path:
+        module_path = mkdtemp(dir=deployment_dir)
+        ctx_instance.runtime_properties[MODULE_PATH] = module_path
+    if not os.path.exists(module_path):
+        raise NonRecoverableError(
+            'Expected module path {} to exist and it does not.'.format(
+                module_path))
+    REL_PATH = 'ansible-cloudify-ctx/modules/{}'.format(MODULE_NAME)
+    abs_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), REL_PATH)
+    with open(os.path.join(module_path, MODULE_NAME), 'w') as outfile:
+        with open(abs_path, 'r') as infile:
+            outfile.write(infile.read())
+
+
 def create_playbook_venv(_ctx):
     """
         Handle creation of virtual environments for running playbooks.
         The virtual environments will be created at the deployment directory.
        :param _ctx: cloudify context.
        """
+    node = get_node(_ctx)
     instance = get_instance(_ctx)
     if is_connected_to_internet():
         if install_new_pyenv_condition(_ctx):
@@ -868,9 +893,9 @@ def create_playbook_venv(_ctx):
             venv_path = mkdtemp(dir=deployment_dir)
             make_virtualenv(path=venv_path)
             ansible_to_install = [ANSIBLE_TO_INSTALL]
-            if _ctx.node.properties.get('installation_source'):
+            if node.properties.get('installation_source'):
                 ansible_to_install = [
-                    _ctx.node.properties['installation_source']
+                    node.properties['installation_source']
                 ]
             install_packages_to_venv(venv_path, ansible_to_install)
             instance.runtime_properties[PLAYBOOK_VENV] = venv_path

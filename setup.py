@@ -41,6 +41,11 @@ setup(
     author_email='hello@cloudify.co',
     description='Manage Ansible nodes by Cloudify.',
     packages=['cloudify_ansible', 'cloudify_ansible_sdk'],
+    package_data={
+        'cloudify_ansible': [
+            'ansible-cloudify-ctx/modules/cloudify_runtime_property.py'
+        ]
+    },
     license='LICENSE',
     zip_safe=False,
     install_requires=[

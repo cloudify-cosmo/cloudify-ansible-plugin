@@ -59,6 +59,15 @@ dsl_definitions:
       description: >
         List of roles to install on controller virtual env before running the playbook.
         If the manager has no internet connection this feature cannot be used.
+    module_path:
+      type: string
+      default: ''
+      description: >
+        The location on the Cloudify Manager file system where
+        Ansible modules are expected to be installed or will be installed.
+        The default value is empty and if so, this will be created automatically
+        during the environment setup. The cloudify-ansible-ctx module will be
+        installed by default.
     playbook_source_path:
       type: string
       default: ""
