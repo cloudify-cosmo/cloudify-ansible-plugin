@@ -408,6 +408,12 @@ relationships:
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
 
+  cloudify.ansible.relationships.connected_to_host:
+    derived_from: cloudify.relationships.ansible.connected_to_host
+
+  cloudify.ansible.relationships.run_on_host:
+    derived_from: cloudify.relationships.ansible.run_on_host
+
   cloudify.relationships.ansible.using_ansible_environment:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
@@ -442,10 +448,12 @@ workflows:
     mapping: ansible.cloudify_ansible.workflows.update_playbook_venv
     parameters:
       extra_packages:
+        type: list
         default: []
         description: |
           List of python packages to be installed in venv
       galaxy_collections:
+        type: list
         default: []
         description: |
           List of ansible galaxy collections to be installed

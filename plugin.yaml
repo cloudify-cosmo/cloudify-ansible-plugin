@@ -421,6 +421,12 @@ relationships:
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
 
+  cloudify.ansible.relationships.connected_to_host:
+    derived_from: cloudify.relationships.ansible.connected_to_host
+
+  cloudify.ansible.relationships.run_on_host:
+    derived_from: cloudify.relationships.ansible.run_on_host
+
   cloudify.relationships.ansible.using_ansible_environment:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
