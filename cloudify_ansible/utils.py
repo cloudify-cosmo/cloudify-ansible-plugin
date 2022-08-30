@@ -230,10 +230,13 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
         'File path {0} does not exist.'.format(file_path))
 
 
-def get_instance(_ctx=None):
+def get_instance(_ctx=None, target=False):
     _ctx = _ctx or ctx
     if _ctx.type == RELATIONSHIP_INSTANCE:
-        return _ctx.source.instance
+        if target:
+            return _ctx.target.instance
+        else:
+            return _ctx.source.instance
     else:  # _ctx.type == NODE_INSTANCE
         return _ctx.instance
 

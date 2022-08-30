@@ -30,6 +30,7 @@ from script_runner.tasks import ProcessException
 from cloudify_ansible_sdk.tests import AnsibleTestBase, mock_sources_dict
 import cloudify_ansible_sdk
 
+from cloudify_ansible.constants import WORKSPACE
 from cloudify_ansible.tasks import (
     run, ansible_requires_host, ansible_remove_host, cleanup)
 from cloudify_ansible.utils import (
@@ -49,7 +50,7 @@ COMPUTE_NODE_PROPS = {
 RUNTIME_PROPS = {
     'external_id': None,
     'resource_config': {},
-    'playbook_venv': '/path/to/venv'
+    'playbook_venv': '/tmp/path/to/venv'
 }
 RELS = []
 OP_CTX = {
@@ -142,8 +143,9 @@ class TestPluginTasks(AnsibleTestBase):
                 curdir,
                 handle_file_path(curdir, [], ctx))
 
-    @patch('cloudify_common_sdk.utils.get_deployment_dir')
     @patch.object(cloudify_ansible_sdk.AnsiblePlaybookFromFile, 'execute')
+    @patch('cloudify_common_sdk.utils.get_deployment_dir')
+    @patch('cloudify_common_sdk.utils.get_node_instance_dir')
     def test_ansible_playbook(self, foo, mock_dir, *_):
         mock_dir.return_value = mkdtemp()
         with patch('cloudify_ansible.create_playbook_venv'):
@@ -162,6 +164,7 @@ class TestPluginTasks(AnsibleTestBase):
             "We are failed!")
         current_ctx.set(ctx)
         mock_dir.return_value = mkdtemp()
+        ctx.instance.runtime_properties[WORKSPACE] = mock_dir.return_value
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaisesRegexp(NonRecoverableError,
                                          "We are failed!"):
@@ -177,6 +180,7 @@ class TestPluginTasks(AnsibleTestBase):
         mock_dir.return_value = mkdtemp()
         foo.side_effect = ProcessException('Unable to run command', -1)
         current_ctx.set(ctx)
+        ctx.instance.runtime_properties[WORKSPACE] = mock_dir.return_value
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(NonRecoverableError):
                 run(
@@ -192,6 +196,7 @@ class TestPluginTasks(AnsibleTestBase):
         foo.side_effect = ProcessException(
             'One or more hosts are unreachable.', 4)
         current_ctx.set(ctx)
+        ctx.instance.runtime_properties[WORKSPACE] = mock_dir.return_value
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(OperationRetry):
                 run(
@@ -208,6 +213,7 @@ class TestPluginTasks(AnsibleTestBase):
         foo.side_effect = ProcessException(
             'One or more hosts are unreachable.', 4)
         current_ctx.set(ctx)
+        ctx.instance.runtime_properties[WORKSPACE] = mock_dir.return_value
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(NonRecoverableError):
                 run(
@@ -225,6 +231,7 @@ class TestPluginTasks(AnsibleTestBase):
             "We are failed!"
         )
         current_ctx.set(ctx)
+        ctx.instance.runtime_properties[WORKSPACE] = mock_dir.return_value
         with patch('cloudify_ansible.create_playbook_venv'):
             with self.assertRaises(NonRecoverableError):
                 run(

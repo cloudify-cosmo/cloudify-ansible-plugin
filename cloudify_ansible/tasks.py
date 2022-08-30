@@ -330,8 +330,8 @@ def uninstall(ctx=None, **_):
 
 @operation
 def set_pyenv(playbook_venv, ctx, **_):
-    utils.get_instance(ctx).runtime_properties[constants.PLAYBOOK_VENV]\
-        = playbook_venv
+    instance = utils.get_instance(ctx, target=True)
+    instance.runtime_properties[constants.PLAYBOOK_VENV] = playbook_venv
 
 
 @operation
