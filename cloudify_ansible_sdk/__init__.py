@@ -61,6 +61,7 @@ class AnsiblePlaybookFromFile(object):
                  additional_args=None,
                  start_at_task=None,
                  tags=None,
+                 module_path=None,
                  **kwargs):
 
         self.playbook = site_yaml_path or playbook_path
@@ -72,19 +73,19 @@ class AnsiblePlaybookFromFile(object):
         self._tags = tags
         self._verbosity = verbosity
         self.logger = logger
+        self._module_path = module_path or os.path.join(
+            os.path.expanduser('~'),
+            '.ansible/plugins/modules:/usr/share/ansible/plugins/modules')
 
-        for deprecated_key in DEPRECATED_KEYS:
-            if deprecated_key in kwargs:
+        for k, v in kwargs.items():
+            if k in DEPRECATED_KEYS:
                 self.logger.error(
-                    'This key been deprecated: {0} {1}'.format(
-                        deprecated_key, kwargs[deprecated_key]))
+                    'This key been deprecated: {0} {1}'.format(k, kwargs[k]))
+            if k in DIRECT_PARAMS:
+                # add known additional params to additional_args
+                self.additional_args += '--{key}="{value}" '.format(
+                    key=k.replace("_", "-"), value=json.dumps(kwargs[k]))
 
-        # add known additional params to additional_args
-        for field in DIRECT_PARAMS:
-            if kwargs.get(field):
-                self.additional_args += '--{field}="{value}" '.format(
-                    field=field.replace("_", "-"),
-                    value=json.dumps(kwargs[field]))
         if start_at_task:
             self.update_additional_args({'start_at_task': start_at_task})
 
@@ -106,6 +107,10 @@ class AnsiblePlaybookFromFile(object):
         for i in range(1, self._verbosity):
             verbosity += 'v'
         return verbosity
+
+    @property
+    def module_path(self):
+        return '--module-path={}'.format(self._module_path)
 
     @property
     def tags(self):
@@ -164,6 +169,7 @@ class AnsiblePlaybookFromFile(object):
             self.playbook,
             self.additional_args,
             self.tags,
+            self.module_path,
         ]
 
     @property

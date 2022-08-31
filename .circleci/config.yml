@@ -1,9 +1,9 @@
 version: 2.1
 
 orbs:
-  node: cloudify/public-unittest-orb@1 #orb version
-  wagonorb: cloudify/wagon-bulder-orb@2.4.0 #orb version
-  releaseorb: cloudify/release-orb@1.4.0 #orb version
+  node: cloudify/unittest-orb@1.0.9 #orb version
+  wagonorb: cloudify/wagon-bulder-orb@2.5.1 #orb version
+  releaseorb: cloudify/release-orb@1.4.1 #orb version
   managerorb: cloudify/manager-orb@2.0.1
 
 checkout:
@@ -13,6 +13,7 @@ checkout:
         PR_ID=${CI_PULL_REQUEST##*/}
         git fetch origin +refs/pull/$PR_ID/merge:
         git checkout -qf FETCH_HEAD
+        git submodule update --init --recursive
       fi
 
 
@@ -33,7 +34,11 @@ commands:
   run_hello_world_test:
     steps:
       # - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
-      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example --on-failure=uninstall-force --timeout=1800
+      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
+
+  run_python_venv_options:
+    steps:
+      - run: ecosystem-test local-blueprint-test -b examples/python-venv-options.yaml --test-id=python-venv-options --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
 
 jobs:
 
