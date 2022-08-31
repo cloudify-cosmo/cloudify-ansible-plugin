@@ -318,8 +318,8 @@ def install(ctx=None, **_):
 
 @operation
 def uninstall(ctx=None, **_):
-    if ctx.node.properties.get('ansible_external_pyenv'):
-        ctx.logger.info("Not deleting external pyenv")
+    if ctx.node.properties.get('ansible_external_venv'):
+        ctx.logger.info("Not deleting external venv")
         return
     if ctx.node.properties.get('ansible_external_executable_path'):
         ctx.logger.info("Not deleting external executable path")

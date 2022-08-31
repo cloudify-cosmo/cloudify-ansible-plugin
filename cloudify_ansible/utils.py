@@ -748,24 +748,24 @@ def get_executable_path(executable, venv):
     return '{0}/bin/{1}'.format(venv, executable) if venv else executable
 
 
-def install_new_pyenv_condition(_ctx):
+def install_new_venv_condition(_ctx):
     node = get_node(_ctx)
     instance = get_instance(_ctx)
     if instance.runtime_properties.get(PLAYBOOK_VENV):
         _ctx.logger.info(
-            "Using installed pyenv: {}"
+            "Using installed venv: {}"
             .format(
                 instance.runtime_properties.get(PLAYBOOK_VENV)
             )
         )
         return False
-    if node.properties.get('ansible_external_pyenv'):
+    if node.properties.get('ansible_external_venv'):
         instance.runtime_properties[PLAYBOOK_VENV] = \
-            node.properties.get('ansible_external_pyenv')
+            node.properties.get('ansible_external_venv')
         _ctx.logger.info(
-            "Using installed pyenv: {}"
+            "Using installed venv: {}"
             .format(
-                node.properties.get('ansible_external_pyenv')
+                node.properties.get('ansible_external_venv')
             )
         )
         return False
@@ -887,7 +887,7 @@ def create_playbook_venv(_ctx):
     node = get_node(_ctx)
     instance = get_instance(_ctx)
     if is_connected_to_internet():
-        if install_new_pyenv_condition(_ctx):
+        if install_new_venv_condition(_ctx):
             _ctx.logger.info("Installing new python venv")
             deployment_dir = get_deployment_dir(_ctx.deployment.id)
             venv_path = mkdtemp(dir=deployment_dir)

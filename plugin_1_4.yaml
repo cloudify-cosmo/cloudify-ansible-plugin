@@ -30,11 +30,11 @@ dsl_definitions:
         If the manager has no internet connection this feature cannot be used.
 
   playbook_config: &playbook_config
-    ansible_external_pyenv:
+    ansible_external_venv:
       type: string
       default: ""
       description: >
-        Ansible pyenv with previously installed ansible and extra packages
+        Ansible python venv with previously installed ansible and extra packages
     ansible_playbook_executable_path:
       type: string
       default: ""

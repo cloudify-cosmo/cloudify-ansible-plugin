@@ -25,7 +25,7 @@ node_templates:
   shared_env_by_property_collections_roles:
     type: cloudify.nodes.ansible.Executor
     properties:
-      ansible_external_pyenv: { get_attribute: [ansible, playbook_venv ]}
+      ansible_external_venv: { get_attribute: [ansible, playbook_venv ]}
       playbook_path: local/filesize.yml
       galaxy_collections:
         - community.general
