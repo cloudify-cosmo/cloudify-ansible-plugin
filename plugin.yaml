@@ -436,16 +436,6 @@ relationships:
   cloudify.ansible.relationships.run_on_host:
     derived_from: cloudify.relationships.ansible.run_on_host
 
-  cloudify.relationships.ansible.share_ansible_environment:
-    derived_from: cloudify.relationships.connected_to
-    target_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: ansible.cloudify_ansible.tasks.set_pyenv
-          inputs:
-            playbook_venv:
-              default: { get_attribute: [ SOURCE, playbook_venv ] }
-
 workflows:
 
   reload_ansible_playbook:

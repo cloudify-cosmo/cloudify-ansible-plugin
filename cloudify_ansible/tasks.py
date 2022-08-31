@@ -329,12 +329,6 @@ def uninstall(ctx=None, **_):
 
 
 @operation
-def set_pyenv(playbook_venv, ctx, **_):
-    instance = utils.get_instance(ctx, target=True)
-    instance.runtime_properties[constants.PLAYBOOK_VENV] = playbook_venv
-
-
-@operation
 def update_venv(galaxy_collections, extra_packages, ctx=None, **_):
     ctx.logger.info(
         "Updating venv with extra_packages {} and collections {}"

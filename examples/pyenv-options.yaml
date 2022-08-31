@@ -22,33 +22,15 @@ node_templates:
       galaxy_collections:
         - community.general
 
-  shared_venv_by_relationship_collection:
-    type: cloudify.nodes.ansible.Executor
-    properties:
-      playbook_path: local/filesize.yml
-      galaxy_collections:
-        - community.general
-      sources: *sources
-    relationships:
-      - type: cloudify.relationships.ansible.using_ansible_environment
-        target: ansible
-
-  shared_env_by_relationship:
-    type: cloudify.nodes.ansible.Executor
-    properties:
-      playbook_path: local/filesize.yml
-      sources: *sources
-    relationships:
-      - type: cloudify.relationships.ansible.using_ansible_environment
-        target: ansible
-
-  shared_env_by_property:
+  shared_env_by_property_collections_roles:
     type: cloudify.nodes.ansible.Executor
     properties:
       ansible_external_pyenv: { get_attribute: [ansible, playbook_venv ]}
       playbook_path: local/filesize.yml
       galaxy_collections:
         - community.general
+      roles:
+        - datadog.datadog
       sources: *sources
     relationships:
       - type: cloudify.relationships.depends_on
