@@ -38,7 +38,7 @@ commands:
 
   run_python_venv_options:
     steps:
-      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/python-venv-options.yaml --test-id=python-venv-options --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
+      - run: ecosystem-test local-blueprint-test -b examples/python-venv-options.yaml --test-id=python-venv-options --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
 
 jobs:
 
