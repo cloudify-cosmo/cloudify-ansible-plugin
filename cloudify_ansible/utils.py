@@ -22,6 +22,7 @@ import shutil
 from uuid import uuid1
 from copy import deepcopy
 from tempfile import mkdtemp
+from distutils.dir_util import copy_tree
 
 from cloudify import ctx
 from ansible.playbook import Playbook
@@ -271,7 +272,7 @@ def handle_site_yaml(site_yaml_path, additional_playbook_files, _ctx):
     site_yaml_real_name = os.path.basename(site_yaml_real_path)
     site_yaml_new_dir = os.path.join(
         get_instance(_ctx).runtime_properties[WORKSPACE], 'playbook')
-    shutil.copytree(site_yaml_real_dir, site_yaml_new_dir)
+    copy_tree(site_yaml_real_dir, site_yaml_new_dir)
     site_yaml_final_path = os.path.join(site_yaml_new_dir, site_yaml_real_name)
     return u'{0}'.format(site_yaml_final_path)
 
