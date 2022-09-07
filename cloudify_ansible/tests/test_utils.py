@@ -186,6 +186,32 @@ class UtilsTests(unittest.TestCase):
         self.assertEqual(p0, output[0][0])
 
     def test_create_playbook_venv(self):
+        with patch('cloudify_ansible.utils.set_installed_packages'):
+            with patch('cloudify_ansible.utils.get_deployment_dir'):
+                with patch('cloudify_ansible.utils.mkdtemp',
+                           return_value=os.path.join(
+                        '/opt',
+                        'mgmtworker',
+                        'work',
+                        'deployments',
+                        'default-tenant',
+                        'test-deployment')):
+                    with patch('cloudify_ansible.utils.runner.run'):
+                        ctx = self._instance_ctx()
+                        utils.create_playbook_venv(
+                            _ctx=ctx
+                        )
+                    self.assertEqual(ctx.instance.runtime_properties.get(
+                        PLAYBOOK_VENV), os.path.join(
+                        '/opt',
+                        'mgmtworker',
+                        'work',
+                        'deployments',
+                        'default-tenant',
+                        'test-deployment'))
+
+    def test_use_external_playbook_venv(self):
+        # if set PLAYBOOK_VENV runtime property no real venv should be created
         with patch('cloudify_ansible.utils.get_deployment_dir'):
             with patch('cloudify_ansible.utils.mkdtemp',
                        return_value=os.path.join(
@@ -197,9 +223,12 @@ class UtilsTests(unittest.TestCase):
                     'test-deployment')):
                 with patch('cloudify_ansible.utils.runner.run'):
                     ctx = self._instance_ctx()
-                    utils.create_playbook_venv(_ctx=ctx,
-                                               packages_to_install=[])
-                self.assertEqual(ctx.instance.runtime_properties.get(
+                    ctx.instance.runtime_properties[PLAYBOOK_VENV] \
+                        = '/opt/mgmtworker/some_shared_venv'
+                    utils.create_playbook_venv(
+                        _ctx=ctx
+                    )
+                self.assertNotEqual(ctx.instance.runtime_properties.get(
                     PLAYBOOK_VENV), os.path.join(
                     '/opt',
                     'mgmtworker',
@@ -207,3 +236,34 @@ class UtilsTests(unittest.TestCase):
                     'deployments',
                     'default-tenant',
                     'test-deployment'))
+                self.assertEqual(ctx.instance.runtime_properties.get(
+                    PLAYBOOK_VENV), '/opt/mgmtworker/some_shared_venv')
+
+    def test_use_external_playbook_venv_from_properties(self):
+        # if set ansible_external_env no real venv should be created
+        with patch('cloudify_ansible.utils.get_deployment_dir'):
+            with patch('cloudify_ansible.utils.mkdtemp',
+                       return_value=os.path.join(
+                    '/opt',
+                    'mgmtworker',
+                    'work',
+                    'deployments',
+                    'default-tenant',
+                    'test-deployment')):
+                with patch('cloudify_ansible.utils.runner.run'):
+                    ctx = self._instance_ctx()
+                    ctx.node.properties['ansible_external_venv'] \
+                        = '/opt/mgmtworker/some_shared_venv'
+                    utils.create_playbook_venv(
+                        _ctx=ctx
+                    )
+                self.assertNotEqual(ctx.instance.runtime_properties.get(
+                    PLAYBOOK_VENV), os.path.join(
+                    '/opt',
+                    'mgmtworker',
+                    'work',
+                    'deployments',
+                    'default-tenant',
+                    'test-deployment'))
+                self.assertEqual(ctx.instance.runtime_properties.get(
+                    PLAYBOOK_VENV), '/opt/mgmtworker/some_shared_venv')
