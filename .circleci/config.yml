@@ -29,7 +29,7 @@ executors:
 commands:
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --bundle-path workspace/build/cloudify-plugins-bundle.tgz --yum-package python-netaddr --yum-package git
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --bundle-path workspace/build/cloudify-plugins-bundle.tgz --yum-package python-netaddr --yum-package git -p $(find ~/project/workspace/build/ -name *centos-Core*x86_64.wgn)  ~/project/plugin.yaml
 
   run_hello_world_test:
     steps:
