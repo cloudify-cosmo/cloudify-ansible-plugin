@@ -57,3 +57,25 @@ def reload_playbook(ctx, node_ids, node_instance_ids, **kwargs):
                        node_ids,
                        node_instance_ids,
                        **kwargs).execute()
+
+
+def update_playbook_venv(ctx, extra_packages, galaxy_collections, **kwargs):
+    graph = ctx.graph_mode()
+    sequence = graph.sequence()
+    # Iterate over all node instances of type "cloudify.nodes.ansible.Ansible"
+    # and update playbook venv.
+
+    for node_instance in ctx.node_instances:
+        if 'cloudify.nodes.ansible.Ansible' in \
+                node_instance.node.type_hierarchy:
+            ctx.logger.info("Updating playbook venv for node instance {}"
+                            .format(node_instance.id))
+            sequence.add(node_instance.execute_operation(
+                operation='ansible.update_venv',
+                kwargs={
+                    'extra_packages': extra_packages,
+                    'galaxy_collections': galaxy_collections,
+                },
+                allow_kwargs_override=True
+            ))
+    graph.execute()

@@ -11,14 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from tempfile import mkdtemp
+
 from mock import Mock, patch, mock_open
 from cloudify_ansible import (
     constants,
     ansible_playbook_node
 )
 
-from cloudify.mocks import MockCloudifyContext
 from cloudify.state import current_ctx
+from cloudify.mocks import MockCloudifyContext
 
 from cloudify_ansible_sdk._compat import PY2
 from cloudify_ansible_sdk.tests import AnsibleTestBase
@@ -36,7 +39,8 @@ COMPUTE_NODE_PROPS = {
 }
 RUNTIME_PROPS = {
     'external_id': None,
-    'resource_config': {}
+    'resource_config': {},
+    'workspace': '/path/to/workdir'
 }
 RELS = []
 OP_CTX = {
@@ -79,11 +83,15 @@ class TestDecorator(AnsibleTestBase):
             target=compute_ctx)
         return relationship_ctx
 
+    @patch('cloudify_ansible.utils.get_deployment_dir')
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
-    def test_ansible_playbook_node(self, *_):
+    @patch('cloudify_ansible.create_playbook_workspace')
+    def test_ansible_playbook_node(self, *mocks):
+        dir_val = mkdtemp()
+        mocks[-1].return_value = dir_val
         # without remerge
-        relationship_ctx = self._get_ctx()
-        current_ctx.set(relationship_ctx)
+        ctx = self._get_ctx()
+        current_ctx.set(ctx)
 
         if PY2:
             builtins_open = '__builtin__.open'
@@ -105,22 +113,28 @@ class TestDecorator(AnsibleTestBase):
         func.assert_called_with(
             {
                 'playbook_path': 'Check',
+                'module_path': ctx.source.instance.runtime_properties.get(
+                    'module_path'), # noqa
                 'sources': 'hosts',
                 'verbosity': 2,
-                'logger': relationship_ctx.logger,
+                'logger': ctx.logger,
                 'additional_args': ''
             }, {
                 constants.OPTION_HOST_CHECKING: "False",
                 constants.OPTION_TASK_FAILED_ATTRIBUTE: "False",
                 constants.OPTION_STDOUT_FORMAT: "json"
             },
-            relationship_ctx)
+            ctx)
 
+    @patch('cloudify_ansible.utils.get_deployment_dir')
     @patch('cloudify_common_sdk.utils.get_deployment_dir')
-    def test_ansible_playbook_node_remerge(self, *_):
+    @patch('cloudify_ansible.create_playbook_workspace')
+    def test_ansible_playbook_node_remerge(self, *mocks):
+        dir_val = mkdtemp()
+        mocks[-1].return_value = dir_val
         # remerge
-        relationship_ctx = self._get_ctx()
-        current_ctx.set(relationship_ctx)
+        ctx = self._get_ctx()
+        current_ctx.set(ctx)
 
         if PY2:
             builtins_open = '__builtin__.open'
@@ -144,9 +158,11 @@ class TestDecorator(AnsibleTestBase):
         func.assert_called_with(
             {
                 'playbook_path': 'Check',
+                'module_path': ctx.source.instance.runtime_properties.get(
+                    'module_path'), # noqa
                 'sources': 'hosts',
                 'verbosity': 2,
-                'logger': relationship_ctx.logger,
+                'logger': ctx.logger,
                 'additional_args': '',
                 'group_name': "name_of_group"
             }, {
@@ -154,4 +170,4 @@ class TestDecorator(AnsibleTestBase):
                 constants.OPTION_TASK_FAILED_ATTRIBUTE: "False",
                 constants.OPTION_STDOUT_FORMAT: "json"
             },
-            relationship_ctx)
+            ctx)

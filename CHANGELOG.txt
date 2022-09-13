@@ -127,3 +127,11 @@
 2.13.15: Handle ascii characters while setting up ansible venv.
 2.13.16: Add environment variables that will support Cloudify Ansible Module.
 2.13.17: Deprecate incorrect relationship names.
+3.0.0:
+  - Change Ansible venv handling
+  - upgrade Ansible version to 4.10.0
+  - add roles installation to work directory
+  - add Ansible node for ansible binary installation and creation of shared python venv (EaaS)
+  - add property to use external python venv for ansible
+  - suppress password reporting.
+  - add ansible module path and cloudify runtime property ansible module default.
