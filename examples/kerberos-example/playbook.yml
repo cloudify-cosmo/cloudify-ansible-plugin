@@ -1,0 +1,16 @@
+- hosts: localhost
+  tasks:
+    - name: simple runtime property
+      cloudify_runtime_property:
+        path: hello
+        value: world
+
+    - name: complex runtime property part I
+      cloudify_runtime_property:
+        path: foo.bar
+        value: baz
+
+    - name: complex runtime property part II
+      cloudify_runtime_property:
+        path: foo.qux
+        value: quux

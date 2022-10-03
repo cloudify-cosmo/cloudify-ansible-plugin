@@ -19,6 +19,7 @@ import json
 import yaml
 import errno
 import shutil
+import pathlib
 from uuid import uuid1
 from copy import deepcopy
 from tempfile import mkdtemp
@@ -859,6 +860,19 @@ def install_extra_packages(_ctx,
             raise NonRecoverableError('No internet connection.'
                                       'Do not use extra_packages when'
                                       ' working on the plugin virtualenv.')
+
+
+def setup_kerberos(_ctx):
+    _ctx.logger.debug('Patching WinRM Ansible connection module.')
+    REL_PATH = 'ansible/plugins/connection/winrm.py'
+    abs_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), REL_PATH)
+    _ctx_node = get_node(_ctx)
+    _ctx_instance = get_instance(_ctx)
+    venv_path = _ctx_instance.runtime_properties.get(PLAYBOOK_VENV)
+    for file in sorted(pathlib.Path(venv_path).rglob('*/' + REL_PATH)):
+        _ctx.logger.info('Replacing {} with {}'.format(abs_path, file))
+        shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
 
 
 def setup_modules(_ctx, module_path=None):
