@@ -25,7 +25,7 @@ node_templates:
         ANSIBLE_HOST_KEY_CHECKING: "False"
         ANSIBLE_STDOUT_CALLBACK: dense
       extra_packages:
-        - winrm
+        - pywinrm
         - pywinrm[kerberos]
       kerberos_config: |
         [libdefaults]
