@@ -290,6 +290,10 @@ node_types:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *playbook_config
+      kerberos_config:
+        type: string
+        description: Either the multiline content of the KRB5_CONFIG file or the path of a file resource packaged in the blueprint.
+        required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         precreate:
