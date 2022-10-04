@@ -24,6 +24,9 @@ node_templates:
         ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
         ANSIBLE_HOST_KEY_CHECKING: "False"
         ANSIBLE_STDOUT_CALLBACK: dense
+      extra_packages:
+        - winrm
+        - pywinrm[kerberos]
       kerberos_config: |
         [libdefaults]
             default_realm = LEDZEPPELINSUCKS.COM
