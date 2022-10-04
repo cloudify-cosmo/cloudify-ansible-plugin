@@ -1,16 +1,14 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: Example from an Ansible Playbook
+      win_ping:
+        data: pong
+        register: out
+
 - hosts: localhost
   tasks:
-    - name: simple runtime property
+    - name: ping runtime property
       cloudify_runtime_property:
-        path: hello
-        value: world
-
-    - name: complex runtime property part I
-      cloudify_runtime_property:
-        path: foo.bar
-        value: baz
-
-    - name: complex runtime property part II
-      cloudify_runtime_property:
-        path: foo.qux
-        value: quux
+        path: ping
+        value: out.stdout_lines

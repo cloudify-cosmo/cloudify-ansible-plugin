@@ -877,7 +877,7 @@ def setup_kerberos(_ctx):
             krb5_config = tempfile.NamedTemporaryFile(
                 dir=node_instance_dir,
                 delete=False)
-            krb5_config.write(kerberos_config)
+            krb5_config.write(kerberos_config.encode())
             _ctx_instance.runtime_properties['KRB5_CONFIG'] = krb5_config.name
         elif isinstance(kerberos_config, str):
             krb5_config = os.path.join(
