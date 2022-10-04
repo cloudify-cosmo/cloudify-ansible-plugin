@@ -1,13 +1,9 @@
 - hosts: all
-  become: true
   tasks:
     - name: Example from an Ansible Playbook
       win_ping:
         data: pong
         register: out
-
-- hosts: localhost
-  tasks:
     - name: ping runtime property
       cloudify_runtime_property:
         path: ping
