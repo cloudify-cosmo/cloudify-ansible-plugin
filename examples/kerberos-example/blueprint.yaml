@@ -15,7 +15,7 @@ node_templates:
             winhost:
               ansible_connection: winrm
               ansible_user: ansible
-              ansible_password: {}
+              ansible_password: { get_secret: kerb }
               ansible_winrm_transport: kerberos
               ansible_winrm_server_cert_validation: ignore
               ansible_port: 5985
