@@ -877,7 +877,8 @@ def setup_kerberos(_ctx):
     _ctx_instance = get_instance(_ctx)
 
     kerberos_config = _ctx_node.properties.get('kerberos_config')
-    if kerberos_config:
+    if kerberos_config and not _ctx_instance.runtime_properties.get(
+            'KRB5_CONFIG'):
         node_instance_dir = get_node_instance_dir()
         if isinstance(kerberos_config, str) and '\n' in kerberos_config:
             krb5_config = tempfile.NamedTemporaryFile(
@@ -906,14 +907,16 @@ def setup_kerberos(_ctx):
                 'The kerberos_config was provided, '
                 'but it is not in string or dict format.')
 
-    _ctx.logger.debug('Patching WinRM Ansible connection module.')
-    REL_PATH = 'ansible/plugins/connection/winrm.py'
-    abs_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), REL_PATH)
-    venv_path = _ctx_instance.runtime_properties.get(PLAYBOOK_VENV)
-    for file in sorted(pathlib.Path(venv_path).rglob('*/' + REL_PATH)):
-        _ctx.logger.info('Replacing {} with {}'.format(abs_path, file))
-        shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+    venv = _ctx_instance.runtime_properties.get(PLAYBOOK_VENV)
+    if not _ctx_instance.runtime_properties.get('__UPDATE_WINRM'):
+        _ctx.logger.debug('Patching WinRM Ansible connection module.')
+        REL_PATH = 'ansible/plugins/connection/winrm.py'
+        abs_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), REL_PATH)
+        for file in sorted(pathlib.Path(venv).rglob('*/' + REL_PATH)):
+            _ctx.logger.debug('Replacing {} with {}'.format(abs_path, file))
+            shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+        _ctx_instance.runtime_properties['__UPDATE_WINRM'] = True
 
 
 def setup_modules(_ctx, module_path=None):

@@ -214,7 +214,7 @@ def handle_venv(ctx=None,
     create_playbook_venv(ctx)
     create_playbook_workspace(ctx)
     setup_modules(ctx, module_path)
-    setup_kerberos(ctx)
     install_extra_packages(ctx, extra_packages)
     install_galaxy_collections(ctx, galaxy_collections)
     install_roles(ctx, roles)
+    setup_kerberos(ctx)

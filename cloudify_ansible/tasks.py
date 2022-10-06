@@ -120,6 +120,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
     }
     os.environ['CTX_NODE_INSTANCE_ID'] = _instance.id
     if 'KRB5_CONFIG' in _instance.runtime_properties:
+        os.environ['KRB5_CONFIG'] = _instance.runtime_properties['KRB5_CONFIG']
         playbook_args['environment_variables'].update(
             {
                 'KRB5_CONFIG': _instance.runtime_properties['KRB5_CONFIG']

@@ -29,6 +29,26 @@ def download_resource_side_effect(*args, **kwargs):
     return args, kwargs
 
 
+KERB_CONFIG = """
+[libdefaults]
+    default_realm = EXAMPLE.COM
+    kdc_timesync = 1
+    ccache_type = 4
+    forwardable = true
+    proxiable = true
+    fcc-mit-ticketflags = true
+
+[realms]
+    EXAMPLE.COM = {
+        kdc = server.example.com
+        admin_server = server.example.com
+    }
+[domain_realm]
+    example.com = EXAMPLE.COM
+    .example.com = EXAMPLE.COM
+"""
+
+
 class UtilsTests(unittest.TestCase):
 
     def tearDown(self):
@@ -267,3 +287,14 @@ class UtilsTests(unittest.TestCase):
                     'test-deployment'))
                 self.assertEqual(ctx.instance.runtime_properties.get(
                     PLAYBOOK_VENV), '/opt/mgmtworker/some_shared_venv')
+
+    @patch('cloudify_ansible.utils.pathlib')
+    @patch('cloudify_ansible.utils.tempfile')
+    @patch('cloudify_ansible.utils.get_node_instance_dir')
+    def test_setup_kerberos(self, *_, **__):
+        ctx = self._instance_ctx()
+        ctx.node.properties['kerberos_config'] = KERB_CONFIG
+        ctx.instance.runtime_properties['__UPDATE_WINRM'] = False
+        utils.setup_kerberos(ctx)
+        assert ctx.instance.runtime_properties['KRB5_CONFIG']
+        assert ctx.instance.runtime_properties['__UPDATE_WINRM']

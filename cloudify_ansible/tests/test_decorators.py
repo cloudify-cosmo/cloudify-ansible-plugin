@@ -40,7 +40,8 @@ COMPUTE_NODE_PROPS = {
 RUNTIME_PROPS = {
     'external_id': None,
     'resource_config': {},
-    'workspace': '/path/to/workdir'
+    'workspace': '/path/to/workdir',
+    '__UPDATE_WINRM': True
 }
 RELS = []
 OP_CTX = {
