@@ -24,10 +24,10 @@ node_templates:
       sources:
         vms:
           hosts:
-            rd5392server.ledzeppelinsucks.com:
+            kdc.example.com:
               ansible_connection: winrm
               ansible_user: ansible
-              ansible_password: { get_secret: kerb }
+              ansible_password: { get_secret: kerberos_password }
               ansible_winrm_transport: kerberos
               ansible_winrm_server_cert_validation: ignore
               ansible_port: 5985
