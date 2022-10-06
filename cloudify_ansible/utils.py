@@ -648,10 +648,16 @@ def set_installed_packages(venv):
         installed_packages
 
 
+def check_installed_packages(venv, packages):
+    pkgs = runner.run(
+        [get_executable_path('pip', venv=venv), 'freeze']).std_out
+    return any(x in pkgs for x in packages)
+
+
 def install_packages_to_venv(venv, packages_list):
     # Force reinstall in playbook venv in order to make sure
     # they being installed on specified environment .
-    if packages_list:
+    if packages_list and not check_installed_packages(packages_list, venv):
         ctx.logger.debug("venv = {path}".format(path=venv))
         command = [get_executable_path('pip', venv=venv), 'install',
                    '--force-reinstall', '--retries=2',
@@ -900,14 +906,19 @@ def setup_kerberos(_ctx):
                 'The kerberos_config was provided, '
                 'but it is not in string or dict format.')
 
-    _ctx.logger.debug('Patching WinRM Ansible connection module.')
-    REL_PATH = 'ansible/plugins/connection/winrm.py'
-    abs_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), REL_PATH)
-    venv_path = _ctx_instance.runtime_properties.get(PLAYBOOK_VENV)
-    for file in sorted(pathlib.Path(venv_path).rglob('*/' + REL_PATH)):
-        _ctx.logger.info('Replacing {} with {}'.format(abs_path, file))
-        shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+        venv_path = _ctx_instance.runtime_properties.get(PLAYBOOK_VENV)
+        if not check_installed_packages(
+                venv_path,
+                ['pywinrm', 'pywinrm[kerberos]']) and \
+                _ctx_instance.runtime_properties.get('__updated_winrm'):
+            _ctx.logger.debug('Patching WinRM Ansible connection module.')
+            REL_PATH = 'ansible/plugins/connection/winrm.py'
+            abs_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), REL_PATH)
+            for file in sorted(pathlib.Path(venv_path).rglob('*/' + REL_PATH)):
+                _ctx.logger.info('Replacing {} with {}'.format(abs_path, file))
+                shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+            _ctx_instance.runtime_properties['__updated_winrm'] = True
 
 
 def setup_modules(_ctx, module_path=None):
