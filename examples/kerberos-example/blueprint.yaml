@@ -4,18 +4,6 @@ imports:
   - https://cloudify.co/spec/cloudify/6.3.0/types.yaml
   - plugin:cloudify-ansible-plugin
 
-inputs:
-
-  domain:
-    type: string
-    default: kdc.example.com
-
-  user:
-    type: string
-    default: ansible
-
-
-
 node_templates:
 
   example:

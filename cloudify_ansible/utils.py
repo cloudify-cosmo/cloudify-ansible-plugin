@@ -648,12 +648,6 @@ def set_installed_packages(venv):
         installed_packages
 
 
-def check_installed_packages(venv):
-    pkgs = runner.run(
-        [get_executable_path('pip', venv=venv), 'freeze']).std_out
-    return get_instance(ctx).runtime_properties[INSTALLED_PACKAGES] == pkgs
-
-
 def install_packages_to_venv(venv, packages_list):
     # Force reinstall in playbook venv in order to make sure
     # they being installed on specified environment .
