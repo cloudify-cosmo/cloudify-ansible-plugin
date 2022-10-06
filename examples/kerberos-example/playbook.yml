@@ -3,8 +3,10 @@
     - name: Example from an Ansible Playbook
       win_ping:
         data: pong
-        register: out
+
+- hosts: localhost
+  tasks:
     - name: ping runtime property
       cloudify_runtime_property:
         path: ping
-        value: out.stdout_lines
+        value: pong
