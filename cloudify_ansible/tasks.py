@@ -333,7 +333,7 @@ def uninstall(ctx=None, **_):
 
 
 @operation
-def update_venv(galaxy_collections, extra_packages, ctx=None, **_):
+def update_venv(galaxy_collections, extra_packages, roles, ctx=None, **_):
     ctx.logger.info(
         "Updating venv with extra_packages {} and collections {}"
         .format(str(extra_packages), str(galaxy_collections)))
