@@ -314,6 +314,10 @@ def install(ctx=None, **_):
         ctx,
         install_config.get('galaxy_collections')
     )
+    utils.install_roles_to_venv(
+        ctx,
+        install_config.get('roles')
+    )
 
 
 @operation
@@ -335,3 +339,4 @@ def update_venv(galaxy_collections, extra_packages, ctx=None, **_):
         .format(str(extra_packages), str(galaxy_collections)))
     utils.install_galaxy_collections(ctx, galaxy_collections)
     utils.install_extra_packages(ctx, extra_packages)
+    utils.install_roles_to_venv(ctx, roles)

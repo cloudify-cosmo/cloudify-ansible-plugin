@@ -466,3 +466,7 @@ workflows:
         default: []
         description: |
           List of ansible galaxy collections to be installed
+      roles:
+        default: []
+        description: |
+          List of ansible roles to be installed
