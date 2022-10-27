@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '3.0.0'
+    package_version: '3.0.1'
 
 dsl_definitions:
 
@@ -456,6 +456,10 @@ workflows:
         default: []
         description: |
           List of ansible galaxy collections to be installed
+      roles:
+        default: []
+        description: |
+          List of ansible roles to be installed
 
 blueprint_labels:
   obj-type:

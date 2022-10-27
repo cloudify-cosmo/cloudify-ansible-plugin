@@ -135,3 +135,4 @@
   - add property to use external python venv for ansible
   - suppress password reporting.
   - add ansible module path and cloudify runtime property ansible module default.
+3.0.1: RD-5970 ansible plugin role installation

@@ -308,11 +308,15 @@ def install(ctx=None, **_):
     utils.create_playbook_workspace(ctx)
     utils.install_extra_packages(
         ctx,
-        install_config.get('extra_packages')
+        install_config.get('extra_packages', [])
     )
     utils.install_galaxy_collections(
         ctx,
-        install_config.get('galaxy_collections')
+        install_config.get('galaxy_collections', [])
+    )
+    utils.install_roles(
+        ctx,
+        install_config.get('roles', [])
     )
 
 
@@ -329,9 +333,10 @@ def uninstall(ctx=None, **_):
 
 
 @operation
-def update_venv(galaxy_collections, extra_packages, ctx=None, **_):
+def update_venv(galaxy_collections, extra_packages, roles, ctx=None, **_):
     ctx.logger.info(
         "Updating venv with extra_packages {} and collections {}"
         .format(str(extra_packages), str(galaxy_collections)))
     utils.install_galaxy_collections(ctx, galaxy_collections)
     utils.install_extra_packages(ctx, extra_packages)
+    utils.install_roles(ctx, roles)
