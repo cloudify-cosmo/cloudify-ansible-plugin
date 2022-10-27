@@ -308,15 +308,15 @@ def install(ctx=None, **_):
     utils.create_playbook_workspace(ctx)
     utils.install_extra_packages(
         ctx,
-        install_config.get('extra_packages')
+        install_config.get('extra_packages', [])
     )
     utils.install_galaxy_collections(
         ctx,
-        install_config.get('galaxy_collections')
+        install_config.get('galaxy_collections', [])
     )
-    utils.install_roles_to_venv(
+    utils.install_roles(
         ctx,
-        install_config.get('roles')
+        install_config.get('roles', [])
     )
 
 
@@ -339,4 +339,4 @@ def update_venv(galaxy_collections, extra_packages, roles, ctx=None, **_):
         .format(str(extra_packages), str(galaxy_collections)))
     utils.install_galaxy_collections(ctx, galaxy_collections)
     utils.install_extra_packages(ctx, extra_packages)
-    utils.install_roles_to_venv(ctx, roles)
+    utils.install_roles(ctx, roles)
