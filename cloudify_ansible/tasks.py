@@ -335,8 +335,8 @@ def uninstall(ctx=None, **_):
 @operation
 def update_venv(galaxy_collections, extra_packages, roles, ctx=None, **_):
     ctx.logger.info(
-        "Updating venv with extra_packages {} and collections {}"
-        .format(str(extra_packages), str(galaxy_collections)))
+        "Updating venv with extra_packages {}, collections {} and roles {}"
+        .format(str(extra_packages), str(galaxy_collections), str(roles)))
     utils.install_galaxy_collections(ctx, galaxy_collections)
     utils.install_extra_packages(ctx, extra_packages)
     utils.install_roles(ctx, roles)
