@@ -312,6 +312,8 @@ node_types:
       <<: *playbook_config
     interfaces:
       cloudify.interfaces.lifecycle:
+        precreate:
+          implementation: ansible.cloudify_ansible.tasks.precreate
         configure:
           implementation: ansible.cloudify_ansible.tasks.configure
         start:
