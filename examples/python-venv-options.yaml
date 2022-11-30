@@ -50,3 +50,6 @@ node_templates:
       ansible_playbook_executable_path: { concat: [{ get_attribute: [ansible, playbook_venv ]}, '/bin/ansible-playbook']}
       playbook_path: local/filesize.yml
       sources: *sources
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: ansible

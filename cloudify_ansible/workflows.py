@@ -59,7 +59,11 @@ def reload_playbook(ctx, node_ids, node_instance_ids, **kwargs):
                        **kwargs).execute()
 
 
-def update_playbook_venv(ctx, extra_packages, galaxy_collections, **kwargs):
+def update_playbook_venv(ctx,
+                         extra_packages,
+                         galaxy_collections,
+                         roles,
+                         **kwargs):
     graph = ctx.graph_mode()
     sequence = graph.sequence()
     # Iterate over all node instances of type "cloudify.nodes.ansible.Ansible"
@@ -75,6 +79,7 @@ def update_playbook_venv(ctx, extra_packages, galaxy_collections, **kwargs):
                 kwargs={
                     'extra_packages': extra_packages,
                     'galaxy_collections': galaxy_collections,
+                    'roles': roles,
                 },
                 allow_kwargs_override=True
             ))

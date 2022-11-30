@@ -29,14 +29,15 @@ executors:
 commands:
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --bundle-path workspace/build/cloudify-plugins-bundle.tgz --yum-package python-netaddr --yum-package git -p $(find ~/project/workspace/build/ -name *centos-Core*x86_64.wgn)  ~/project/plugin.yaml
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE --generate-new-aws-token -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --yum-package python-netaddr --yum-package git -p $(find ~/project/workspace/build/ -name *centos-Core*x86_64.wgn)  ~/project/plugin.yaml
+      - run: ecosystem-test upload-plugin -PN aws
+      - run: ecosystem-test upload-plugin -PN utilities
       - run: |
           docker exec -it cfy_manager mkdir -p /etc/cloudify/.cloudify/profiles/manager-local/
           docker exec -it cfy_manager cp /root/.cloudify/profiles/manager-local/context.json /etc/cloudify/.cloudify/profiles/manager-local/context.json
 
   run_hello_world_test:
     steps:
-      # - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i network_name=ansnet-$CIRCLE_BUILD_NUM -i subnet_name=anssub-$CIRCLE_BUILD_NUM --on-failure=uninstall-force --timeout=1800
       - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
 
   run_python_venv_options:
