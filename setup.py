@@ -43,7 +43,8 @@ setup(
     packages=['cloudify_ansible', 'cloudify_ansible_sdk'],
     package_data={
         'cloudify_ansible': [
-            'ansible-cloudify-ctx/modules/cloudify_runtime_property.py'
+            'ansible-cloudify-ctx/modules/cloudify_runtime_property.py',
+            'ansible/plugins/connection/winrm.py'
         ]
     },
     license='LICENSE',
@@ -52,6 +53,6 @@ setup(
         "cloudify-common>=4.5.5",
         "cloudify-utilities-plugins-sdk>=0.0.84",
         "ansible==4.10.0",
-        "pexpect==4.8.0"
+        "pexpect==4.8.0",
     ]
 )

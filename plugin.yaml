@@ -3,7 +3,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '3.0.2'
+    package_version: '3.1.0'
 
 dsl_definitions:
 
@@ -296,6 +296,10 @@ node_types:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *playbook_config
+      kerberos_config:
+        type: string
+        description: Either the multiline content of the KRB5_CONFIG file or the path of a file resource packaged in the blueprint.
+        required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         precreate:

@@ -119,6 +119,13 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
                 'ansible.cfg')
     }
     os.environ['CTX_NODE_INSTANCE_ID'] = _instance.id
+    if 'KRB5_CONFIG' in _instance.runtime_properties:
+        os.environ['KRB5_CONFIG'] = _instance.runtime_properties['KRB5_CONFIG']
+        playbook_args['environment_variables'].update(
+            {
+                'KRB5_CONFIG': _instance.runtime_properties['KRB5_CONFIG']
+            }
+        )
 
     secure_log_playbook_args(_ctx, playbook_args)
     playbook = AnsiblePlaybookFromFile(**playbook_args)

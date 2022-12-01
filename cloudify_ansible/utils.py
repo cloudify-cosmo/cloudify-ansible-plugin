@@ -16,9 +16,12 @@ import os
 import re
 import sys
 import json
+import tempfile
+
 import yaml
 import errno
 import shutil
+import pathlib
 from uuid import uuid1
 from copy import deepcopy
 from tempfile import mkdtemp
@@ -36,6 +39,7 @@ from cloudify_ansible_sdk._compat import (
 from cloudify_common_sdk.utils import (
     get_deployment_dir,
     get_node_instance_dir)
+from cloudify_common_sdk.resource_downloader import get_shared_resource
 from script_runner.tasks import (
     ILLEGAL_CTX_OPERATION_ERROR,
     UNSUPPORTED_SCRIPT_FEATURE_ERROR
@@ -859,6 +863,54 @@ def install_extra_packages(_ctx,
             raise NonRecoverableError('No internet connection.'
                                       'Do not use extra_packages when'
                                       ' working on the plugin virtualenv.')
+
+
+def setup_kerberos(_ctx):
+
+    _ctx_node = get_node(_ctx)
+    _ctx_instance = get_instance(_ctx)
+
+    kerberos_config = _ctx_node.properties.get('kerberos_config')
+    if kerberos_config and not _ctx_instance.runtime_properties.get(
+            'KRB5_CONFIG'):
+        node_instance_dir = get_node_instance_dir()
+        if isinstance(kerberos_config, str) and '\n' in kerberos_config:
+            krb5_config = tempfile.NamedTemporaryFile(
+                dir=node_instance_dir,
+                delete=False)
+            krb5_config.write(kerberos_config.encode())
+            _ctx_instance.runtime_properties['KRB5_CONFIG'] = krb5_config.name
+        elif isinstance(kerberos_config, str):
+            krb5_config = os.path.join(
+                node_instance_dir,
+                os.path.basename(kerberos_config)
+            )
+            _ctx.download_resource(kerberos_config, krb5_config)
+            _ctx_instance.runtime_properties['KRB5_CONFIG'] = krb5_config
+        elif isinstance(kerberos_config, dict):
+            location = kerberos_config.get('location')
+            username = kerberos_config.get('username')
+            password = kerberos_config.get('password')
+            krb5_config = get_shared_resource(
+                location, dir=node_instance_dir,
+                username=username,
+                password=password)
+            _ctx_instance.runtime_properties['KRB5_CONFIG'] = krb5_config
+        else:
+            raise NonRecoverableError(
+                'The kerberos_config was provided, '
+                'but it is not in string or dict format.')
+
+    venv = _ctx_instance.runtime_properties.get(PLAYBOOK_VENV)
+    if not _ctx_instance.runtime_properties.get('__UPDATE_WINRM'):
+        _ctx.logger.debug('Patching WinRM Ansible connection module.')
+        REL_PATH = 'ansible/plugins/connection/winrm.py'
+        abs_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), REL_PATH)
+        for file in sorted(pathlib.Path(venv).rglob('*/' + REL_PATH)):
+            _ctx.logger.debug('Replacing {} with {}'.format(abs_path, file))
+            shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+        _ctx_instance.runtime_properties['__UPDATE_WINRM'] = True
 
 
 def setup_modules(_ctx, module_path=None):
