@@ -54,6 +54,11 @@ def set_playbook_config(ctx, **kwargs):
     utils.set_playbook_config_as_runtime_properties(ctx, kwargs)
 
 
+@operation
+def configure(ctx=None, **_):
+    pass
+
+
 def secure_log_playbook_args(_ctx, args, **_):
     """
     This function takes playbook_args and check against sensitive_keys
