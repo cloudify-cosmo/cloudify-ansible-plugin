@@ -1051,9 +1051,30 @@ def get_message_from_failed_task(task, host):
 
 def get_issues_from_process_exception(exc):
     try:
+        # We have a big stdout message with JSON result. After META...
         result = exc.stdout.split('META: ran handlers')[-1]
         loaded_result = json.loads(result)
         issues = []
+        # Example Result:
+        # {
+        #     "plays": [
+        #         {
+        #             "play": {"name": "localhost"},
+        #             "tasks": [
+        #                 {
+        #                     "hosts": {
+        #                         "localhost": {
+        #                             "action": "debug",
+        #                             "changed": false,
+        #                             "failed": true,
+        #                             "msg": "Invalid options for debug"
+        #                         }
+        #                     },
+        #                 }
+        #             ]
+        #         }
+        #     ]
+        # }
         for play in loaded_result['plays']:
             for task in play['tasks']:
                 for host in task['hosts']:
