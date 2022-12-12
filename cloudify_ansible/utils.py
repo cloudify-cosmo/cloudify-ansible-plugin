@@ -31,6 +31,7 @@ from cloudify import ctx
 from ansible.playbook import Playbook
 from cloudify.manager import get_rest_client
 from cloudify.utils import LocalCommandRunner
+from script_runner.tasks import ProcessException
 from ansible.vars.manager import VariableManager
 from ansible.parsing.dataloader import DataLoader
 from cloudify_rest_client.constants import VisibilityState
@@ -1016,7 +1017,15 @@ def process_execution(script_func, script_path, ctx, process=None):
 
     ctx._return_value = None
 
-    actual_result = script_func(script_path, ctx, process)
+    try:
+        actual_result = script_func(script_path, ctx, process)
+    except ProcessException as e:
+        issues = get_issues_from_process_exception(e)
+        if issues:
+            raise NonRecoverableError(
+                'The following Ansible tasks failed: {}'.format(issues))
+        else:
+            raise e
     script_result = ctx._return_value
     if ctx.is_script_exception_defined and isinstance(
             script_result, ScriptException):
@@ -1026,6 +1035,55 @@ def process_execution(script_func, script_path, ctx, process=None):
             raise NonRecoverableError(str(script_result))
     else:
         return actual_result
+
+
+def get_message_from_failed_task(task, host):
+    try:
+        if task['hosts'][host]['failed']:
+            message = 'The action {} for host {} failed: {}'.format(
+                {task['hosts'][host]['action']},
+                host,
+                {task['hosts'][host]['msg']})
+            return message
+    except KeyError:
+        return
+
+
+def get_issues_from_process_exception(exc):
+    try:
+        # We have a big stdout message with JSON result. After META...
+        result = exc.stdout.split('META: ran handlers')[-1]
+        loaded_result = json.loads(result)
+        issues = []
+        # Example Result:
+        # {
+        #     "plays": [
+        #         {
+        #             "play": {"name": "localhost"},
+        #             "tasks": [
+        #                 {
+        #                     "hosts": {
+        #                         "localhost": {
+        #                             "action": "debug",
+        #                             "changed": false,
+        #                             "failed": true,
+        #                             "msg": "Invalid options for debug"
+        #                         }
+        #                     },
+        #                 }
+        #             ]
+        #         }
+        #     ]
+        # }
+        for play in loaded_result['plays']:
+            for task in play['tasks']:
+                for host in task['hosts']:
+                    message = get_message_from_failed_task(task, host)
+                    if message:
+                        issues.append(message)
+        return issues
+    except Exception:
+        return
 
 
 def get_plays(string, node_name):
