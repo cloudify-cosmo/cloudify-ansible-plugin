@@ -139,3 +139,4 @@
 3.0.2: CYBL-1898 fix update venv workflow propositional argument and fix mis-match between plugin files.
 3.1.0: RD-5392 Kerberos Support
 3.1.1: Add missing configure task
+3.1.2: Ignore system default for ansible because Cloudify requires python 3.
