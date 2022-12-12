@@ -123,12 +123,23 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
                 _instance.runtime_properties[constants.WORKSPACE],
                 'ansible.cfg')
     }
+
     os.environ['CTX_NODE_INSTANCE_ID'] = _instance.id
     if 'KRB5_CONFIG' in _instance.runtime_properties:
         os.environ['KRB5_CONFIG'] = _instance.runtime_properties['KRB5_CONFIG']
         playbook_args['environment_variables'].update(
             {
                 'KRB5_CONFIG': _instance.runtime_properties['KRB5_CONFIG']
+            }
+        )
+
+    playbook_env = _instance.runtime_properties.get('playbook_env')
+    if playbook_env and 'ANSIBLE_PYTHON_INTERPRETER' not in \
+            playbook_args['environment_variables']:
+        playbook_args['environment_variables'].update(
+            {
+                'ANSIBLE_PYTHON_INTERPRETER': os.path.join(
+                    playbook_env, 'bin/python')
             }
         )
 
@@ -277,6 +288,15 @@ def store_facts(playbook_args, ansible_env_vars, _ctx, **kwargs):
         'CTX_NODE_INSTANCE_ID': _instance.id,
     }
     os.environ['CTX_NODE_INSTANCE_ID'] = _instance.id
+    playbook_env = _instance.runtime_properties.get('playbook_env')
+    if playbook_env and 'ANSIBLE_PYTHON_INTERPRETER' not in \
+            playbook_args['environment_variables']:
+        playbook_args['environment_variables'].update(
+            {
+                'ANSIBLE_PYTHON_INTERPRETER': os.path.join(
+                    playbook_env, 'bin/python')
+            }
+        )
     _store_facts(
         playbook,
         ansible_env_vars,
