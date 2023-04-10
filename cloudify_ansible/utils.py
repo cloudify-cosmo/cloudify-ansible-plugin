@@ -27,7 +27,7 @@ from copy import deepcopy
 from tempfile import mkdtemp
 from distutils.dir_util import copy_tree
 
-from cloudify import ctx
+from cloudify import ctx, exceptions
 from ansible.playbook import Playbook
 from cloudify.manager import get_rest_client
 from cloudify.utils import LocalCommandRunner
@@ -633,9 +633,18 @@ def make_virtualenv(path):
         Make a venv for installing ansible module inside.
     """
     ctx.logger.debug("Creating virtualenv at: {path}".format(path=path))
-    runner.run([
-        sys.executable, '-m', 'virtualenv', path
-    ])
+    try:
+        runner.run([
+            sys.executable, '-m', 'virtualenv', path
+        ])
+    except exceptions.CommandExecutionError:
+        runner.run([
+            sys.executable, '-m', 'pip', 'install', 'virtualenv'
+        ])
+        runner.run([
+            sys.executable, '-m', 'virtualenv', path
+        ])
+
 
 
 def is_local_venv():
