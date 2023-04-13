@@ -646,7 +646,6 @@ def make_virtualenv(path):
         ])
 
 
-
 def is_local_venv():
     return get_instance(ctx).runtime_properties.get(LOCAL_VENV)
 
