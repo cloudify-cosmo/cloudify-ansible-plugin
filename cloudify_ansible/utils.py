@@ -632,18 +632,32 @@ def make_virtualenv(path):
     """
         Make a venv for installing ansible module inside.
     """
+    if hasattr(exceptions, 'CommandExecutionError'):
+        exception = exceptions.CommandExecutionError
+    elif hasattr(exceptions, 'CommandExecutionError'):
+        exception = exceptions.CommandExecutionException
+    else:
+        exception = Exception
     ctx.logger.debug("Creating virtualenv at: {path}".format(path=path))
     try:
         runner.run([
             sys.executable, '-m', 'virtualenv', path
         ])
-    except exceptions.CommandExecutionError:
-        runner.run([
-            sys.executable, '-m', 'pip', 'install', 'virtualenv'
-        ])
-        runner.run([
-            sys.executable, '-m', 'virtualenv', path
-        ])
+    except exception:
+        try:
+            runner.run([
+                sys.executable, '-m', 'pip', 'install', 'virtualenv'
+            ])
+            runner.run([
+                sys.executable, '-m', 'virtualenv', path
+            ])
+        except exception:
+            runner.run([
+                sys.executable, '-m', 'pip', 'install', 'venv'
+            ])
+            runner.run([
+                sys.executable, '-m', 'venv', path
+            ])
 
 
 def is_local_venv():
