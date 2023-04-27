@@ -61,6 +61,7 @@ from cloudify_ansible.constants import (
     COMPLETED_TAGS,
     AVAILABLE_TAGS,
     INSTALLED_ROLES,
+    SUPPORTED_PYTHON,
     BP_INCLUDES_PATH,
     ANSIBLE_TO_INSTALL,
     INSTALLED_PACKAGES,
@@ -154,11 +155,25 @@ def _get_collections_location(instance):
             (get_node(ctx).properties.get('galaxy_collections')
              or runtime_properties.get('galaxy_collections')):
         return runtime_properties.get(WORKSPACE)
-    return os.path.join(runtime_properties.get(PLAYBOOK_VENV),
-                        'lib',
-                        'python' + sys.version[:3],
-                        'site-packages'
-                        )
+    for pyv in SUPPORTED_PYTHON:
+        site_packages = os.path.join(
+            runtime_properties.get(PLAYBOOK_VENV),
+            'lib',
+            'python' + pyv,
+            'site-packages')
+        if os.path.isdir(site_packages):
+            return site_packages
+
+    results = re.findall(r'^\d\.\d.', sys.version)
+    if results:
+        site_packages = os.path.join(
+            runtime_properties.get(PLAYBOOK_VENV),
+            'lib',
+            'python' + results[0],
+            'site-packages')
+        return site_packages
+    raise NonRecoverableError(
+        'Unabled to identify the Python env for collections.')
 
 
 def _get_roles_location(instance):
