@@ -26,6 +26,7 @@ from uuid import uuid1
 from copy import deepcopy
 from tempfile import mkdtemp
 from distutils.dir_util import copy_tree
+from distutils.version import StrictVersion
 
 from cloudify import ctx, exceptions
 from ansible.playbook import Playbook
@@ -61,7 +62,6 @@ from cloudify_ansible.constants import (
     COMPLETED_TAGS,
     AVAILABLE_TAGS,
     INSTALLED_ROLES,
-    SUPPORTED_PYTHON,
     BP_INCLUDES_PATH,
     ANSIBLE_TO_INSTALL,
     INSTALLED_PACKAGES,
@@ -149,31 +149,29 @@ def _get_tenant_name(_ctx=None):
     return _ctx.tenant_name
 
 
+def get_site_packages(path_base):
+    def _get_formatted_version(version):
+        try:
+            version = version.replace('python', '')
+            return StrictVersion(version)
+        except ValueError:
+            return None
+
+    package_dirs = next(os.walk(path_base))[1]
+    versions = package_dirs
+    newest = max(versions, key=_get_formatted_version)
+    path_base += '/{0}/site-packages'.format(newest)
+    return path_base
+
+
 def _get_collections_location(instance):
     runtime_properties = instance.runtime_properties
     if not is_local_venv() and \
             (get_node(ctx).properties.get('galaxy_collections')
              or runtime_properties.get('galaxy_collections')):
         return runtime_properties.get(WORKSPACE)
-    for pyv in SUPPORTED_PYTHON:
-        site_packages = os.path.join(
-            runtime_properties.get(PLAYBOOK_VENV),
-            'lib',
-            'python' + pyv,
-            'site-packages')
-        if os.path.isdir(site_packages):
-            return site_packages
-
-    results = re.findall(r'^\d\.\d.', sys.version)
-    if results:
-        site_packages = os.path.join(
-            runtime_properties.get(PLAYBOOK_VENV),
-            'lib',
-            'python' + results[0],
-            'site-packages')
-        return site_packages
-    raise NonRecoverableError(
-        'Unabled to identify the Python env for collections.')
+    return get_site_packages(
+        runtime_properties.get(PLAYBOOK_VENV))
 
 
 def _get_roles_location(instance):
@@ -647,10 +645,14 @@ def make_virtualenv(path):
     """
         Make a venv for installing ansible module inside.
     """
-    if hasattr(exceptions, 'CommandExecutionError'):
-        exception = exceptions.CommandExecutionError
-    elif hasattr(exceptions, 'CommandExecutionError'):
+    if hasattr(exceptions, 'CommandExecutionException') and \
+            hasattr(exceptions, 'CommandExecutionError'):
+        exception = (exceptions.CommandExecutionException,
+                     exceptions.CommandExecutionError)
+    elif hasattr(exceptions, 'CommandExecutionException'):
         exception = exceptions.CommandExecutionException
+    elif hasattr(exceptions, 'CommandExecutionError'):
+        exception = exceptions.CommandExecutionError
     else:
         exception = Exception
     ctx.logger.debug("Creating virtualenv at: {path}".format(path=path))

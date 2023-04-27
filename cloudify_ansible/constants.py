@@ -22,7 +22,6 @@ LOCAL_VENV = 'local_venv'
 BECOME = 'ansible_become'
 MODULE_PATH = 'module_path'
 PLAYBOOK_VENV = 'playbook_venv'
-SUPPORTED_PYTHON = ['3.6', '3.11']
 INSTALLED_ROLES = 'installed_roles'
 KEY = 'ansible_ssh_private_key_file'
 COMPLETED_TAGS = '___COMPLETED_TAGS'
