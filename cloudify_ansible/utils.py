@@ -62,6 +62,7 @@ from cloudify_ansible.constants import (
     COMPLETED_TAGS,
     AVAILABLE_TAGS,
     INSTALLED_ROLES,
+    SUPPORTED_PYTHON,
     BP_INCLUDES_PATH,
     ANSIBLE_TO_INSTALL,
     INSTALLED_PACKAGES,
@@ -110,7 +111,8 @@ def handle_key_data(_data, workspace_dir):
                 with open(private_key_file, 'w') as outfile:
                     if isinstance(existing_dict[key], (dict, list)):
                         existing_dict[key] = json.dumps(existing_dict[key])
-                    outfile.write(existing_dict[key])
+                    if existing_dict[key]:
+                        outfile.write(existing_dict[key])
                 os.chmod(private_key_file, 0o600)
                 existing_dict[key] = private_key_file
         return existing_dict
@@ -149,7 +151,8 @@ def _get_tenant_name(_ctx=None):
     return _ctx.tenant_name
 
 
-def get_site_packages(path_base):
+def get_site_packages(path_base, instance=None):
+
     def _get_formatted_version(version):
         try:
             version = version.replace('python', '')
@@ -159,7 +162,28 @@ def get_site_packages(path_base):
 
     package_dirs = next(os.walk(path_base))[1]
     versions = package_dirs
-    newest = max(versions, key=_get_formatted_version)
+    try:
+        newest = max(versions, key=_get_formatted_version)
+    except TypeError:
+        instance = instance or get_instance()
+        runtime_properties = instance.runtime_properties
+        for pyv in SUPPORTED_PYTHON:
+            site_packages = os.path.join(
+                runtime_properties.get(PLAYBOOK_VENV),
+                'lib',
+                'python' + pyv,
+                'site-packages')
+            if os.path.isdir(site_packages):
+                return site_packages
+
+        results = re.findall(r'^\d\.\d.', sys.version)
+        if results:
+            site_packages = os.path.join(
+                runtime_properties.get(PLAYBOOK_VENV),
+                'lib',
+                'python' + results[0],
+                'site-packages')
+
     path_base += '/{0}/site-packages'.format(newest)
     return path_base
 
