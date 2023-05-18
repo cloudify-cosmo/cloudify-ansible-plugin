@@ -22,7 +22,7 @@ from tempfile import mkdtemp, NamedTemporaryFile
 from cloudify.exceptions import (NonRecoverableError,
                                  OperationRetry,
                                  HttpException)
-from cloudify.mocks import MockCloudifyContext
+from cloudify.mocks import MockNodeInstanceContext, MockCloudifyContext
 from cloudify.state import current_ctx
 from script_runner.tasks import ProcessException
 
@@ -66,7 +66,28 @@ blueprint_resources = {
         'lamp_simple/hosts'): NamedTemporaryFile(delete=False).name
 }
 
-ctx = MockCloudifyContext(
+
+class MockNodeInstanceCtx(MockNodeInstanceContext):
+
+    def refresh(self, *_, **__):
+        pass
+
+    def update(self, *_, **__):
+        pass
+
+
+class MockC1oudifyContext(MockCloudifyContext):
+
+    def __init__(self, *_, **kwargs):
+        super().__init__(*_, **kwargs)
+        self._instance = MockNodeInstanceCtx(
+            id=kwargs.get('node_id'),
+            runtime_properties=self._runtime_properties,
+            relationships=kwargs.get('relationships'),
+            index=kwargs.get('index'))
+
+
+ctx = MockC1oudifyContext(
     node_name='mock_node_name',
     node_id='node_id',
     deployment_id='mock_deployment_id',
@@ -87,7 +108,7 @@ compute_ctx = MockCloudifyContext(
 )
 compute_ctx.node.type_hierarchy = \
     ['cloudify.nodes.Root', 'cloudify.nodes.Compute']
-relationship_ctx = MockCloudifyContext(
+relationship_ctx = MockC1oudifyContext(
     deployment_id='mock_deployment_id',
     source=ctx,
     target=compute_ctx)

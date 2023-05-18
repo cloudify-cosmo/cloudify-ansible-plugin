@@ -97,7 +97,8 @@ def secure_log_playbook_args(_ctx, args, **_):
     obfuscation_re = re.compile(re_str, flags=re.IGNORECASE | re.MULTILINE)
 
     _logger = args.pop('logger', None)
-    log_message = obfuscate_passwords(args, obfuscation_re)
+    log_args = _log(args, sensitive_keys)
+    log_message = obfuscate_passwords(log_args, obfuscation_re, sensitive_keys)
     if _logger:
         args['logger'] = _logger
     _ctx.logger.debug("playbook_args: \n {0}".format(log_message))
@@ -198,6 +199,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
             raise RecoverableError(
                 "Retrying...",
                 causes=[exception_to_error_cause(process_error, tb)])
+    _instance.refresh(force=True)
     if constants.COMPLETED_TAGS not in _instance.runtime_properties:
         _instance.runtime_properties[constants.COMPLETED_TAGS] = \
             tags_to_apply
@@ -271,6 +273,7 @@ def _store_facts(playbook,
         else:
             raise RecoverableError('Retrying...')
     facts = utils.get_facts(facts)
+    _instance.refresh(force=True)
     _instance.runtime_properties['facts'] = facts
 
 
