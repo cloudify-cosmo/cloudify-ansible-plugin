@@ -146,3 +146,6 @@
 3.1.6:
   - Use venv if virtualenv is not available. (Cloudify 7)
   - Use CommandExecutionException if CommandExecutionError not available. (Cloudify 7)
+3.1.7:
+  - Update Runtime Properties Conflict Fix
+  - Apply sensitive keys to run_data debug log.

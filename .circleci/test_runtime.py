@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from ecosystem_tests.dorkl.constansts import logger
 from ecosystem_tests.dorkl import cleanup_on_failure
 from ecosystem_tests.dorkl.exceptions import EcosystemTestException
-from ecosystem_tests.dorkl.cloudify_api import cloudify_exec, executions_start
+from ecosystem_tests.dorkl.cloudify_api import cloudify_exec
 
 TEST_ID = environ.get('__ECOSYSTEM_TEST_ID', 'hello-world-example')
 

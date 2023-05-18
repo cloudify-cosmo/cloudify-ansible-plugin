@@ -1,280 +1,178 @@
 plugins:
-
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '3.1.6'
-
+    package_version: '3.1.7'
 dsl_definitions:
-
-  ansible_install_config: &install_config
-    use_existing_resource:
+  ansible_install_config:
+    use_existing_resource: &id001
       type: boolean
-      description: If true, use an existing ansible installation rather than installing it
       default: false
-    installation_source:
+    installation_source: &id002
       type: string
-      default: 'ansible==4.10.0'
-      description: Location to download the Ansible executable binary from. Ignored if 'use_existing' is true.
-    extra_packages:
+      default: ansible==4.10.0
+    extra_packages: &id003
+      type: list
       default: []
-      description:  >
-        List of python packages to install on controller virtual env before running the playbook.
-        If the manager has no internet connection this feature cannot be used.
-    galaxy_collections:
+    galaxy_collections: &id004
+      type: list
       default: []
-      description: >
-        List of Ansible galaxy collections to install on controller virtual env before running the playbook.
-        If the manager has no internet connection this feature cannot be used.
-    roles:
-      default: []
-      description: >
-        List of roles to install on controller virtual env before running the playbook.
-        If the manager has no internet connection this feature cannot be used.
-
-  playbook_config: &playbook_config
-    ansible_external_venv:
-      type: string
-      default: ""
-      description: >
-        Ansible python venv with previously installed ansible and extra packages
-    ansible_playbook_executable_path:
-      type: string
-      default: ""
-      description: >
-        A full path to your ansible_playbook executable if user don't want to
-        use the included version of executable in the plugin
-    extra_packages:
-      # uncomment on 5+
-      # type: list
-      default: []
-      description: >
-        List of python packages to install on controller virtual env before running the playbook.
-        If the manager has no internet connection this feature cannot be used.
-    galaxy_collections:
-      # uncomment on 5+
-      # type: list
-      default: []
-      description: >
-        List of Ansible galaxy collections to install on controller virtual env before running the playbook.
-        If the manager has no internet connection this feature cannot be used.
-    roles:
-      default: []
-      description: >
-        List of roles to install on controller virtual env before running the playbook.
-        If the manager has no internet connection this feature cannot be used.
-    module_path:
+  playbook_config:
+    ansible_external_venv: &id005
       type: string
       default: ''
-      description: >
-        The location on the Cloudify Manager file system where
-        Ansible modules are expected to be installed or will be installed.
-        The default value is empty and if so, this will be created automatically
-        during the environment setup. The cloudify-ansible-ctx module will be
-        installed by default.
-    playbook_source_path:
+    ansible_playbook_executable_path: &id006
       type: string
-      default: ""
-      description: >
-        A full path/URL that contain playbook specified in playbook_path
-        or site_yaml_path.
-    playbook_path:
-      type: string
-      default: ""
-      description: >
-        A path to your `site.yaml` or `main.yaml` in your
-        Ansible Playbook relative to blueprint or playbook_source_path
-        if playbook_source_path is URL to archive File relative inside the archive.
-    site_yaml_path:
-      type: string
-      default: ""
-      description: >
-        DEPRECATED.
-        A path to your `site.yaml` or `main.yaml` in your
-        Ansible Playbook relative to blueprint or playbook_source_path
-        if playbook_source_path is URL to archive File relative inside the archive.
-    additional_playbook_files:
-      # uncomment on 5+
-      # type: list
+      default: ''
+    extra_packages: &id007
+      type: list
       default: []
-      description: >
-        A list of string paths blueprint resources that you
-        would like to download to the playbook directory.
-        If you use this variable, you must list all of the paths
-        that you expect to download.
-    sources:
+    galaxy_collections: &id008
+      type: list
+      default: []
+    roles: &id009
+      type: list
+      default: []
+    module_path: &id010
       type: string
-      default: ""
-      description: >
-        Your Inventory sources. Either YAML or a path to a file.
-        If not provided the inventory will be take from the `sources`
-        runtime property.
-    run_data:
+      default: ''
+    playbook_source_path: &id011
+      type: string
+      default: ''
+    playbook_path: &id012
+      type: string
+      default: ''
+    site_yaml_path: &id013
+      type: string
+      default: ''
+    additional_playbook_files: &id014
+      type: list
+      default: []
+    sources: &id015
+      type: string
+      default: ''
+    run_data: &id016
       default: {}
-      description: >
-        Variable values.
-    sensitive_keys:
-      # uncomment on 5+
-      # type: list
-      description: keys that you want us to obscure
+    sensitive_keys: &id017
+      type: list
       default:
         - ansible_password
-    options_config:
+    options_config: &id018
       default: {}
-      description: >
-        Command-line options, such as `tags` or `skip_tags`.
-    ansible_env_vars:
+    ansible_env_vars: &id019
       default:
-        ANSIBLE_HOST_KEY_CHECKING: "False"
-        # On Ansible 2.8.x "INVALID_TASK_ATTRIBUTE_FAILED" default value has
-        # been changed to "True" which cause failure when run playbook
-        ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: "False"
+        ANSIBLE_HOST_KEY_CHECKING: 'False'
+        ANSIBLE_INVALID_TASK_ATTRIBUTE_FAILED: 'False'
         ANSIBLE_STDOUT_CALLBACK: json
-      description: >
-        A dictionary of environment variables to set.
-    debug_level:
+    debug_level: &id020
       type: integer
       default: 2
-      description: >
-        Debug level
-    log_stdout:
+    log_stdout: &id021
       type: boolean
-      description: Whether to dump output to execution event log. Set to false to speed up long executions.
       default: true
-    additional_args:
+    additional_args: &id022
       type: string
-      description: >
-        Additional args that you want to use, for example, '-c local'.
       default: ''
-    start_at_task:
+    start_at_task: &id023
       type: string
-      description: >
-        Start the playbook at the task matching this name
       default: ''
-    scp_extra_args:
+    scp_extra_args: &id024
       type: string
-      description: >
-        Specify extra arguments to pass to scp only (e.g. -l)
       default: ''
-    sftp_extra_args:
+    sftp_extra_args: &id025
       type: string
-      description: >
-        Specify extra arguments to pass to sftp only (e.g. -f, -l)
       default: ''
-    ssh_common_args:
+    ssh_common_args: &id026
       type: string
-      description: >
-        Specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)
       default: ''
-    ssh_extra_args:
+    ssh_extra_args: &id027
       type: string
-      description: >
-        Specify extra arguments to pass to ssh only (e.g. -R)
       default: ''
-    timeout:
+    timeout: &id028
       type: string
-      description: >
-        Override the connection timeout in seconds (default=10)
       default: '10'
-    save_playbook:
+    save_playbook: &id029
       type: boolean
-      description: >
-        Save playbook after action
       default: false
-    remerge_sources:
+    remerge_sources: &id030
       type: boolean
-      description: >
-        update sources on target node
       default: false
-    ansible_become:
+    ansible_become: &id031
       type: boolean
-      description: >
-        A boolean value, `true` or `false` whether
-        to assume the user privileges.
       default: false
-    tags:
+    tags: &id032
       type: list
-      description: >
-        A list of tags, in order of desired execution. If these tags are provided, they will be called, and auto_tags will be ignored.
       default: []
-    auto_tags:
+    auto_tags: &id033
       type: boolean
-      description: >
-        If set to "true", the plugin will read the playbook and generate a list of tags to execute.
-        This requires that the playbook is written in such a way that the specified tags will produce the desired result.
-        This value is ignored if tags are provided.
       default: false
-    number_of_attempts:
+    number_of_attempts: &id034
       type: integer
       default: 3
-      description: >
-        Total number of attempts to execute the playbook if exit code represents unreachable hosts\failure.
-    store_facts:
+    store_facts: &id035
       type: boolean
       default: true
-      description: >
-        Store ansible facts under runtime properties.
-
-  playbook_inputs: &playbook_inputs
-    ansible_playbook_executable_path:
+  playbook_inputs:
+    ansible_playbook_executable_path: &id036
       default: { get_property: [SELF, ansible_playbook_executable_path] }
-    extra_packages:
-      default: { get_property: [ SELF, extra_packages ] }
-    galaxy_collections:
-      default: { get_property: [ SELF, galaxy_collections ] }
-    roles:
-      default: { get_property: [ SELF, roles ] }
-    playbook_source_path:
+    extra_packages: &id037
+      default: { get_property: [SELF, extra_packages] }
+    galaxy_collections: &id038
+      default: { get_property: [SELF, galaxy_collections] }
+    roles: &id039
+      default: { get_property: [SELF, roles] }
+    playbook_source_path: &id040
       default: { get_property: [SELF, playbook_source_path] }
-    playbook_path:
+    playbook_path: &id041
       default: { get_property: [SELF, playbook_path] }
-    site_yaml_path:
+    site_yaml_path: &id042
       default: { get_property: [SELF, site_yaml_path] }
-    save_playbook:
+    save_playbook: &id043
       default: { get_property: [SELF, save_playbook] }
-    remerge_sources:
+    remerge_sources: &id044
       default: { get_property: [SELF, remerge_sources] }
-    sources:
+    sources: &id045
       default: { get_property: [SELF, sources] }
-    run_data:
+    run_data: &id046
       default: { get_property: [SELF, run_data] }
-    sensitive_keys:
+    sensitive_keys: &id047
       default: { get_property: [SELF, sensitive_keys] }
-    options_config:
+    options_config: &id048
       default: { get_property: [SELF, options_config] }
-    ansible_env_vars:
+    ansible_env_vars: &id049
       default: { get_property: [SELF, ansible_env_vars] }
-    debug_level:
+    debug_level: &id050
       default: { get_property: [SELF, debug_level] }
-    additional_args:
+    additional_args: &id051
       default: { get_property: [SELF, additional_args] }
-    start_at_task:
+    start_at_task: &id052
       default: { get_property: [SELF, start_at_task] }
-    scp_extra_args:
+    scp_extra_args: &id053
       default: { get_property: [SELF, scp_extra_args] }
-    sftp_extra_args:
+    sftp_extra_args: &id054
       default: { get_property: [SELF, sftp_extra_args] }
-    ssh_common_args:
+    ssh_common_args: &id055
       default: { get_property: [SELF, ssh_common_args] }
-    ssh_extra_args:
+    ssh_extra_args: &id056
       default: { get_property: [SELF, ssh_extra_args] }
-    timeout:
+    timeout: &id057
       default: { get_property: [SELF, timeout] }
-    tags:
-      default: { get_property: [ SELF, tags ] }
-    auto_tags:
-      default: { get_property: [ SELF, auto_tags ] }
-    number_of_attempts:
-       default: { get_property: [ SELF, number_of_attempts ] }
-    store_facts:
-       default: { get_property: [ SELF, store_facts ] }
-
+    tags: &id058
+      default: { get_property: [SELF, tags] }
+    auto_tags: &id059
+      default: { get_property: [SELF, auto_tags] }
+    number_of_attempts: &id060
+      default: { get_property: [SELF, number_of_attempts] }
+    store_facts: &id061
+      default: { get_property: [SELF, store_facts] }
 node_types:
-
   cloudify.nodes.ansible.Ansible:
     derived_from: cloudify.nodes.SoftwareComponent
     properties:
-      <<: *install_config
+      use_existing_resource: *id001
+      installation_source: *id002
+      extra_packages: *id003
+      galaxy_collections: *id004
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -291,15 +189,40 @@ node_types:
               default: []
             roles:
               default: []
-
   cloudify.nodes.ansible.Executor:
     derived_from: cloudify.nodes.Root
     properties:
-      <<: *playbook_config
-      kerberos_config:
-        type: string
-        description: Either the multiline content of the KRB5_CONFIG file or the path of a file resource packaged in the blueprint.
-        required: false
+      ansible_external_venv: *id005
+      ansible_playbook_executable_path: *id006
+      extra_packages: *id007
+      galaxy_collections: *id008
+      roles: *id009
+      module_path: *id010
+      playbook_source_path: *id011
+      playbook_path: *id012
+      site_yaml_path: *id013
+      additional_playbook_files: *id014
+      sources: *id015
+      run_data: *id016
+      sensitive_keys: *id017
+      options_config: *id018
+      ansible_env_vars: *id019
+      debug_level: *id020
+      log_stdout: *id021
+      additional_args: *id022
+      start_at_task: *id023
+      scp_extra_args: *id024
+      sftp_extra_args: *id025
+      ssh_common_args: *id026
+      ssh_extra_args: *id027
+      timeout: *id028
+      save_playbook: *id029
+      remerge_sources: *id030
+      ansible_become: *id031
+      tags: *id032
+      auto_tags: *id033
+      number_of_attempts: *id034
+      store_facts: *id035
     interfaces:
       cloudify.interfaces.lifecycle:
         precreate:
@@ -307,19 +230,101 @@ node_types:
         start:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
-            <<: *playbook_inputs
+            ansible_playbook_executable_path: *id036
+            extra_packages: *id037
+            galaxy_collections: *id038
+            roles: *id039
+            playbook_source_path: *id040
+            playbook_path: *id041
+            site_yaml_path: *id042
+            save_playbook: *id043
+            remerge_sources: *id044
+            sources: *id045
+            run_data: *id046
+            sensitive_keys: *id047
+            options_config: *id048
+            ansible_env_vars: *id049
+            debug_level: *id050
+            additional_args: *id051
+            start_at_task: *id052
+            scp_extra_args: *id053
+            sftp_extra_args: *id054
+            ssh_common_args: *id055
+            ssh_extra_args: *id056
+            timeout: *id057
+            tags: *id058
+            auto_tags: *id059
+            number_of_attempts: *id060
+            store_facts: *id061
         delete:
           implementation: ansible.cloudify_ansible.tasks.cleanup
       ansible:
         reload:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
-            <<: *playbook_inputs
-
+            ansible_playbook_executable_path: *id036
+            extra_packages: *id037
+            galaxy_collections: *id038
+            roles: *id039
+            playbook_source_path: *id040
+            playbook_path: *id041
+            site_yaml_path: *id042
+            save_playbook: *id043
+            remerge_sources: *id044
+            sources: *id045
+            run_data: *id046
+            sensitive_keys: *id047
+            options_config: *id048
+            ansible_env_vars: *id049
+            debug_level: *id050
+            additional_args: *id051
+            start_at_task: *id052
+            scp_extra_args: *id053
+            sftp_extra_args: *id054
+            ssh_common_args: *id055
+            ssh_extra_args: *id056
+            timeout: *id057
+            tags: *id058
+            auto_tags: *id059
+            number_of_attempts: *id060
+            store_facts: *id061
   cloudify.nodes.ansible.Playbook:
     derived_from: cloudify.nodes.Root
     properties:
-      <<: *playbook_config
+      ansible_external_venv: *id005
+      ansible_playbook_executable_path: *id006
+      extra_packages: *id007
+      galaxy_collections: *id008
+      roles: *id009
+      module_path: *id010
+      playbook_source_path: *id011
+      playbook_path: *id012
+      site_yaml_path: *id013
+      additional_playbook_files: *id014
+      sources: *id015
+      run_data: *id016
+      sensitive_keys: *id017
+      options_config: *id018
+      ansible_env_vars: *id019
+      debug_level: *id020
+      log_stdout: *id021
+      additional_args: *id022
+      start_at_task: *id023
+      scp_extra_args: *id024
+      sftp_extra_args: *id025
+      ssh_common_args: *id026
+      ssh_extra_args: *id027
+      timeout: *id028
+      save_playbook: *id029
+      remerge_sources: *id030
+      ansible_become: *id031
+      tags: *id032
+      auto_tags: *id033
+      number_of_attempts: *id034
+      store_facts: *id035
+      kerberos_config:
+        type: string
+        required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         precreate:
@@ -329,19 +334,92 @@ node_types:
         start:
           implementation: ansible.cloudify_ansible.tasks.set_playbook_config
           inputs:
-            <<: *playbook_inputs
+            ansible_playbook_executable_path: *id036
+            extra_packages: *id037
+            galaxy_collections: *id038
+            roles: *id039
+            playbook_source_path: *id040
+            playbook_path: *id041
+            site_yaml_path: *id042
+            save_playbook: *id043
+            remerge_sources: *id044
+            sources: *id045
+            run_data: *id046
+            sensitive_keys: *id047
+            options_config: *id048
+            ansible_env_vars: *id049
+            debug_level: *id050
+            additional_args: *id051
+            start_at_task: *id052
+            scp_extra_args: *id053
+            sftp_extra_args: *id054
+            ssh_common_args: *id055
+            ssh_extra_args: *id056
+            timeout: *id057
+            tags: *id058
+            auto_tags: *id059
+            number_of_attempts: *id060
+            store_facts: *id061
         poststart:
           implementation: ansible.cloudify_ansible.tasks.store_facts
           inputs:
-            <<: *playbook_inputs
+            ansible_playbook_executable_path: *id036
+            extra_packages: *id037
+            galaxy_collections: *id038
+            roles: *id039
+            playbook_source_path: *id040
+            playbook_path: *id041
+            site_yaml_path: *id042
+            save_playbook: *id043
+            remerge_sources: *id044
+            sources: *id045
+            run_data: *id046
+            sensitive_keys: *id047
+            options_config: *id048
+            ansible_env_vars: *id049
+            debug_level: *id050
+            additional_args: *id051
+            start_at_task: *id052
+            scp_extra_args: *id053
+            sftp_extra_args: *id054
+            ssh_common_args: *id055
+            ssh_extra_args: *id056
+            timeout: *id057
+            tags: *id058
+            auto_tags: *id059
+            number_of_attempts: *id060
+            store_facts: *id061
       ansible:
         reload:
           implementation: ansible.cloudify_ansible.tasks.run
           inputs:
-            <<: *playbook_inputs
-
+            ansible_playbook_executable_path: *id036
+            extra_packages: *id037
+            galaxy_collections: *id038
+            roles: *id039
+            playbook_source_path: *id040
+            playbook_path: *id041
+            site_yaml_path: *id042
+            save_playbook: *id043
+            remerge_sources: *id044
+            sources: *id045
+            run_data: *id046
+            sensitive_keys: *id047
+            options_config: *id048
+            ansible_env_vars: *id049
+            debug_level: *id050
+            additional_args: *id051
+            start_at_task: *id052
+            scp_extra_args: *id053
+            sftp_extra_args: *id054
+            ssh_common_args: *id055
+            ssh_extra_args: *id056
+            timeout: *id057
+            tags: *id058
+            auto_tags: *id059
+            number_of_attempts: *id060
+            store_facts: *id061
 relationships:
-
   cloudify.relationships.ansible.connected_to_host:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
@@ -350,39 +428,18 @@ relationships:
           implementation: ansible.cloudify_ansible.tasks.ansible_requires_host
           inputs:
             group_name:
-              default: ""
-              description: >
-                Ansible node group name
+              default: ''
             hostname:
-              default: ""
-              description: >
-                Hostname
+              default: ''
             host_config:
               default: {}
-              description: >
-                Host configuration:
-                  ansible_host: The hostname or IP address of the host to SSH
-                    into.
-                  ansible_user: The username to SSH with.
-                  ansible_ssh_private_key_file: The private key file to SSH
-                    with.
-                  ansible_become: A boolean value, `true` or `false` whether
-                    to assume the user privileges.
-                  ansible_ssh_common_args: Additional arguments to the SSH
-                    command, by default: '-o StrictHostKeyChecking=no'
-
         unlink:
           implementation: ansible.cloudify_ansible.tasks.ansible_remove_host
           inputs:
             group_name:
-              default: ""
-              description: >
-                Ansible node group name
+              default: ''
             hostname:
-              default: ""
-              description: >
-                Hostname
-
+              default: ''
   cloudify.relationships.ansible.run_on_host:
     derived_from: cloudify.relationships.connected_to
     source_interfaces:
@@ -393,9 +450,9 @@ relationships:
             ansible_playbook_executable_path:
               default: { get_attribute: [SOURCE, ansible_playbook_executable_path] }
             extra_packages:
-              default: { get_attribute: [ SOURCE, extra_packages ] }
+              default: { get_attribute: [SOURCE, extra_packages] }
             galaxy_collections:
-              default: { get_attribute: [ SOURCE, galaxy_collections ] }
+              default: { get_attribute: [SOURCE, galaxy_collections] }
             playbook_source_path:
               default: { get_attribute: [SOURCE, playbook_source_path] }
             playbook_path:
@@ -433,49 +490,69 @@ relationships:
             timeout:
               default: { get_attribute: [SOURCE, timeout] }
             tags:
-              default: { get_attribute: [ SOURCE, tags ] }
+              default: { get_attribute: [SOURCE, tags] }
             auto_tags:
-              default: { get_attribute: [ SOURCE, auto_tags ] }
+              default: { get_attribute: [SOURCE, auto_tags] }
         unlink:
           implementation: ansible.cloudify_ansible.tasks.cleanup
-
   cloudify.ansible.relationships.connected_to_host:
     derived_from: cloudify.relationships.ansible.connected_to_host
-
   cloudify.ansible.relationships.run_on_host:
     derived_from: cloudify.relationships.ansible.run_on_host
-
 workflows:
-
   reload_ansible_playbook:
     mapping: ansible.cloudify_ansible.workflows.reload_playbook
+    availability_rules:
+      node_instances_active:
+        - all
+        - partial
     parameters:
-      <<: *playbook_config
+      ansible_external_venv: *id005
+      ansible_playbook_executable_path: *id006
+      extra_packages: *id007
+      galaxy_collections: *id008
+      roles: *id009
+      module_path: *id010
+      playbook_source_path: *id011
+      playbook_path: *id012
+      site_yaml_path: *id013
+      additional_playbook_files: *id014
+      sources: *id015
+      run_data: *id016
+      sensitive_keys: *id017
+      options_config: *id018
+      ansible_env_vars: *id019
+      debug_level: *id020
+      log_stdout: *id021
+      additional_args: *id022
+      start_at_task: *id023
+      scp_extra_args: *id024
+      sftp_extra_args: *id025
+      ssh_common_args: *id026
+      ssh_extra_args: *id027
+      timeout: *id028
+      save_playbook: *id029
+      remerge_sources: *id030
+      ansible_become: *id031
+      tags: *id032
+      auto_tags: *id033
+      number_of_attempts: *id034
+      store_facts: *id035
       node_instance_ids:
-        # uncomment on 5+
-        # type: list
+        type: list
         default: []
-        description: |
-          List of node instance ID's to reload for.
       node_ids:
-        # uncomment on 5+
-        # type: list
+        type: list
         default: []
-        description: |
-          List of node templates to reload for.
-
   update_playbook_venv:
     mapping: ansible.cloudify_ansible.workflows.update_playbook_venv
     parameters:
       extra_packages:
+        type: list
         default: []
-        description: |
-          List of python packages to be installed in venv
       galaxy_collections:
+        type: list
         default: []
-        description: |
-          List of ansible galaxy collections to be installed
       roles:
+        type: list
         default: []
-        description: |
-          List of ansible roles to be installed
