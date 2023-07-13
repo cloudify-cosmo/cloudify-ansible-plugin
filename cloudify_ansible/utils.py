@@ -973,7 +973,10 @@ def setup_kerberos(_ctx):
             os.path.dirname(os.path.abspath(__file__)), REL_PATH)
         for file in sorted(pathlib.Path(venv).rglob('*/' + REL_PATH)):
             _ctx.logger.debug('Replacing {} with {}'.format(abs_path, file))
-            shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+            try:
+                shutil.copy2(abs_path, os.path.dirname(file.as_posix()))
+            except shutil.SameFileError:
+                pass
         _ctx_instance.runtime_properties['__UPDATE_WINRM'] = True
 
 

@@ -4,4 +4,3 @@ ipaddr
 netaddr
 cryptography==3.3.2
 psutil==5.8.0
-cloudify==6.3.0
