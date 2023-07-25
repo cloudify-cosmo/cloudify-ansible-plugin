@@ -97,7 +97,7 @@ workflows:
       #         only: /([0-9\.]*\-build|master)/
       - integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
           requires:
             - wagonorb/wagon
@@ -156,7 +156,7 @@ workflows:
               only: /([0-9\.]*\-build|master)/
       - integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
           requires:
             - wagonorb/wagon
