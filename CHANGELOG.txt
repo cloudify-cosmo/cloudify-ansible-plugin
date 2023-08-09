@@ -149,3 +149,6 @@
 3.1.7:
   - Update Runtime Properties Conflict Fix
   - Apply sensitive keys to run_data debug log.
+3.1.8:
+  - Ignore winrm patching inside plugin virtualenv if already done.
+  - Remove cloudify 6.3 from constraints.txt

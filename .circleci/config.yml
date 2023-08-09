@@ -39,7 +39,7 @@ executors:
 commands:
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE --generate-new-aws-token -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --yum-package python-netaddr --yum-package git -p $(find ~/project/workspace/build/ -name *centos-Core*x86_64.wgn)  ~/project/plugin.yaml
+      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE --generate-new-aws-token -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --yum-package python-netaddr --yum-package git --yum-package epel -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin.yaml
       - run: ecosystem-test upload-plugin -PN aws
       - run: ecosystem-test upload-plugin -PN utilities
       - run: |
@@ -79,6 +79,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master)/
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - wagonorb/arch64_wagon:
           filters:
             branches:
@@ -89,10 +93,11 @@ workflows:
               only: /([0-9\.]*\-build|master)/
       - integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
           requires:
             - wagonorb/wagon
+            - wagonorb/wagon_311
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
           filters:
@@ -104,6 +109,7 @@ workflows:
               only: /master/
           requires:
             - wagonorb/wagon
+            - wagonorb/wagon_311
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
             - node/validate_version_job
@@ -132,6 +138,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master)/
+      - wagonorb/wagon_311:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - wagonorb/arch64_wagon:
           filters:
             branches:
@@ -142,10 +152,11 @@ workflows:
               only: /([0-9\.]*\-build|master)/
       - integration_tests_py3:
           context: 
-            - slack-secrets
+            - plugins-inputs
           <<: *unittest-post-steps
           requires:
             - wagonorb/wagon
+            - wagonorb/wagon_311
             - wagonorb/arch64_wagon
             - wagonorb/rhel_wagon
           filters:
