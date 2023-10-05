@@ -2,7 +2,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '3.1.8'
+    package_version: '3.1.9'
 dsl_definitions:
   ansible_install_config:
     use_existing_resource: &id001
@@ -17,13 +17,15 @@ dsl_definitions:
     galaxy_collections: &id004
       type: list
       default: []
-  playbook_config:
     ansible_external_venv: &id005
       type: string
       default: ''
     ansible_playbook_executable_path: &id006
       type: string
       default: ''
+  playbook_config:
+    ansible_external_venv: *id005
+    ansible_playbook_executable_path: *id006
     extra_packages: &id007
       type: list
       default: []
@@ -173,6 +175,8 @@ node_types:
       installation_source: *id002
       extra_packages: *id003
       galaxy_collections: *id004
+      ansible_external_venv: *id005
+      ansible_playbook_executable_path: *id006
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
