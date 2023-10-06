@@ -152,13 +152,18 @@ class TestPluginTasks(AnsibleTestBase):
         self.assertTrue(deleteme, path.dirname(output))
         shutil.rmtree(deleteme)
 
-    def test_handle_file_path(self):
+    @patch('cloudify_ansible.utils.get_blueprint_dir')
+    @patch('cloudify_common_sdk.utils.get_blueprint_dir')
+    def test_handle_file_path(self, _, mock_bp_dir, *__):
         with patch('cloudify_ansible.utils.get_rest_client'):
             setattr(ctx, '_local', False)
-            with self.assertRaises(NonRecoverableError):
-                self.assertEquals(
-                    '/opt/manager/resources/blueprints/None/None/foo',
-                    handle_file_path('foo', [], ctx))
+            mock_bp_dir.return_value = \
+                '/opt/manager/resources/blueprints/None/None'
+            with patch('os.path.exists', return_value=False):
+                with self.assertRaises(NonRecoverableError):
+                    self.assertEquals(
+                        '/opt/manager/resources/blueprints/None/None/foo',
+                        handle_file_path('foo', [], ctx))
             setattr(ctx, '_local', True)
             self.assertEquals(
                 curdir,

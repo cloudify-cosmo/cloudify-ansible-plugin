@@ -262,21 +262,30 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 )
             return new_file_path
         else:
+            # in update case , we always need to fetch the new blueprint
+            # because a deployment can have multiple updates
+            # unlike first creation blueprint files would be the same.
+            is_update = _ctx.workflow_id == 'update'
             downloaded = \
                 _ctx.instance.runtime_properties.get('_blueprint_dir')
-            if downloaded:
-                file_path = '{0}/{1}'.format(downloaded, file_path)
+            dir_exists = os.path.exists(downloaded)
+            if downloaded and dir_exists and not is_update:
+                file_path = os.path.join(downloaded, file_path)
             else:
                 # handle update deployment different blueprint playbook name
                 blueprint_id = _ctx.blueprint.id
-                if _ctx.workflow_id == 'update':
+                if is_update:
+                    if downloaded:
+                        delete_temp_folder(downloaded)
+                        _ctx.instance.runtime_properties.pop('_blueprint_dir')
+                        _ctx.instance.update()
                     blueprint_id = \
                         _get_deployment_blueprint(_ctx.deployment.id)
                 blueprint_path = get_blueprint_dir(blueprint_id)
                 _ctx.instance.runtime_properties['_blueprint_dir'] = \
                     blueprint_path
                 _ctx.instance.update()
-                file_path = '{0}/{1}'.format(blueprint_path, file_path)
+                file_path = os.path.join(blueprint_path, file_path)
     if os.path.exists(file_path):
         return file_path
     raise NonRecoverableError(
@@ -866,21 +875,24 @@ def install_galaxy_collections(_ctx,
         inside venv.
        """
 
+    def _install_galaxy_collections(instance=None):
+        venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
+        collections_location = _get_collections_location(instance)
+        _ctx.logger.info(
+            "Installing collections {} to path {}".format(
+                str(collections_to_install),
+                collections_location
+            )
+        )
+        install_collections_to_venv(venv_path,
+                                    collections_to_install,
+                                    collections_location)
+
     if collections_to_install:
         instance = get_instance(ctx)
         if is_connected_to_internet():
             if is_local_venv():
-                venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
-                collections_location = _get_collections_location(instance)
-                _ctx.logger.info(
-                    "Installing collections {} to path {}".format(
-                        str(collections_to_install),
-                        collections_location
-                    )
-                )
-                install_collections_to_venv(venv_path,
-                                            collections_to_install,
-                                            collections_location)
+                _install_galaxy_collections(instance=instance)
         else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use galaxy_collections when'
@@ -896,21 +908,24 @@ def install_roles(_ctx,
        :param roles_to_install: list of roles to install
        """
 
+    def _install_roles(instance=None):
+        venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
+        roles_location = _get_roles_location(instance)
+        _ctx.logger.info(
+            "Installing roles {} to path {}".format(
+                str(roles_to_install),
+                roles_location
+            )
+        )
+        install_roles_to_venv(venv_path,
+                              roles_to_install,
+                              roles_location)
+
     if roles_to_install:
+        instance = get_instance(_ctx)
         if is_connected_to_internet():
             if is_local_venv():
-                instance = get_instance(_ctx)
-                venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
-                roles_location = _get_roles_location(instance)
-                _ctx.logger.info(
-                    "Installing roles {} to path {}".format(
-                        str(roles_to_install),
-                        roles_location
-                    )
-                )
-                install_roles_to_venv(venv_path,
-                                      roles_to_install,
-                                      roles_location)
+                _install_roles(instance=instance)
         else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use roles when'
