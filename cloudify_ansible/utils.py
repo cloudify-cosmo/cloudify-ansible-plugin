@@ -266,9 +266,10 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
             # because a deployment can have multiple updates
             # unlike first creation blueprint files would be the same.
             is_update = _ctx.workflow_id == 'update'
+            _ctx_instance = get_instance(_ctx)
             downloaded = \
-                _ctx.instance.runtime_properties.get('_blueprint_dir')
-            dir_exists = os.path.exists(downloaded)
+                _ctx_instance.runtime_properties.get('_blueprint_dir')
+            dir_exists = os.path.exists(downloaded) if downloaded else False
             if downloaded and dir_exists and not is_update:
                 file_path = os.path.join(downloaded, file_path)
             else:
@@ -277,14 +278,14 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 if is_update:
                     if downloaded:
                         delete_temp_folder(downloaded)
-                        _ctx.instance.runtime_properties.pop('_blueprint_dir')
-                        _ctx.instance.update()
+                        _ctx_instance.runtime_properties.pop('_blueprint_dir')
+                        _ctx_instance.update()
                     blueprint_id = \
                         _get_deployment_blueprint(_ctx.deployment.id)
                 blueprint_path = get_blueprint_dir(blueprint_id)
-                _ctx.instance.runtime_properties['_blueprint_dir'] = \
+                _ctx_instance.runtime_properties['_blueprint_dir'] = \
                     blueprint_path
-                _ctx.instance.update()
+                _ctx_instance.update()
                 file_path = os.path.join(blueprint_path, file_path)
     if os.path.exists(file_path):
         return file_path

@@ -28,30 +28,50 @@ checkout:
 
 
 executors:
-  py36:
-    docker:
-      - image: circleci/python:3.6
 
   cloudify-machine-py3:
     machine:
       image: ubuntu-2004:202201-02
 
 commands:
+
+  setup_manager:
+    steps:
+      - run: |
+          if [[ -z "${CLOUDIFY_HOST}" ]]; then
+              exit 1
+          fi
+      - run: |
+          if [[ -z "${CLOUDIFY_TENANT}" ]] && [ -z "${CIRCLE_PROJECT_REPONAME}" ]; then
+              exit 1
+          fi
+      - run: |
+          if [[ -z "${CLOUDIFY_TOKEN}" ]]; then
+              exit 1
+          fi
+      - run: |
+          response=$(curl --write-out '%{http_code}' --silent --insecure --header "Tenant: ${CLOUDIFY_TENANT}" --header "Authentication-Token: ${CLOUDIFY_TOKEN}" https://$CLOUDIFY_HOST/api/v3.1/status --output /dev/null)
+          if [[ $response != 200 ]]; then
+              echo "Failed to get manager status";
+              exit 1
+          fi
+      - run: pip3 install urllib3==1.26.15 requests-toolbelt==0.10.1
+      - run: pip3 install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/refs/heads/master.zip
+      - run: git submodule update --init --recursive --remote
+
   prepare_test_manager:
     steps:
-      - run: ecosystem-test prepare-test-manager -l $TEST_LICENSE --generate-new-aws-token -es gcp_credentials=$gcp_credentials -es aws_access_key_id=$aws_access_key_id -es aws_secret_access_key=$aws_secret_access_key --yum-package python-netaddr --yum-package git --yum-package epel -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*)  ~/project/plugin.yaml
-      - run: |
-          docker exec -it cfy_manager mkdir -p /etc/cloudify/.cloudify/profiles/manager-local/
-          docker exec -it cfy_manager cp /root/.cloudify/profiles/manager-local/context.json /etc/cloudify/.cloudify/profiles/manager-local/context.json
+      - run: ls -alR
+      - run: ecosystem-test prepare-remote-test-manager --generate-new-aws-token -es gcp_credentials=$gcp_credentials -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*) ~/project/plugin_1_4.yaml
 
   run_hello_world_test:
     steps:
-      - run: ecosystem-test local-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
+      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i .circleci\example-inputs.yaml --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
       - slack/notify_failed
 
   run_python_venv_options:
     steps:
-      - run: ecosystem-test local-blueprint-test -b examples/python-venv-options.yaml --test-id=python-venv-options --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
+      - run: ecosystem-test remote-blueprint-test -b examples/python-venv-options.yaml --test-id=python-venv-options --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
 
 jobs:
 
@@ -61,7 +81,9 @@ jobs:
       CLOUDIFY_SSL_TRUST_ALL: true
     steps:
       - checkout
-      - managerorb/create_manager_container_latest
+      - attach_workspace:
+          at: workspace
+      - setup_manager
       - prepare_test_manager
       - run_hello_world_test
 

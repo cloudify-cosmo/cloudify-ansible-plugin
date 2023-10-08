@@ -17,9 +17,12 @@ from os import environ
 from contextlib import contextmanager
 
 from ecosystem_tests.dorkl.constansts import logger
-from ecosystem_tests.dorkl import cleanup_on_failure
-from ecosystem_tests.dorkl.exceptions import EcosystemTestException
-from ecosystem_tests.dorkl.cloudify_api import cloudify_exec
+from ecosystem_tests.nerdl.api import (
+    with_client,
+    get_node_instance,
+    wait_for_workflow,
+    cleanup_on_failure,
+    list_node_instances)
 
 TEST_ID = environ.get('__ECOSYSTEM_TEST_ID', 'hello-world-example')
 
@@ -50,20 +53,8 @@ def test_runtime_properties():
                     error_messages))
 
 
-def nodes():
-    return cloudify_exec('cfy nodes list')
-
-
-def node_instances():
-    return cloudify_exec('cfy node-instances list -d {}'.format(TEST_ID))
-
-
-def get_node_instance(name):
-    return cloudify_exec('cfy node-instances get {}'.format(name))
-
-
 def node_instance_by_name(name):
-    for node_instance in node_instances():
+    for node_instance in list_node_instances(TEST_ID):
         if node_instance['node_id'] == name:
             return get_node_instance(node_instance['id'])
     raise Exception('No node instances found.')
