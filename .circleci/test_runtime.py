@@ -48,7 +48,7 @@ def test_runtime_properties():
                     prop))
         if errors:
             error_messages = '\n'.join(errors)
-            raise EcosystemTestException(
+            raise Exception(
                 'validate_runtime_properties failed because of {}'.format(
                     error_messages))
 
