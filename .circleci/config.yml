@@ -66,7 +66,7 @@ commands:
 
   run_hello_world_test:
     steps:
-      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i .circleci\example-inputs.yaml --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
+      - run: ecosystem-test remote-blueprint-test -b examples/blueprint-examples/hello-world-example/aws.yaml --test-id=hello-world-example -i .circleci/example-inputs.yaml --on-failure=uninstall-force --timeout=1800 --nested-test=.circleci/test_runtime.py
       - slack/notify_failed
 
   run_python_venv_options:
