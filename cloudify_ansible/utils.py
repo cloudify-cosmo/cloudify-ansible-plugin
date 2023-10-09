@@ -39,6 +39,7 @@ from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import (
     text_type, urlopen, URLError)
 from cloudify_common_sdk.utils import (
+    get_blueprint_dir,
     get_deployment_dir,
     get_node_instance_dir)
 from cloudify_common_sdk.resource_downloader import get_shared_resource
@@ -63,7 +64,6 @@ from cloudify_ansible.constants import (
     AVAILABLE_TAGS,
     INSTALLED_ROLES,
     SUPPORTED_PYTHON,
-    BP_INCLUDES_PATH,
     ANSIBLE_TO_INSTALL,
     INSTALLED_PACKAGES,
     INSTALLED_COLLECTIONS,
@@ -248,6 +248,7 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
             # For now, the important thing here is that we are
             # enabling downloading the playbook to a remote host.
             playbook_file_dir = mkdtemp()
+            os.chmod(playbook_file_dir, 0o755)
             new_file_path = download_nested_file_to_new_nested_temp_file(
                 file_path,
                 playbook_file_dir,
@@ -261,16 +262,31 @@ def handle_file_path(file_path, additional_playbook_files, _ctx):
                 )
             return new_file_path
         else:
-            # handle update deployment different blueprint playbook name
-            deployment_blueprint = _ctx.blueprint.id
-            if _ctx.workflow_id == 'update':
-                deployment_blueprint = \
-                    _get_deployment_blueprint(_ctx.deployment.id)
-            file_path = \
-                BP_INCLUDES_PATH.format(
-                    tenant=_get_tenant_name(_ctx),
-                    blueprint=deployment_blueprint,
-                    relative_path=file_path)
+            # in update case , we always need to fetch the new blueprint
+            # because a deployment can have multiple updates
+            # unlike first creation blueprint files would be the same.
+            is_update = _ctx.workflow_id == 'update'
+            _ctx_instance = get_instance(_ctx)
+            downloaded = \
+                _ctx_instance.runtime_properties.get('_blueprint_dir')
+            dir_exists = os.path.exists(downloaded) if downloaded else False
+            if downloaded and dir_exists and not is_update:
+                file_path = os.path.join(downloaded, file_path)
+            else:
+                # handle update deployment different blueprint playbook name
+                blueprint_id = _ctx.blueprint.id
+                if is_update:
+                    if downloaded:
+                        delete_temp_folder(downloaded)
+                        _ctx_instance.runtime_properties.pop('_blueprint_dir')
+                        _ctx_instance.update()
+                    blueprint_id = \
+                        _get_deployment_blueprint(_ctx.deployment.id)
+                blueprint_path = get_blueprint_dir(blueprint_id)
+                _ctx_instance.runtime_properties['_blueprint_dir'] = \
+                    blueprint_path
+                _ctx_instance.update()
+                file_path = os.path.join(blueprint_path, file_path)
     if os.path.exists(file_path):
         return file_path
     raise NonRecoverableError(
@@ -402,6 +418,7 @@ def create_playbook_workspace(ctx):
     instance = get_instance(ctx)
     if WORKSPACE not in instance.runtime_properties:
         workspace_dir = mkdtemp(dir=get_node_instance_dir())
+        os.chmod(workspace_dir, 0o755)
         instance.runtime_properties[WORKSPACE] = workspace_dir
     else:
         workspace_dir = instance.runtime_properties.get(WORKSPACE)
@@ -859,17 +876,24 @@ def install_galaxy_collections(_ctx,
         inside venv.
        """
 
+    def _install_galaxy_collections(instance=None):
+        venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
+        collections_location = _get_collections_location(instance)
+        _ctx.logger.info(
+            "Installing collections {} to path {}".format(
+                str(collections_to_install),
+                collections_location
+            )
+        )
+        install_collections_to_venv(venv_path,
+                                    collections_to_install,
+                                    collections_location)
+
     if collections_to_install:
         instance = get_instance(ctx)
         if is_connected_to_internet():
-            venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
-            collections_location = _get_collections_location(instance)
-            _ctx.logger.info("Installing collections {} to path {}".format(
-                str(collections_to_install),
-                collections_location))
-            install_collections_to_venv(venv_path,
-                                        collections_to_install,
-                                        collections_location)
+            if is_local_venv():
+                _install_galaxy_collections(instance=instance)
         else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use galaxy_collections when'
@@ -885,17 +909,24 @@ def install_roles(_ctx,
        :param roles_to_install: list of roles to install
        """
 
-    if roles_to_install:
-        if is_connected_to_internet():
-            instance = get_instance(_ctx)
-            venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
-            roles_location = _get_roles_location(instance)
-            _ctx.logger.info("Installing roles {} to path {}".format(
+    def _install_roles(instance=None):
+        venv_path = instance.runtime_properties.get(PLAYBOOK_VENV)
+        roles_location = _get_roles_location(instance)
+        _ctx.logger.info(
+            "Installing roles {} to path {}".format(
                 str(roles_to_install),
-                roles_location))
-            install_roles_to_venv(venv_path,
-                                  roles_to_install,
-                                  roles_location)
+                roles_location
+            )
+        )
+        install_roles_to_venv(venv_path,
+                              roles_to_install,
+                              roles_location)
+
+    if roles_to_install:
+        instance = get_instance(_ctx)
+        if is_connected_to_internet():
+            if is_local_venv():
+                _install_roles(instance=instance)
         else:
             raise NonRecoverableError('No internet connection.'
                                       'Do not use roles when'
@@ -985,6 +1016,7 @@ def setup_modules(_ctx, module_path=None):
     deployment_dir = get_deployment_dir(_ctx.deployment.id)
     if not module_path:
         module_path = mkdtemp(dir=deployment_dir)
+        os.chmod(module_path, 0o755)
         ctx_instance.runtime_properties[MODULE_PATH] = module_path
     if not os.path.exists(module_path):
         raise NonRecoverableError(
@@ -1011,6 +1043,7 @@ def create_playbook_venv(_ctx):
             _ctx.logger.info("Installing new python venv")
             deployment_dir = get_deployment_dir(_ctx.deployment.id)
             venv_path = mkdtemp(dir=deployment_dir)
+            os.chmod(venv_path, 0o755)
             make_virtualenv(path=venv_path)
             ansible_to_install = [ANSIBLE_TO_INSTALL]
             if node.properties.get('installation_source'):

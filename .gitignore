@@ -46,7 +46,6 @@ MagicMock/*
 .DS_Store
 
 # Cloudify
-inputs.yaml
 local-storage/
 .cloudify/
 
