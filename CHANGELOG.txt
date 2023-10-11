@@ -154,3 +154,5 @@
   - Remove cloudify 6.3 from constraints.txt
 3.2.0:
   - Some changes to account for external storage.
+3.2.1:
+  - Re-release with bumped utilities-plugins-sdk.

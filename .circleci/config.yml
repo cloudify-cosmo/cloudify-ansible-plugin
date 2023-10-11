@@ -62,7 +62,7 @@ commands:
   prepare_test_manager:
     steps:
       - run: ls -alR
-      - run: ecosystem-test prepare-remote-test-manager --generate-new-aws-token -es gcp_credentials=$gcp_credentials -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*) ~/project/plugin_1_4.yaml
+      - run: ecosystem-test prepare-remote-test-manager --generate-new-aws-token -es gcp_credentials=$gcp_credentials -p $(find ~/project/workspace/build/ -name *manylinux-py311-none-linux_x86_64.wgn*) ~/project/plugin_1_5.yaml
 
   run_hello_world_test:
     steps:
