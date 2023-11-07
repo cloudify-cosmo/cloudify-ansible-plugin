@@ -1,0 +1,25 @@
+diff --git a/dev-requirements.txt b/dev-requirements.txt
+index ef12307..c4f363e 100644
+--- a/dev-requirements.txt
++++ b/dev-requirements.txt
+@@ -1 +1,6 @@
+ pyyaml>=4.2b4
++pyyaml>=4.2b4
++-e fusion-common
++-e fusion-agent
++-e fusion-manager/mgmtworker
++-e cloudify-utilities-plugins-sdk
+diff --git a/setup.py b/setup.py
+index 3fdcf0a..cec9361 100644
+--- a/setup.py
++++ b/setup.py
+@@ -45,8 +45,7 @@ setup(
+     license='LICENSE',
+     zip_safe=False,
+     install_requires=[
+-        "cloudify-common>=4.5.5",
+-        "cloudify-utilities-plugins-sdk>=0.0.121",
++        "fusion-common",
+         "ansible==4.10.0",
+         "pexpect==4.8.0",
+         "networkx",
