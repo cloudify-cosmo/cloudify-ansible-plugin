@@ -1,0 +1,36 @@
+diff --git a/constraints.txt b/constraints.txt
+index 58c7b8e..06f041a 100644
+--- a/constraints.txt
++++ b/constraints.txt
+@@ -2,5 +2,7 @@ ansible==4.10.0
+ hvac
+ ipaddr
+ netaddr
+-cryptography==3.3.2
+-psutil==5.8.0
++psutil==5.9.6
++fusion-mgmtworker @ https://github.com/fusion-e/fusion-manager/archive/magicp1-2.0.0.zip#subdirectory=mgmtworker
++fusion-agent[celery,fabric,kerberos] @ https://github.com/fusion-e/fusion-agent/archive/magicp1-2.0.0.zip
++fusion-common[dispatcher,snmp] @ https://github.com/fusion-e/fusion-common/archive/magicp1-2.0.0.zip
+diff --git a/dev-requirements.txt b/dev-requirements.txt
+index ef12307..4a98d79 100644
+--- a/dev-requirements.txt
++++ b/dev-requirements.txt
+@@ -1 +1,4 @@
+ pyyaml>=4.2b4
++fusion-mgmtworker @ https://github.com/fusion-e/fusion-manager/archive/magicp1-2.0.0.zip#subdirectory=mgmtworker
++fusion-agent[celery,fabric,kerberos] @ https://github.com/fusion-e/fusion-agent/archive/magicp1-2.0.0.zip
++fusion-common[dispatcher,snmp] @ https://github.com/fusion-e/fusion-common/archive/magicp1-2.0.0.zip
+diff --git a/setup.py b/setup.py
+index 3fdcf0a..dcccff2 100644
+--- a/setup.py
++++ b/setup.py
+@@ -45,7 +45,7 @@ setup(
+     license='LICENSE',
+     zip_safe=False,
+     install_requires=[
+-        "cloudify-common>=4.5.5",
++        "fusion-common",
+         "cloudify-utilities-plugins-sdk>=0.0.121",
+         "ansible==4.10.0",
+         "pexpect==4.8.0",
