@@ -156,3 +156,4 @@
   - Some changes to account for external storage.
 3.2.1:
   - Re-release with bumped utilities-plugins-sdk.
+3.2.2: Rerelease with updated dependencies.
