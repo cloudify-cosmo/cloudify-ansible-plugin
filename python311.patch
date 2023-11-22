@@ -7,7 +7,7 @@ index ef12307..1d65750 100644
 +-e fusion-common
 +-e cloudify-utilities-plugins-sdk
 diff --git a/setup.py b/setup.py
-index 3fdcf0a..d019e21 100644
+index 841a362..cb724bd 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -17,7 +17,7 @@ import os
@@ -36,6 +36,6 @@ index 3fdcf0a..d019e21 100644
 -        "cloudify-utilities-plugins-sdk>=0.0.121",
 +        "fusion-common",
 +        "cloudify-utilities-plugins-sdk>=0.0.129",
-         "ansible==4.10.0",
+         "ansible",
          "pexpect==4.8.0",
          "networkx",
