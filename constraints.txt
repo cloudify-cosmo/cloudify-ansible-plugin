@@ -1,4 +1,4 @@
-ansible==4.10.0
+ansible
 hvac
 ipaddr
 netaddr
