@@ -1,6 +1,6 @@
-ansible==4.10.0
+ansible
 hvac
 ipaddr
 netaddr
-cryptography==3.3.2
+cryptography
 psutil==5.8.0
