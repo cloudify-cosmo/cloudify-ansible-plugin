@@ -1,6 +1,0 @@
-ansible
-hvac
-ipaddr
-netaddr
-cryptography
-psutil==5.8.0

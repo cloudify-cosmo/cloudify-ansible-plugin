@@ -15,9 +15,10 @@
 
 import os
 import re
+import sys
 import pathlib
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def get_version():
@@ -29,13 +30,32 @@ def get_version():
         return re.search(r'\d+.\d+.\d+', var).group()
 
 
+install_requires = [
+    'ansible',
+    'pexpect==4.8.0',
+]
+
+if sys.version_info.major == 3 and sys.version_info.minor == 6:
+    packages = ['cloudify_ansible', 'cloudify_ansible_sdk']
+    install_requires += [
+        'cloudify-common>=4.5.5',
+        'cloudify-utilities-plugins-sdk>=0.0.121',
+    ]
+else:
+    packages = find_packages()
+    install_requires += [
+        'fusion-common',
+        'cloudify-utilities-plugins-sdk',
+    ]
+
+
 setup(
     name='cloudify-ansible-plugin',
     version=get_version(),
     author='Cloudify Platform LTD',
     author_email='hello@cloudify.co',
     description='Manage Ansible nodes by Cloudify.',
-    packages=['cloudify_ansible', 'cloudify_ansible_sdk'],
+    packages=packages,
     package_data={
         'cloudify_ansible': [
             'ansible-cloudify-ctx/modules/cloudify_runtime_property.py',
@@ -44,11 +64,5 @@ setup(
     },
     license='LICENSE',
     zip_safe=False,
-    install_requires=[
-        "cloudify-common>=4.5.5",
-        "cloudify-utilities-plugins-sdk>=0.0.121",
-        "ansible",
-        "pexpect==4.8.0",
-        "networkx",
-    ]
+    install_requires=install_requires
 )

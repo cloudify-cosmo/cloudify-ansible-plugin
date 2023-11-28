@@ -1,0 +1,6 @@
+hvac
+ipaddr
+netaddr
+psutil==5.8.0
+cryptography==40.0.2
+networkx>=2.5.1,<2.6
