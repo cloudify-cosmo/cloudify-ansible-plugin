@@ -158,3 +158,4 @@
   - Re-release with bumped utilities-plugins-sdk.
 3.2.2: Rerelease with updated dependencies.
 3.2.3: updated libraries versions for security.
+3.2.4: Republish with new requirements.
