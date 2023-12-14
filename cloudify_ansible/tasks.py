@@ -182,7 +182,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         if process_error.exit_code in UNREACHABLE_CODES:
             number = _ctx.operation.retry_number or 0
             attempts = playbook_args.get(constants.NUMBER_OF_ATTEMPTS, 60)
-            _ctx.logger.error('{} {}'.format(number, attempts))
+            _ctx.logger.error('Retry {}/{}.'.format(number, attempts))
             utils.raise_if_retry_is_not_allowed(number, attempts)
             raise OperationRetry(
                 "One or more hosts are unreachable.",
@@ -194,7 +194,7 @@ def run(playbook_args, ansible_env_vars, _ctx, **kwargs):
         else:
             number = _ctx.operation.retry_number or 0
             attempts = playbook_args.get(constants.NUMBER_OF_ATTEMPTS, 60)
-            _ctx.logger.error('{} {}'.format(number, attempts))
+            _ctx.logger.error('Retry {}/{}.'.format(number, attempts))
             utils.raise_if_retry_is_not_allowed(number, attempts)
             raise RecoverableError(
                 "Retrying...",

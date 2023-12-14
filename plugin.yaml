@@ -2,7 +2,7 @@ plugins:
   ansible:
     executor: central_deployment_agent
     package_name: cloudify-ansible-plugin
-    package_version: '3.2.5'
+    package_version: '3.2.6'
 dsl_definitions:
   ansible_install_config:
     use_existing_resource: &id001
