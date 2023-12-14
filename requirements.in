@@ -3,8 +3,9 @@
 -e fusion-agent
 -e cloudify-utilities-plugins-sdk
 cryptography>=41.0.5
-networkx>=2.5.1,<2.6
 psutil==5.8.0
 hvac
 ipaddr
 netaddr
+cffi>=1.14,<1.15
+pyyaml>6
