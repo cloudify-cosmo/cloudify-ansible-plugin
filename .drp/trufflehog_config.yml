@@ -1,0 +1,13 @@
+---
+project_exclusion_list:
+  exclusion_folders:
+    - .drp
+    - .github
+    - examples
+    - Makefile
+  #   - test
+  #   - jenkins
+  #   - buildroot
+  #   - buildroot
+  # exclusion_file_paths:
+  #   - package/tpm2-tools/tpm2-tools.hash
