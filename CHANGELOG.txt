@@ -161,3 +161,4 @@
 3.2.4: Republish with new requirements.
 3.2.5: Handle secure log edge-case with numbers.
 3.2.6: Adjust retry log message.
+3.2.7: added .drp folder to exclude files from trufflehog
