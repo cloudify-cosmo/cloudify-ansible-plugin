@@ -2,10 +2,16 @@
 -e fusion-manager/mgmtworker
 -e fusion-agent
 -e cloudify-utilities-plugins-sdk
-cryptography>=41.0.5
+cryptography>=42.0.5
+pycryptodomex>=3.20.0
+paramiko>=3.4.0
+jinja2>=3.1.3
+ansible-core>=2.16.4
+gitpython>=3.1.42
+
+
 psutil==5.8.0
 hvac
 ipaddr
 netaddr
-cffi>=1.14,<1.15
 pyyaml>6

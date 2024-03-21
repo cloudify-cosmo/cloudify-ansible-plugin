@@ -162,3 +162,4 @@
 3.2.5: Handle secure log edge-case with numbers.
 3.2.6: Adjust retry log message.
 3.2.7: added .drp folder to exclude files from trufflehog
+3.2.8: blackduck
