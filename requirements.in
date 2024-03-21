@@ -1,11 +1,5 @@
--e fusion-common
--e fusion-manager/mgmtworker
--e fusion-agent
--e cloudify-utilities-plugins-sdk
-cryptography>=41.0.5
-psutil==5.8.0
-hvac
-ipaddr
-netaddr
-cffi>=1.14,<1.15
-pyyaml>6
+-e ${HOME}/fusion-common
+-e ${HOME}/fusion-manager/mgmtworker
+-e ${HOME}/fusion-agent
+-e ${HOME}/cloudify-utilities-plugins-sdk
+cryptography>=42.0.5
