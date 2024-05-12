@@ -153,7 +153,7 @@
   - Ignore winrm patching inside plugin virtualenv if already done.
   - Remove cloudify 6.3 from constraints.txt
 3.2.0:
-  - Some changes to account for external storage.
+  - Some changes to account for external storage.q
 3.2.1:
   - Re-release with bumped utilities-plugins-sdk.
 3.2.2: Rerelease with updated dependencies.
@@ -163,3 +163,4 @@
 3.2.6: Adjust retry log message.
 3.2.7: added .drp folder to exclude files from trufflehog
 3.2.8: blackduck
+3.2.9: NE-29645
