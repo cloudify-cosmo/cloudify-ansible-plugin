@@ -37,7 +37,7 @@ from ansible.vars.manager import VariableManager
 from ansible.parsing.dataloader import DataLoader
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_ansible_sdk._compat import (
-    text_type, urlopen, URLError)
+    text_type, urlopen)
 from cloudify_common_sdk.utils import (
     get_blueprint_dir,
     get_deployment_dir,
@@ -190,7 +190,7 @@ def get_site_packages(path_base, instance=None):
 
 def _get_collections_location(instance):
     runtime_properties = instance.runtime_properties
-    if not is_local_venv() and \
+    if not is_local_venv() or \
             (get_node(ctx).properties.get('galaxy_collections')
              or runtime_properties.get('galaxy_collections')):
         return runtime_properties.get(WORKSPACE)
@@ -416,12 +416,11 @@ def create_playbook_workspace(ctx):
         :return:
     """
     instance = get_instance(ctx)
-    if WORKSPACE not in instance.runtime_properties:
+    workspace_dir = instance.runtime_properties.get(WORKSPACE)
+    if not workspace_dir:
         workspace_dir = mkdtemp(dir=get_node_instance_dir())
         os.chmod(workspace_dir, 0o755)
         instance.runtime_properties[WORKSPACE] = workspace_dir
-    else:
-        workspace_dir = instance.runtime_properties.get(WORKSPACE)
     collections_location = _get_collections_location(instance)
     ansible_cfg_file = os.path.join(workspace_dir, 'ansible.cfg')
     with open(ansible_cfg_file, 'w') as f:
@@ -1059,13 +1058,15 @@ def create_playbook_venv(_ctx):
 
 
 def is_connected_to_internet():
-    try:
-        urlopen('http://google.com', timeout=5)
-        ctx.logger.debug("Connected to internet.")
-        return True
-    except URLError:
-        ctx.logger.debug("No Internet connection.")
-        return False
+    for n in range(0, 3):
+        try:
+            urlopen('http://www.microsoft.com', timeout=5)
+            ctx.logger.info("Connected to internet.")
+            return True
+        except Exception as e:
+            ctx.logger.debug(f"exception {str(e)}")
+    ctx.logger.info('No Internet connection.')
+    return False
 
 
 def process_execution(script_func, script_path, ctx, process=None):
